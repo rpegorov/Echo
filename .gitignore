@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+
+# Xcode: пользовательские данные и сборка
+xcuserdata/
+*.xcuserstate
+DerivedData/
+build/
+dist/
+*.xcarchive
+*.dmg
+
+# Бэкапы / временные файлы проекта
+*.backup
+*.orig
+
+# Скретч / черновики дизайна
+design-preview.html
+ui screen/
+fix_project.sh
+
+# Внутренние документы и инструменты агента (не для публичного репозитория)
+.claude/
+DEVLOG.md
+ARCHITECTURE.md
+contex.md

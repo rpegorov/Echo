@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22" width="22" height="22">
+  <!--
+    Menu bar icon for Echo (colored, NON-template).
+    Concentric "echo" rings = ripples on water. Broken arcs with staggered gaps,
+    water-tone palette (teal -> cyan -> sky). Rendered in color on both light and
+    dark menu bars, so renders-as-template must be FALSE and NSImage.isTemplate=false.
+  -->
+
+  <!-- Center drop -->
+  <circle cx="11" cy="11" r="1.7" fill="#7dd3fc"/>
+
+  <!-- Inner ring (sky) -->
+  <g transform="rotate(12 11 11)">
+    <circle cx="11" cy="11" r="4.0" fill="none" stroke="#0ea5e9" stroke-width="1.5"
+            stroke-linecap="round" stroke-dasharray="20 5"/>
+  </g>
+
+  <!-- Middle ring (cyan) -->
+  <g transform="rotate(54 11 11)">
+    <circle cx="11" cy="11" r="6.6" fill="none" stroke="#06b6d4" stroke-width="1.5"
+            stroke-linecap="round" stroke-dasharray="33 8.5"/>
+  </g>
+
+  <!-- Outer ring (teal) -->
+  <g transform="rotate(-26 11 11)">
+    <circle cx="11" cy="11" r="9.3" fill="none" stroke="#14b8a6" stroke-width="1.5"
+            stroke-linecap="round" stroke-dasharray="46 12"/>
+  </g>
+</svg>
