@@ -7,12 +7,23 @@
 Live CPU, RAM, disk and network readings in your menu bar, with built-in window
 management, clipboard history and quick system utilities.
 
-<!-- Замените плейсхолдеры на реальные скриншоты (положите файлы в docs/) -->
-<img src="docs/popover.png" alt="Echo popover" width="320">
+<img src="screen/1.png" alt="Echo menu bar popover" width="300">
 
 </div>
 
 ---
+
+## Screenshots
+
+<table>
+  <tr>
+    <td width="50%"><img src="screen/3.png" alt="CPU detail" width="100%"><br><sub>CPU — live chart and top processes</sub></td>
+    <td width="50%"><img src="screen/4.png" alt="Network detail" width="100%"><br><sub>Network — throughput, peaks and averages</sub></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center"><img src="screen/2.png" alt="Preferences" width="72%"><br><sub>Preferences — General</sub></td>
+  </tr>
+</table>
 
 ## Features
 
