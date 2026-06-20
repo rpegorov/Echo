@@ -34,7 +34,9 @@ xcodebuild archive \
   | grep -E "^(error:|warning:|.* ARCHIVE|\*\* ARCHIVE)" || true
 
 # --- Достаём собранный .app и переименовываем в Echo.app ---
-BUILT_APP="$(find "$ARCHIVE_PATH/Products/Applications" -maxdepth 1 -name "*.app" | head -1)"
+# INSTALL_PATH = $(USER_APPS_DIR), поэтому .app лежит в Products/Users/<you>/Applications,
+# а не в Products/Applications — ищем по всему архиву.
+BUILT_APP="$(find "$ARCHIVE_PATH/Products" -name "*.app" -type d | head -1)"
 if [[ -z "${BUILT_APP:-}" || ! -d "$BUILT_APP" ]]; then
   echo "✗ Не нашёл .app в архиве: $ARCHIVE_PATH"
   exit 1

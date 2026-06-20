@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCHEME="MonitorBarApp"
 CONFIG="Debug"
-APP_NAME="MonitorBarApp"
+APP_NAME="Echo"
 
 echo "▶ Building $APP_NAME ($CONFIG)..."
 
