@@ -63,7 +63,7 @@ final class SystemUtilitiesService: ObservableObject {
 
     private func enablePreventSleep() {
         let result = IOPMAssertionCreateWithName(
-            kIOPMAssertionTypePreventUserIdleSystemSleep as CFString,
+            kIOPMAssertionTypeNoDisplaySleep as CFString,
             IOPMAssertionLevel(kIOPMAssertionLevelOn),
             "MonitorBarApp: Prevent Sleep" as CFString,
             &assertionID
