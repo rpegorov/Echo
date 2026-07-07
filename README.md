@@ -59,6 +59,44 @@ management, clipboard history and quick system utilities.
 4. For window management, grant access in
    **System Settings → Privacy & Security → Accessibility**.
 
+### Bypassing Gatekeeper (unsigned build)
+
+Because Echo is not signed with an Apple Developer certificate, macOS may block it with a "damaged or can't be opened" warning. Two ways to fix this:
+
+**Option 1 — Remove quarantine flag (recommended)**
+
+This removes the quarantine attribute from the specific app without changing any system settings.
+
+1. Open **Terminal** (find it via Spotlight: `⌘ Space` → type _Terminal_).
+2. Run the following command, then drag **Echo.app** from Applications into the Terminal window — the path will be appended automatically:
+   ```
+   sudo xattr -r -c
+   ```
+   > **Note:** the command does not work on files inside a mounted `.dmg`. Copy the app to your Desktop (or Applications) first, then run the command on the copied app. In some cases you can also run it on the `.dmg` file before mounting.
+3. Press **Enter** and type your administrator password. The password is not shown while typing — this is normal. If you have no password set, create one first.
+4. Launch Echo. macOS will verify the app (this can take up to 30 minutes on first run) and then open it.
+
+**Option 2 — Disable Gatekeeper system-wide**
+
+This restores the _"Allow apps from Anywhere"_ option in System Settings → Privacy & Security. Only do this if Option 1 does not work for you.
+
+1. Open **Terminal** and run the appropriate command for your macOS version:
+
+   macOS 10.12 – 10.15.7:
+   ```
+   sudo spctl --master-disable
+   ```
+   macOS 11 and later:
+   ```
+   sudo spctl --global-disable
+   ```
+   To re-enable Gatekeeper later, replace `disable` with `enable`.
+
+2. Press **Enter** and type your administrator password.
+3. Launch Echo normally.
+
+---
+
 ### Build from source
 
 ```bash
