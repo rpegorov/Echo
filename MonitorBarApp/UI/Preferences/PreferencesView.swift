@@ -11,6 +11,7 @@ struct PreferencesView: View {
     @ObservedObject var clipboard: ClipboardService
     @ObservedObject var windowManager: WindowManagerService
     let ultraSwitch: UltraSwitchService
+    @ObservedObject var updater: UpdaterService
 
     @State private var section: PrefSection? = .general
     @State private var hasAXPermission = false
@@ -28,6 +29,7 @@ struct PreferencesView: View {
         case windowManager = "Window Manager"
         case ultraSwitch = "Ultra Switch"
         case keyboard = "Keyboard Shortcuts"
+        case updates = "Updates"
         case clipboard = "Clipboard History"
 
         var id: String { rawValue }
@@ -40,6 +42,7 @@ struct PreferencesView: View {
             case .windowManager: return "macwindow.on.rectangle"
             case .ultraSwitch:   return "globe"
             case .keyboard:      return "keyboard"
+            case .updates:       return "arrow.down.circle"
             case .clipboard:     return "doc.on.clipboard"
             }
         }
@@ -86,6 +89,7 @@ struct PreferencesView: View {
         case .windowManager: windowManagerSection
         case .ultraSwitch:   ultraSwitchSection
         case .keyboard:      keyboardSection
+        case .updates:       UpdatesPrefsView(updater: updater, version: appVersion)
         case .clipboard:     clipboardSection
         }
     }

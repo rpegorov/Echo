@@ -25,6 +25,7 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
     private let hotKeys = HotKeyManager()
     private lazy var snapper = WindowSnapper(windowManager: windowManager, settings: settings)
     private let ultraSwitch = UltraSwitchService()
+    private let updater = UpdaterService()
     private let detailState = DetailState()
 
     private var detailWindow: NSWindow?
@@ -304,7 +305,8 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
             settings: settings,
             clipboard: clipboard,
             windowManager: windowManager,
-            ultraSwitch: ultraSwitch
+            ultraSwitch: ultraSwitch,
+            updater: updater
         )
         let hosting = NSHostingController(rootView: root)
 
