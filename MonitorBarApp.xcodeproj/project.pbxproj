@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		E1AA00032EE708D00033CB07 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = E1AA00022EE708D00033CB07 /* Sparkle */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		E127768E2EE708D00033CB07 /* MonitorBarApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MonitorBarApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -37,6 +41,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E1AA00032EE708D00033CB07 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -90,6 +95,7 @@
 			);
 			name = MonitorBarApp;
 			packageProductDependencies = (
+				E1AA00022EE708D00033CB07 /* Sparkle */,
 			);
 			productName = MonitorBarApp;
 			productReference = E127768E2EE708D00033CB07 /* MonitorBarApp.app */;
@@ -120,6 +126,9 @@
 			mainGroup = E12776842EE708D00033CB07;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
+			packageReferences = (
+				E1AA00012EE708D00033CB07 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
 			productRefGroup = E127768F2EE708D00033CB07 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -149,6 +158,25 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		E1AA00012EE708D00033CB07 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E1AA00022EE708D00033CB07 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E1AA00012EE708D00033CB07 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
+
 /* Begin XCBuildConfiguration section */
 		E127769D2EE708D00033CB07 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -166,6 +194,10 @@
 				INSTALL_PATH = "$(USER_APPS_DIR)";
 				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = rostislav.egorov.MonitorBarApp;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				PRODUCT_NAME = Echo;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -195,6 +227,10 @@
 				INSTALL_PATH = "$(USER_APPS_DIR)";
 				MARKETING_VERSION = 1.1;
 				PRODUCT_BUNDLE_IDENTIFIER = rostislav.egorov.MonitorBarApp;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				PRODUCT_NAME = Echo;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				PROVISIONING_PROFILE_SPECIFIER = "";

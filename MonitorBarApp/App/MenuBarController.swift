@@ -24,6 +24,8 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
     private let windowManager = WindowManagerService()
     private let hotKeys = HotKeyManager()
     private lazy var snapper = WindowSnapper(windowManager: windowManager, settings: settings)
+    private let ultraSwitch = UltraSwitchService()
+    private let updater = UpdaterService()
     private let detailState = DetailState()
 
     private var detailWindow: NSWindow?
@@ -48,12 +50,14 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
         settings.onMonitoringChange   = { [weak self] in self?.applyMonitoring() }
         settings.onAppearanceChange   = { [weak self] in self?.applyAppearance() }
         settings.onLaunchAtLoginChange = { [weak self] in self?.applyLaunchAtLogin() }
+        settings.onUltraSwitchChange  = { [weak self] in self?.applyUltraSwitch() }
 
         observePowerNotifications()
         applyAppearance()
         applyMonitoring()   // задаёт интервал и стартует/останавливает по политике энергосбережения
         registerHotKeys()
         updateSnapper()
+        applyUltraSwitch()
     }
 
     // MARK: - Power & monitoring policy
@@ -120,6 +124,15 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
         settings.windowManagerEnabled ? snapper.start() : snapper.stop()
     }
 
+    /// Включает автозамену раскладки только когда включены и фича, и авторежим.
+    private func applyUltraSwitch() {
+        if settings.ultraSwitchEnabled && settings.autoConvertEnabled {
+            ultraSwitch.startAuto()
+        } else {
+            ultraSwitch.stopAuto()
+        }
+    }
+
     // MARK: - Setup
 
     /// Создаёт иконку в строке меню (шаблонная, наследует цвет системы).
@@ -161,7 +174,12 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
         if popover.isShown {
             popover.performClose(nil)
         } else if let button = statusItem.button {
+            // Приложение-агент не становится активным по клику в строке меню, поэтому
+            // окно поповера остаётся не-key и SwiftUI рисует контролы серыми (неактивными).
+            // Активируем приложение и делаем окно поповера key — акцентные цвета сразу верные.
+            NSApp.activate(ignoringOtherApps: true)
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            popover.contentViewController?.view.window?.makeKey()
         }
     }
 
@@ -236,13 +254,14 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
     // MARK: - Hotkeys
 
     /// Перерегистрирует глобальные хоткеи по текущим настройкам.
-    /// Оконные команды регистрируются только если Window Manager включён;
-    /// открытие clipboard — всегда.
+    /// Оконные команды регистрируются только если включён Window Manager,
+    /// команды раскладки — только если включён Ultra Switch; clipboard — всегда.
     private func registerHotKeys() {
         hotKeys.unregisterAll()
         for command in WMCommand.allCases {
             guard let shortcut = settings.shortcut(for: command) else { continue }
             if command.isWindowCommand && !settings.windowManagerEnabled { continue }
+            if command.isUltraSwitchCommand && !settings.ultraSwitchEnabled { continue }
 
             if let layout = command.layout {
                 hotKeys.register(shortcut) { [weak self] in
@@ -251,7 +270,19 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
                         self.windowManager.apply(layout, gap: CGFloat(self.settings.windowGap))
                     }
                 }
-            } else {
+                continue
+            }
+
+            switch command {
+            case .switchLayout:
+                hotKeys.register(shortcut) { [weak self] in
+                    MainActor.assumeIsolated { self?.ultraSwitch.switchLayout() }
+                }
+            case .convertWord:
+                hotKeys.register(shortcut) { [weak self] in
+                    MainActor.assumeIsolated { self?.ultraSwitch.convertWordUnderCaret() }
+                }
+            default:
                 hotKeys.register(shortcut) { [weak self] in
                     MainActor.assumeIsolated { self?.openClipboard() }
                 }
@@ -270,7 +301,13 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
             return
         }
 
-        let root = PreferencesView(settings: settings, clipboard: clipboard, windowManager: windowManager)
+        let root = PreferencesView(
+            settings: settings,
+            clipboard: clipboard,
+            windowManager: windowManager,
+            ultraSwitch: ultraSwitch,
+            updater: updater
+        )
         let hosting = NSHostingController(rootView: root)
 
         let window = NSWindow(contentViewController: hosting)

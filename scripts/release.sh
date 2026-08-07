@@ -24,9 +24,24 @@ if ! git remote get-url origin >/dev/null 2>&1; then
   exit 1
 fi
 
+# --- Версия в бандле ---
+# Sparkle сравнивает CFBundleVersion, поэтому держим обе строки равными версии релиза.
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" MonitorBarApp/Info.plist
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $VERSION" MonitorBarApp/Info.plist
+
 # --- Сборка DMG ---
 bash scripts/make-dmg.sh
 [[ -f "$DMG" ]] || { echo "✗ DMG не собрался: $DMG"; exit 1; }
+
+# --- Фид обновлений ---
+# Подпись EdDSA и запись в docs/appcast.xml должны попасть в main ДО публикации
+# релиза: приложение читает фид именно из ветки main.
+bash scripts/appcast.sh "$VERSION" "$DMG"
+git add MonitorBarApp/Info.plist docs/appcast.xml
+if ! git diff --cached --quiet; then
+  git commit -m "release: Echo $VERSION"
+  git push origin HEAD
+fi
 
 # --- Тег ---
 if git rev-parse "$TAG" >/dev/null 2>&1; then

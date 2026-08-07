@@ -13,8 +13,14 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
     case topLeft, topRight, bottomLeft, bottomRight
     case center, maximize
     case openClipboard
+    case switchLayout, convertWord
 
     var id: String { rawValue }
+
+    /// Команды Ultra Switch регистрируются только при включённой фиче.
+    var isUltraSwitchCommand: Bool {
+        self == .switchLayout || self == .convertWord
+    }
 
     var title: String {
         switch self {
@@ -29,6 +35,8 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
         case .center:        return "Center"
         case .maximize:      return "Maximize"
         case .openClipboard: return "Open Clipboard History"
+        case .switchLayout:  return "Switch Layout"
+        case .convertWord:   return "Convert Last Word"
         }
     }
 
@@ -45,7 +53,7 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
         case .bottomRight:   return .bottomRight
         case .center:        return .center
         case .maximize:      return .maximize
-        case .openClipboard: return nil
+        case .openClipboard, .switchLayout, .convertWord: return nil
         }
     }
 
@@ -66,6 +74,8 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
         case .center:        return KeyboardShortcut(keyCode: 40,  flags: wm) // K — сжать и по центру
         case .maximize:      return KeyboardShortcut(keyCode: 38,  flags: wm) // J — максимизация
         case .openClipboard: return KeyboardShortcut(keyCode: 9, flags: [.command, .shift]) // ⌘⇧V
+        case .switchLayout:  return KeyboardShortcut(keyCode: 49, flags: [.option]) // ⌥Space
+        case .convertWord:   return KeyboardShortcut(keyCode: 49, flags: [.option, .shift]) // ⌥⇧Space
         }
     }
 }
@@ -116,6 +126,18 @@ final class AppSettings: ObservableObject {
         didSet { onLaunchAtLoginChange?() }
     }
 
+    // MARK: - Ultra Switch
+
+    /// Хоткеи раскладки: мгновенное переключение и конвертация слова.
+    @Published var ultraSwitchEnabled: Bool {
+        didSet { defaults.set(ultraSwitchEnabled, forKey: Keys.ultraSwitch); onChange?(); onUltraSwitchChange?() }
+    }
+
+    /// Автоматически исправлять слово, набранное не в той раскладке.
+    @Published var autoConvertEnabled: Bool {
+        didSet { defaults.set(autoConvertEnabled, forKey: Keys.autoConvert); onUltraSwitchChange?() }
+    }
+
     // MARK: - System Monitoring
 
     /// Базовый интервал опроса метрик, секунды.
@@ -160,6 +182,8 @@ final class AppSettings: ObservableObject {
     var onAppearanceChange: (@MainActor () -> Void)?
     /// Изменение флага «запуск при входе».
     var onLaunchAtLoginChange: (@MainActor () -> Void)?
+    /// Включение/выключение Ultra Switch или автозамены.
+    var onUltraSwitchChange: (@MainActor () -> Void)?
 
     private let defaults = UserDefaults.standard
 
@@ -173,7 +197,14 @@ final class AppSettings: ObservableObject {
         static let lowPowerThrottle = "power.lowPowerThrottle"
         static let lowPowerInterval = "power.lowPowerInterval"
         static let appearance = "appearance.mode"
+        static let ultraSwitch = "ultraSwitch.enabled"
+        static let autoConvert = "ultraSwitch.autoConvert"
+        static let shortcutsVersion = "wm.shortcuts.version"
     }
+
+    /// Текущая версия набора хоткеев. При росте — в сохранённый набор
+    /// доливаются дефолты команд, которых на прошлой версии ещё не было.
+    private static let shortcutsVersion = 1
 
     init() {
         windowManagerEnabled = defaults.object(forKey: Keys.enabled) as? Bool ?? true
@@ -195,6 +226,11 @@ final class AppSettings: ObservableObject {
         appearanceMode = (defaults.string(forKey: Keys.appearance)
             .flatMap(AppearanceMode.init(rawValue:))) ?? .system
 
+        // Ultra Switch — обе фичи выключены по умолчанию: автозамена трогает
+        // чужой ввод, включать её пользователь должен осознанно.
+        ultraSwitchEnabled = defaults.object(forKey: Keys.ultraSwitch) as? Bool ?? false
+        autoConvertEnabled = defaults.object(forKey: Keys.autoConvert) as? Bool ?? false
+
         // Если есть сохранённый набор — он авторитетный (учитывает удалённые
         // пользователем хоткеи). Иначе — дефолты (первый запуск).
         if let data = defaults.data(forKey: Keys.shortcuts),
@@ -202,6 +238,13 @@ final class AppSettings: ObservableObject {
             var result: [WMCommand: KeyboardShortcut] = [:]
             for (key, value) in stored {
                 if let command = WMCommand(rawValue: key) { result[command] = value }
+            }
+            // Доливаем дефолты команд, появившихся после сохранения набора.
+            let storedVersion = defaults.integer(forKey: Keys.shortcutsVersion)
+            if storedVersion < Self.shortcutsVersion {
+                for command in WMCommand.allCases where result[command] == nil && command.isUltraSwitchCommand {
+                    result[command] = command.defaultShortcut
+                }
             }
             shortcuts = result
         } else {
@@ -211,6 +254,8 @@ final class AppSettings: ObservableObject {
             }
             shortcuts = defaultsMap
         }
+
+        defaults.set(Self.shortcutsVersion, forKey: Keys.shortcutsVersion)
     }
 
     func shortcut(for command: WMCommand) -> KeyboardShortcut? {
