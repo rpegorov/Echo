@@ -10,10 +10,12 @@ struct PreferencesView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var clipboard: ClipboardService
     @ObservedObject var windowManager: WindowManagerService
+    let ultraSwitch: UltraSwitchService
 
     @State private var section: PrefSection? = .general
     @State private var hasAXPermission = false
     @State private var systemTilingEnabled = false
+    @State private var hasBothLayouts = true
 
     /// Живой опрос статуса доступа — UI сам переключится, когда выдашь право.
     private let permissionTimer = Timer.publish(every: 1.5, on: .main, in: .common).autoconnect()
@@ -24,6 +26,7 @@ struct PreferencesView: View {
         case power = "Power Management"
         case appearance = "Appearance"
         case windowManager = "Window Manager"
+        case ultraSwitch = "Ultra Switch"
         case keyboard = "Keyboard Shortcuts"
         case clipboard = "Clipboard History"
 
@@ -35,6 +38,7 @@ struct PreferencesView: View {
             case .power:         return "battery.100.bolt"
             case .appearance:    return "paintbrush"
             case .windowManager: return "macwindow.on.rectangle"
+            case .ultraSwitch:   return "globe"
             case .keyboard:      return "keyboard"
             case .clipboard:     return "doc.on.clipboard"
             }
@@ -58,12 +62,15 @@ struct PreferencesView: View {
         .onAppear {
             hasAXPermission = windowManager.hasPermission()
             systemTilingEnabled = windowManager.isSystemEdgeTilingEnabled()
+            hasBothLayouts = ultraSwitch.diagnostics().hasBothLayouts
         }
         .onReceive(permissionTimer) { _ in
             let granted = windowManager.hasPermission()
             if granted != hasAXPermission { hasAXPermission = granted }
             let tiling = windowManager.isSystemEdgeTilingEnabled()
             if tiling != systemTilingEnabled { systemTilingEnabled = tiling }
+            let layouts = ultraSwitch.diagnostics().hasBothLayouts
+            if layouts != hasBothLayouts { hasBothLayouts = layouts }
         }
     }
 
@@ -77,6 +84,7 @@ struct PreferencesView: View {
         case .power:         powerSection
         case .appearance:    appearanceSection
         case .windowManager: windowManagerSection
+        case .ultraSwitch:   ultraSwitchSection
         case .keyboard:      keyboardSection
         case .clipboard:     clipboardSection
         }
@@ -370,6 +378,17 @@ struct PreferencesView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Ultra Switch
+
+    private var ultraSwitchSection: some View {
+        UltraSwitchPrefsView(
+            settings: settings,
+            hasAXPermission: hasAXPermission,
+            hasBothLayouts: hasBothLayouts,
+            onOpenAccessibility: { windowManager.openAccessibilitySettings() }
+        )
     }
 
     // MARK: - Keyboard
