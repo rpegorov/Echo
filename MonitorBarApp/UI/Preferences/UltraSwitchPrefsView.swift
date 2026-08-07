@@ -8,6 +8,7 @@ import SwiftUI
 /// Раздел Preferences: раскладка клавиатуры (мгновенное переключение и автоисправление).
 struct UltraSwitchPrefsView: View {
     @ObservedObject var settings: AppSettings
+    @ObservedObject var ultraSwitch: UltraSwitchService
     let hasAXPermission: Bool
     let hasBothLayouts: Bool
     let onOpenAccessibility: () -> Void
@@ -16,6 +17,7 @@ struct UltraSwitchPrefsView: View {
         VStack(alignment: .leading, spacing: 12) {
             PrefTitle("Ultra Switch")
 
+            statusCard
             if !hasAXPermission { permissionCard }
             if !hasBothLayouts { singleLayoutCard }
 
@@ -66,6 +68,70 @@ struct UltraSwitchPrefsView: View {
     }
 
     // MARK: - Cards
+
+    /// Живой статус автозамены: почему она работает или молчит.
+    private var statusCard: some View {
+        PrefCard {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: statusIcon)
+                    .foregroundStyle(statusColor)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(statusTitle)
+                        .font(.system(size: 13, weight: .medium))
+                    PrefCaption(statusDetail)
+                }
+                Spacer()
+                if ultraSwitch.status == .needsInputMonitoring {
+                    Button("Открыть настройки", action: openInputMonitoring)
+                        .buttonStyle(.borderedProminent)
+                        .tint(DS.accent)
+                }
+            }
+        }
+    }
+
+    private var statusIcon: String {
+        switch ultraSwitch.status {
+        case .running:  return "checkmark.seal.fill"
+        case .disabled: return "pause.circle"
+        default:        return "exclamationmark.triangle.fill"
+        }
+    }
+
+    private var statusColor: Color {
+        switch ultraSwitch.status {
+        case .running:  return .green
+        case .disabled: return .secondary
+        default:        return .orange
+        }
+    }
+
+    private var statusTitle: String {
+        switch ultraSwitch.status {
+        case .running:              return "Автозамена активна"
+        case .disabled:             return "Автозамена выключена"
+        case .needsAccessibility:   return "Нужен доступ Accessibility"
+        case .needsInputMonitoring: return "Нужен доступ Input Monitoring"
+        }
+    }
+
+    private var statusDetail: String {
+        switch ultraSwitch.status {
+        case .running:
+            return "Слово, набранное не в той раскладке, исправляется после пробела."
+        case .disabled:
+            return "Включите оба тумблера ниже."
+        case .needsAccessibility:
+            return "Без него нельзя ни прочитать слово в поле ввода, ни заменить его."
+        case .needsInputMonitoring:
+            return "Без него приложение не узнаёт о нажатии пробела и не может понять, что слово закончено. System Settings → Privacy & Security → Input Monitoring. Статус здесь обновится сам."
+        }
+    }
+
+    private func openInputMonitoring() {
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent") else { return }
+        NSWorkspace.shared.open(url)
+    }
 
     private var permissionCard: some View {
         PrefCard {

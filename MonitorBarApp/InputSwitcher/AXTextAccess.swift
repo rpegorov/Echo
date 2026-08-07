@@ -14,6 +14,9 @@ struct FocusedWord: Sendable {
     let length: Int
     /// Позиция каретки на момент чтения — восстанавливается после замены.
     let caret: Int
+    /// Разделители между словом и кареткой (пробел, точка) — нужны фолбэку,
+    /// который перенабирает текст клавишами и обязан их вернуть на место.
+    let trailing: String
 }
 
 /// Чтение и замена текста в чужом приложении через Accessibility API.
@@ -54,11 +57,13 @@ enum AXTextAccess {
         }
         guard end > index else { return nil }
 
+        let caret = min(selection.location, source.length)
         return FocusedWord(
             word: source.substring(with: NSRange(location: index, length: end - index)),
             start: index,
             length: end - index,
-            caret: selection.location
+            caret: caret,
+            trailing: source.substring(with: NSRange(location: end, length: caret - end))
         )
     }
 
