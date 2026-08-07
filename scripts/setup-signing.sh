@@ -11,12 +11,22 @@
 # переживают обновление. Нотаризацию это не заменяет: Gatekeeper при первой
 # установке по-прежнему будет ругаться.
 #
-# Запускать один раз. Сертификат живёт в связке ключей «Вход».
+# Запускать один раз, БЕЗ sudo: связка ключей у каждого пользователя своя,
+# под root сертификат уедет в чужую и сборка его не найдёт.
+#
+# Скрипт спросит пароль от связки ключей «Вход» — это твой пароль входа в
+# систему. Права администратора не нужны, системные диалоги не открываются.
 #
 set -euo pipefail
 
 CERT_NAME="Echo Self-Signed"
 KEYCHAIN="$HOME/Library/Keychains/login.keychain-db"
+
+if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
+  echo "✗ Не запускай через sudo — сертификат попадёт в связку root, а не в твою."
+  echo "  Повтори без sudo:  ./scripts/setup-signing.sh"
+  exit 1
+fi
 
 if security find-certificate -c "$CERT_NAME" >/dev/null 2>&1; then
   echo "✓ Сертификат «$CERT_NAME» уже есть — ничего делать не нужно."
@@ -34,17 +44,21 @@ openssl req -x509 -newkey rsa:2048 -sha256 -days 3650 -nodes \
   -addext "keyUsage=critical,digitalSignature" \
   -addext "extendedKeyUsage=critical,codeSigning" 2>/dev/null
 
+# Пароль контейнера обязательно непустой: с пустым `security import` падает
+# на проверке MAC («wrong password?»). Контейнер временный и тут же удаляется.
+P12_PASS="$(openssl rand -hex 16)"
 openssl pkcs12 -export -out "$WORK/cert.p12" \
   -inkey "$WORK/key.pem" -in "$WORK/cert.pem" \
-  -name "$CERT_NAME" -passout pass: 2>/dev/null
+  -name "$CERT_NAME" -passout "pass:$P12_PASS" 2>/dev/null
 
 echo "▶ Импортирую в связку ключей «Вход»…"
-# -A разрешает доступ к ключу без отдельного запроса при каждой подписи.
-security import "$WORK/cert.p12" -k "$KEYCHAIN" -P "" -T /usr/bin/codesign -A
+security import "$WORK/cert.p12" -k "$KEYCHAIN" -P "$P12_PASS" -T /usr/bin/codesign -A
 
-echo "▶ Помечаю сертификат доверенным для подписи кода…"
-security add-trusted-cert -d -r trustAsRoot -p codeSign -k "$KEYCHAIN" "$WORK/cert.pem" \
-  || echo "  (не удалось пометить автоматически — подпись всё равно будет работать)"
+# Без этого шага codesign падает с errSecInternalComponent: ключ импортирован,
+# но не разрешён к использованию инструментами подписи.
+echo "▶ Разрешаю codesign пользоваться ключом."
+echo "  Дальше security спросит пароль от связки ключей «Вход» — это пароль твоей учётной записи."
+security set-key-partition-list -S apple-tool:,apple:,codesign: -s "$KEYCHAIN" >/dev/null
 
 echo ""
 echo "✓ Готово. Теперь scripts/make-dmg.sh подпишет сборку этим сертификатом."
