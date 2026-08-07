@@ -13,6 +13,8 @@ struct ContentView: View {
     @ObservedObject var metrics: MetricsService
     @ObservedObject var utilities: SystemUtilitiesService
     @ObservedObject var clipboard: ClipboardService
+    @ObservedObject var settings: AppSettings
+    @ObservedObject var ultraSwitch: UltraSwitchService
 
     /// Открыть детальное окно для выбранной метрики (реализуется владельцем поповера).
     let onSelect: (MetricTab) -> Void
@@ -166,6 +168,22 @@ struct ContentView: View {
             }
             UtilityToggleRow(title: "Prevent Sleep", isOn: $utilities.preventSleepEnabled)
 
+            UtilityToggleRow(title: "Auto Layout Fix", isOn: autoLayoutFix)
+            if ultraSwitch.status.isBlocked {
+                Button { ultraSwitch.requestAccess() } label: {
+                    Text(ultraSwitch.status == .needsAccessibility
+                         ? "Нужен доступ Accessibility — разрешить"
+                         : "Нужен доступ Input Monitoring — разрешить")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.orange)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 4)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .transition(.opacity)
+            }
+
             UtilityToggleRow(title: "Clipboard History", isOn: $clipboard.isEnabled)
             if clipboard.isEnabled {
                 Button { onOpenClipboard() } label: {
@@ -191,6 +209,18 @@ struct ContentView: View {
             }
         }
         .padding(.bottom, 6)
+    }
+
+    /// Тумблер поповера включает автоисправление вместе с самой фичей,
+    /// а выключает только автозамену — хоткеи раскладки остаются рабочими.
+    private var autoLayoutFix: Binding<Bool> {
+        Binding(
+            get: { settings.ultraSwitchEnabled && settings.autoConvertEnabled },
+            set: { isOn in
+                if isOn { settings.ultraSwitchEnabled = true }
+                settings.autoConvertEnabled = isOn
+            }
+        )
     }
 
     // MARK: - Footer

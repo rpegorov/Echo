@@ -390,9 +390,7 @@ struct PreferencesView: View {
         UltraSwitchPrefsView(
             settings: settings,
             ultraSwitch: ultraSwitch,
-            hasAXPermission: hasAXPermission,
-            hasBothLayouts: hasBothLayouts,
-            onOpenAccessibility: { windowManager.openAccessibilitySettings() }
+            hasBothLayouts: hasBothLayouts
         )
     }
 

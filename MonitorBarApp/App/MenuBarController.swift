@@ -50,7 +50,7 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
         settings.onMonitoringChange   = { [weak self] in self?.applyMonitoring() }
         settings.onAppearanceChange   = { [weak self] in self?.applyAppearance() }
         settings.onLaunchAtLoginChange = { [weak self] in self?.applyLaunchAtLogin() }
-        settings.onUltraSwitchChange  = { [weak self] in self?.applyUltraSwitch(requestingPermissions: true) }
+        settings.onUltraSwitchChange  = { [weak self] in self?.applyUltraSwitch() }
 
         observePowerNotifications()
         applyAppearance()
@@ -125,13 +125,8 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
     }
 
     /// Включает автозамену раскладки только когда включены и фича, и авторежим.
-    /// `requestingPermissions` — при изменении настроек пользователем можно
-    /// показать системные запросы доступа; при старте приложения нельзя.
-    private func applyUltraSwitch(requestingPermissions: Bool = false) {
-        ultraSwitch.apply(
-            autoEnabled: settings.ultraSwitchEnabled && settings.autoConvertEnabled,
-            requestingPermissions: requestingPermissions
-        )
+    private func applyUltraSwitch() {
+        ultraSwitch.apply(autoEnabled: settings.ultraSwitchEnabled && settings.autoConvertEnabled)
     }
 
     // MARK: - Setup
@@ -160,6 +155,8 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
             metrics: metrics,
             utilities: utilities,
             clipboard: clipboard,
+            settings: settings,
+            ultraSwitch: ultraSwitch,
             onSelect: { [weak self] tab in self?.openDetail(tab) },
             onOpenClipboard: { [weak self] in self?.openClipboard() },
             onOpenPreferences: { [weak self] in self?.openPreferences() }

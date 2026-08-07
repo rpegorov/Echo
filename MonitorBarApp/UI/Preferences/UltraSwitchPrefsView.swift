@@ -9,16 +9,13 @@ import SwiftUI
 struct UltraSwitchPrefsView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var ultraSwitch: UltraSwitchService
-    let hasAXPermission: Bool
     let hasBothLayouts: Bool
-    let onOpenAccessibility: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             PrefTitle("Ultra Switch")
 
             statusCard
-            if !hasAXPermission { permissionCard }
             if !hasBothLayouts { singleLayoutCard }
 
             PrefCard {
@@ -81,14 +78,19 @@ struct UltraSwitchPrefsView: View {
                     PrefCaption(statusDetail)
                 }
                 Spacer()
-                if ultraSwitch.status == .needsInputMonitoring {
-                    Button("Открыть настройки", action: openInputMonitoring)
+                if ultraSwitch.status.isBlocked {
+                    Button("Разрешить", action: ultraSwitch.requestAccess)
                         .buttonStyle(.borderedProminent)
                         .tint(DS.accent)
                 }
             }
         }
     }
+
+    /// Обновление меняет подпись сборки, и macOS считает её другим приложением:
+    /// старая запись в списке остаётся, но уже ничего не разрешает.
+    private static let afterUpdateHint =
+        "Если Echo уже есть в списке после обновления — удалите его кнопкой «−» и добавьте заново. Статус здесь обновится сам."
 
     private var statusIcon: String {
         switch ultraSwitch.status {
@@ -122,34 +124,9 @@ struct UltraSwitchPrefsView: View {
         case .disabled:
             return "Включите оба тумблера ниже."
         case .needsAccessibility:
-            return "Без него нельзя ни прочитать слово в поле ввода, ни заменить его."
+            return "Без него нельзя ни прочитать слово в поле ввода, ни заменить его. \(Self.afterUpdateHint)"
         case .needsInputMonitoring:
-            return "Без него приложение не узнаёт о нажатии пробела и не может понять, что слово закончено. System Settings → Privacy & Security → Input Monitoring. Статус здесь обновится сам."
-        }
-    }
-
-    private func openInputMonitoring() {
-        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent") else { return }
-        NSWorkspace.shared.open(url)
-    }
-
-    private var permissionCard: some View {
-        PrefCard {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: "lock.shield")
-                        .foregroundStyle(.orange)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Нужен доступ Accessibility")
-                            .font(.system(size: 13, weight: .medium))
-                        PrefCaption("Без него нельзя ни прочитать слово в поле ввода другого приложения, ни заменить его.")
-                    }
-                    Spacer()
-                }
-                Button("Открыть настройки", action: onOpenAccessibility)
-                    .buttonStyle(.borderedProminent)
-                    .tint(DS.accent)
-            }
+            return "Без него приложение не узнаёт о нажатии пробела и не понимает, что слово закончено. \(Self.afterUpdateHint)"
         }
     }
 

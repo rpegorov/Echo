@@ -69,11 +69,9 @@ final class UltraSwitchService: ObservableObject {
     // MARK: - Lifecycle
 
     /// Единственная точка входа из настроек: пересчитывает состояние под текущие флаги.
-    /// `requestingPermissions` — вызов пришёл от действия пользователя, можно показать
-    /// системные запросы доступа; при автоматических перепроверках их показывать нельзя.
-    func apply(autoEnabled: Bool, requestingPermissions: Bool = false) {
+    /// Разрешения здесь не запрашиваются: их просит пользователь кнопкой, по одному.
+    func apply(autoEnabled: Bool) {
         wantsAuto = autoEnabled
-        if autoEnabled && requestingPermissions { requestPermissions() }
         evaluate()
     }
 
@@ -106,16 +104,31 @@ final class UltraSwitchService: ObservableObject {
 
     // MARK: - Permissions
 
-    private func requestPermissions() {
-        if !AXIsProcessTrusted() {
+    /// Просит ровно то разрешение, которого не хватает прямо сейчас, и открывает
+    /// его вкладку в системных настройках.
+    ///
+    /// Раньше оба запроса уходили подряд и пользователь получал два системных
+    /// окна одновременно. Теперь путь один: сначала Accessibility, и только
+    /// когда оно выдано — Input Monitoring.
+    func requestAccess() {
+        switch status {
+        case .needsAccessibility:
+            // Запрос нужен не ради диалога, а чтобы приложение вообще попало
+            // в список Accessibility — иначе его пришлось бы добавлять вручную.
             AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
-        }
-        // Глобальный монитор клавиш живёт на CGEventTap, а тот с macOS 10.15
-        // требует отдельного разрешения Input Monitoring. Без этого запроса
-        // приложение просто не появится в списке, и монитор будет молчать.
-        if !CGPreflightListenEventAccess() {
+            open(pane: "Privacy_Accessibility")
+        case .needsInputMonitoring:
+            // То же самое для Input Monitoring: без вызова приложения нет в списке.
             _ = CGRequestListenEventAccess()
+            open(pane: "Privacy_ListenEvent")
+        case .running, .disabled:
+            break
         }
+    }
+
+    private func open(pane: String) {
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?\(pane)") else { return }
+        NSWorkspace.shared.open(url)
     }
 
     /// Пересчитывает статус и приводит монитор в соответствие с ним.
@@ -185,7 +198,11 @@ final class UltraSwitchService: ObservableObject {
     private func handleKeyDown(_ event: NSEvent) {
         guard Self.boundaryKeyCodes.contains(event.keyCode) else { return }
         guard event.modifierFlags.isDisjoint(with: [.command, .control, .option]) else { return }
-        guard !isExcludedApp() else { return }
+        guard !isExcludedApp() else {
+            Self.log.debug("Граница слова пропущена: приложение в списке исключений")
+            return
+        }
+        Self.log.debug("Граница слова: keyCode \(event.keyCode, privacy: .public)")
 
         pendingCheck?.cancel()
         pendingCheck = Task { [weak self] in
@@ -201,8 +218,14 @@ final class UltraSwitchService: ObservableObject {
             Self.log.debug("Поле ввода не отдало текст через Accessibility")
             return
         }
-        guard let verdict = judge.verdict(for: target.word) else { return }
+        guard let verdict = judge.verdict(for: target.word) else {
+            // Само слово в лог не пишем — только длину: содержимое ввода
+            // не должно утекать даже в диагностику.
+            Self.log.debug("Слово из \(target.word.count, privacy: .public) букв: замена не нужна")
+            return
+        }
 
+        Self.log.debug("Исправляю слово из \(target.word.count, privacy: .public) букв")
         write(verdict.converted, over: target)
         inputSource.select(verdict.target)
     }
