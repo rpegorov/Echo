@@ -161,7 +161,12 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
         if popover.isShown {
             popover.performClose(nil)
         } else if let button = statusItem.button {
+            // Приложение-агент не становится активным по клику в строке меню, поэтому
+            // окно поповера остаётся не-key и SwiftUI рисует контролы серыми (неактивными).
+            // Активируем приложение и делаем окно поповера key — акцентные цвета сразу верные.
+            NSApp.activate(ignoringOtherApps: true)
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            popover.contentViewController?.view.window?.makeKey()
         }
     }
 
