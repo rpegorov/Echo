@@ -34,8 +34,10 @@ enum AXTextAccess {
     private static let maxTrailingSeparators = 2
 
     /// Читает слово перед кареткой в сфокусированном поле.
-    nonisolated static func wordBeforeCaret() -> FocusedWord? {
-        guard let element = focusedElement(), !isSecure(element) else { return nil }
+    /// `appPID` — процесс активного приложения: у части приложений фокус
+    /// доступен только через их собственный элемент (см. `focusedElement`).
+    nonisolated static func wordBeforeCaret(appPID: pid_t? = nil) -> FocusedWord? {
+        guard let element = focusedElement(appPID: appPID), !isSecure(element) else { return nil }
 
         var valueRef: CFTypeRef?
         guard AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &valueRef) == .success,
@@ -70,9 +72,9 @@ enum AXTextAccess {
     /// Заменяет слово на `text` и возвращает каретку на прежнее место.
     /// Перенос символ-в-символ не меняет длину строки в UTF-16, поэтому позиция каретки остаётся валидной.
     @discardableResult
-    nonisolated static func replace(_ target: FocusedWord, with text: String) -> Bool {
-        guard let element = focusedElement(), !isSecure(element) else { return false }
-        guard let current = wordBeforeCaret(), current.word == target.word,
+    nonisolated static func replace(_ target: FocusedWord, with text: String, appPID: pid_t? = nil) -> Bool {
+        guard let element = focusedElement(appPID: appPID), !isSecure(element) else { return false }
+        guard let current = wordBeforeCaret(appPID: appPID), current.word == target.word,
               current.start == target.start else { return false }
 
         guard setRange(element, location: target.start, length: target.length) else { return false }
@@ -86,13 +88,34 @@ enum AXTextAccess {
 
     // MARK: - Private
 
-    private nonisolated static func focusedElement() -> AXUIElement? {
+    /// Сначала спрашиваем у самого приложения, потом — систему.
+    ///
+    /// Порядок именно такой: у Electron-приложений системный запрос фокуса не
+    /// возвращает ничего, а запрос к элементу приложения — возвращает поле ввода.
+    private nonisolated static func focusedElement(appPID: pid_t?) -> AXUIElement? {
+        if let appPID {
+            let appElement = AXUIElementCreateApplication(appPID)
+            AXUIElementSetMessagingTimeout(appElement, messagingTimeout)
+            if let element = copyFocused(from: appElement) { return element }
+
+            // Chromium строит дерево доступности лениво и только по запросу.
+            // Без этого поле ввода в Electron-приложении невидимо целиком.
+            AXUIElementSetAttributeValue(appElement, manualAccessibilityAttribute as CFString, kCFBooleanTrue)
+            if let element = copyFocused(from: appElement) { return element }
+        }
+
         let system = AXUIElementCreateSystemWide()
         AXUIElementSetMessagingTimeout(system, messagingTimeout)
+        return copyFocused(from: system)
+    }
 
+    /// Просит дерево доступности построиться — для приложений на Chromium.
+    static let manualAccessibilityAttribute = "AXManualAccessibility"
+
+    private nonisolated static func copyFocused(from parent: AXUIElement) -> AXUIElement? {
         var focused: CFTypeRef?
         guard AXUIElementCopyAttributeValue(
-            system, kAXFocusedUIElementAttribute as CFString, &focused
+            parent, kAXFocusedUIElementAttribute as CFString, &focused
         ) == .success, let value = focused,
             CFGetTypeID(value) == AXUIElementGetTypeID() else { return nil }
 

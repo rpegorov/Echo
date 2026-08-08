@@ -92,11 +92,11 @@ final class UltraSwitchService: ObservableObject {
             Self.log.notice("Ручная конвертация: нет доступа Accessibility")
             return
         }
-        guard let target = AXTextAccess.wordBeforeCaret(),
+        guard let target = AXTextAccess.wordBeforeCaret(appPID: frontmostPID),
               let script = LayoutTranslit.script(of: target.word),
               let converted = LayoutTranslit.convert(target.word, from: script) else { return }
 
-        write(converted, over: target)
+        guard write(converted, over: target) else { return }
         inputSource.select(script.other)
     }
 
@@ -217,7 +217,7 @@ final class UltraSwitchService: ObservableObject {
 
     /// Читает слово перед кареткой и исправляет его, если словарь уверен в ошибке.
     private func checkLastWord() {
-        guard let target = AXTextAccess.wordBeforeCaret() else {
+        guard let target = AXTextAccess.wordBeforeCaret(appPID: frontmostPID) else {
             Self.log.debug("Поле ввода не отдало текст через Accessibility")
             return
         }
@@ -232,20 +232,30 @@ final class UltraSwitchService: ObservableObject {
         }
 
         Self.log.debug("Исправляю слово из \(target.word.count, privacy: .public) букв")
-        write(verdict.converted, over: target)
+        guard write(verdict.converted, over: target) else {
+            Self.log.notice("Заменить слово не удалось — раскладку не трогаю")
+            return
+        }
         inputSource.select(verdict.target)
     }
 
     /// Пишет исправленное слово: сперва через Accessibility, при отказе —
     /// перенабором клавишами.
-    private func write(_ text: String, over target: FocusedWord) {
-        if AXTextAccess.replace(target, with: text) { return }
+    /// Возвращает `false`, если слово заменить не удалось: переключать раскладку
+    /// в этом случае нельзя — иначе пользователь получает смену языка на
+    /// неисправленном слове.
+    private func write(_ text: String, over target: FocusedWord) -> Bool {
+        if AXTextAccess.replace(target, with: text, appPID: frontmostPID) { return true }
 
         Self.log.debug("Accessibility не дал заменить текст — перенабираю клавишами")
-        SyntheticTyping.replaceBeforeCaret(
+        return SyntheticTyping.replaceBeforeCaret(
             deleteCount: target.caret - target.start,
             with: text + target.trailing
         )
+    }
+
+    private var frontmostPID: pid_t? {
+        NSWorkspace.shared.frontmostApplication?.processIdentifier
     }
 
     private func isExcludedApp() -> Bool {

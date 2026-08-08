@@ -63,6 +63,11 @@ final class AXTextWatcher {
         observedPID = pid
 
         let appElement = AXUIElementCreateApplication(pid)
+        // Просим Chromium построить дерево заранее, при переключении на
+        // приложение: к моменту набора оно уже готово, и первое же слово
+        // обрабатывается наравне с нативными приложениями.
+        AXUIElementSetAttributeValue(appElement, AXTextAccess.manualAccessibilityAttribute as CFString, kCFBooleanTrue)
+
         let context = Unmanaged.passUnretained(self).toOpaque()
         AXObserverAddNotification(created, appElement, kAXFocusedUIElementChangedNotification as CFString, context)
 

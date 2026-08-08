@@ -18,14 +18,16 @@ enum SyntheticTyping {
     private static let backspaceKeyCode: CGKeyCode = 51
 
     /// Стирает `deleteCount` символов перед кареткой и печатает `text`.
-    nonisolated static func replaceBeforeCaret(deleteCount: Int, with text: String) {
-        guard deleteCount > 0, let source = CGEventSource(stateID: .hidSystemState) else { return }
+    /// Возвращает `false`, если отправить события не удалось.
+    @discardableResult
+    nonisolated static func replaceBeforeCaret(deleteCount: Int, with text: String) -> Bool {
+        guard deleteCount > 0, let source = CGEventSource(stateID: .hidSystemState) else { return false }
 
         for _ in 0..<deleteCount {
             post(key: backspaceKeyCode, source: source, down: true)
             post(key: backspaceKeyCode, source: source, down: false)
         }
-        type(text, source: source)
+        return type(text, source: source)
     }
 
     private nonisolated static func post(key: CGKeyCode, source: CGEventSource, down: Bool) {
@@ -33,14 +35,17 @@ enum SyntheticTyping {
             .post(tap: .cghidEventTap)
     }
 
-    private nonisolated static func type(_ text: String, source: CGEventSource) {
+    private nonisolated static func type(_ text: String, source: CGEventSource) -> Bool {
         var units = Array(text.utf16)
-        guard !units.isEmpty else { return }
+        guard !units.isEmpty else { return false }
 
+        var posted = false
         for isDown in [true, false] {
             guard let event = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: isDown) else { continue }
             event.keyboardSetUnicodeString(stringLength: units.count, unicodeString: &units)
             event.post(tap: .cghidEventTap)
+            posted = true
         }
+        return posted
     }
 }
