@@ -5,31 +5,36 @@
 
 import AppKit
 import ApplicationServices
+import Carbon.HIToolbox
 import CoreGraphics
 import os
 
 /// Ultra Switch — мгновенная смена раскладки и исправление слов,
 /// набранных не в той раскладке («ghbdtn» → «привет»).
 ///
-/// Приложение не ведёт журнал нажатий и вообще не читает клавиатуру: о том,
-/// что слово закончено, сообщает сам Accessibility — уведомлением об изменении
-/// текста в поле. Слово читается из поля в момент проверки и живёт до конца
-/// обработки. Поэтому автозамене хватает одного разрешения.
+/// Слово берётся из собственного буфера набранного, а не из поля ввода:
+/// читать чужой текст через Accessibility можно далеко не везде — Pages не
+/// отдаёт его вовсе, а движки на Chromium подтверждают запись и не выполняют
+/// её. Замена идёт синтетическим вводом и поэтому работает всюду, где
+/// принимают клавиатуру.
+///
+/// В памяти живёт одно набираемое слово и одно завершённое, не длиннее 64
+/// символов; на диск не попадает ничего. Всё, что делает позицию каретки
+/// неизвестной, буфер обнуляет.
 @MainActor
 final class UltraSwitchService: ObservableObject {
 
     /// Почему автозамена сейчас работает или не работает.
     enum Status: Equatable {
         case disabled
-        /// Нет доступа Accessibility — единственное, что нужно автозамене.
+        /// Без Accessibility нельзя отправить исправление в чужое приложение.
         case needsAccessibility
+        /// Без Input Monitoring не видно, что набирает пользователь.
+        case needsInputMonitoring
         case running
 
-        var isBlocked: Bool { self == .needsAccessibility }
+        var isBlocked: Bool { self == .needsAccessibility || self == .needsInputMonitoring }
     }
-
-    /// Коды клавиш, завершающих слово, — для дополнительного триггера по клавиатуре.
-    private static let boundaryKeyCodes: Set<UInt16> = [49, 36, 76, 48] // space, return, keypad enter, tab
 
     /// Приложения, в которых автозамена не работает никогда.
     private static let excludedBundleIDs: Set<String> = [
@@ -41,10 +46,7 @@ final class UltraSwitchService: ObservableObject {
         "com.apple.loginwindow"
     ]
 
-    /// Пауза перед чтением поля: разделитель должен успеть дойти до приложения.
-    private static let settleDelay = Duration.milliseconds(60)
-
-    /// Как часто перепроверять выданные разрешения, пока автозамена заблокирована.
+    /// Как часто перепроверять разрешения, пока автозамена заблокирована.
     private static let permissionPollInterval: TimeInterval = 2
 
     private static let log = Logger(
@@ -55,19 +57,29 @@ final class UltraSwitchService: ObservableObject {
     @Published private(set) var status: Status = .disabled
 
     private let inputSource = InputSourceService()
-    private let judge = WordJudge()
-    private let watcher = AXTextWatcher()
+    private let judge = LayoutJudge()
+    private let buffer = KeystrokeBuffer()
+    private let tap = KeyboardTap()
 
-    private var pendingCheck: Task<Void, Never>?
     private var permissionPoll: Timer?
-
-    /// Чего хочет пользователь по настройкам — независимо от того, дали ли права.
     private var wantsAuto = false
+
+    /// Пока идёт синтетический ввод, собственные события игнорируются —
+    /// иначе замена попала бы в буфер как пользовательский набор.
+    private var isInjecting = false
+
+    init() {
+        tap.onCharacter = { [weak self] character in self?.handle(character) }
+        tap.onBackspace = { [weak self] in self?.handleBackspace() }
+        tap.onContextLost = { [weak self] in self?.buffer.clear() }
+
+        // Словари читаются с диска около ста миллисекунд — заранее и в фоне.
+        Task.detached(priority: .utility) { LanguageData.shared.load() }
+    }
 
     // MARK: - Lifecycle
 
-    /// Единственная точка входа из настроек: пересчитывает состояние под текущие флаги.
-    /// Разрешения здесь не запрашиваются: их просит пользователь кнопкой, по одному.
+    /// Единственная точка входа из настроек.
     func apply(autoEnabled: Bool) {
         wantsAuto = autoEnabled
         evaluate()
@@ -78,38 +90,34 @@ final class UltraSwitchService: ObservableObject {
         (AXIsProcessTrusted(), inputSource.hasBothScripts())
     }
 
-    // MARK: - Commands
+    // MARK: - Команды
 
     /// Мгновенное переключение ru ↔ en — замена клавише «глобус».
     func switchLayout() {
         inputSource.toggle()
     }
 
-    /// Безусловно переносит слово перед кареткой в другую раскладку.
-    /// Повторный вызов возвращает слово обратно — это же и есть отмена автозамены.
-    func convertWordUnderCaret() {
-        guard AXIsProcessTrusted() else {
-            Self.log.notice("Ручная конвертация: нет доступа Accessibility")
+    /// Безусловно переносит последнее слово в другую раскладку.
+    /// Повторный вызов возвращает его обратно — это и есть отмена автозамены.
+    func convertLastWord() {
+        guard let candidate = buffer.wordForManualConversion(),
+              let script = LayoutTranslit.script(of: candidate.word),
+              let converted = LayoutTranslit.convert(candidate.word, from: script) else {
+            Self.log.notice("Ручная конвертация: нечего исправлять")
             return
         }
-        guard let target = AXTextAccess.wordBeforeCaret(appPID: frontmostPID),
-              let script = LayoutTranslit.script(of: target.word),
-              let converted = LayoutTranslit.convert(target.word, from: script) else { return }
-
-        guard write(converted, over: target) else { return }
-        inputSource.select(script.other)
+        replace(candidate.word, with: converted, tail: candidate.tail,
+                deleteCount: candidate.deleteCount, target: script.other)
     }
 
-    // MARK: - Permissions
-
-    /// Открывает вкладку Accessibility — единственное, что нужно автозамене.
-    ///
-    /// Системный запрос доступа намеренно не вызывается: он показал бы второе
-    /// окно поверх этого перехода. В списке Accessibility приложение и так есть,
-    /// потому что постоянно обращается к AX.
+    /// Открывает вкладку с недостающим разрешением. Системные запросы доступа
+    /// не вызываются: они открыли бы второе окно поверх этого перехода.
     func requestAccess() {
-        guard status.isBlocked else { return }
-        open(pane: "Privacy_Accessibility")
+        switch status {
+        case .needsAccessibility:   open(pane: "Privacy_Accessibility")
+        case .needsInputMonitoring: open(pane: "Privacy_ListenEvent")
+        case .running, .disabled:   break
+        }
     }
 
     private func open(pane: String) {
@@ -117,70 +125,30 @@ final class UltraSwitchService: ObservableObject {
         NSWorkspace.shared.open(url)
     }
 
-    /// Пересчитывает статус и приводит монитор в соответствие с ним.
+    // MARK: - Состояние
+
     private func evaluate() {
         let newStatus: Status
         if !wantsAuto {
             newStatus = .disabled
         } else if !AXIsProcessTrusted() {
             newStatus = .needsAccessibility
+        } else if !CGPreflightListenEventAccess() {
+            newStatus = .needsInputMonitoring
         } else {
-            newStatus = .running
+            newStatus = tap.start() ? .running : .needsInputMonitoring
         }
 
-        if newStatus == .running {
-            startMonitor()
-        } else {
-            stopMonitor()
+        if newStatus != .running {
+            tap.stop()
+            buffer.clear()
         }
 
         if newStatus != status {
             status = newStatus
             Self.log.notice("Статус автозамены: \(String(describing: newStatus), privacy: .public)")
         }
-
-        // Разрешение может появиться в любой момент и без перезапуска приложения:
-        // пока мы его ждём, опрашиваем состояние сами.
         newStatus.isBlocked ? startPermissionPoll() : stopPermissionPoll()
-    }
-
-    private var isWatching = false
-    private var keyMonitor: Any?
-
-    /// Триггеров два, и они дополняют друг друга. Уведомления Accessibility
-    /// работают на одном разрешении, но их шлют не все приложения; монитор
-    /// клавиш ловит границу слова там, где уведомлений нет, — но требует
-    /// Input Monitoring. Ставим оба, какой сработает первым — не важно:
-    /// проверка всё равно дебаунсится.
-    private func startMonitor() {
-        guard !isWatching else { return }
-        judge.warmUp()
-        watcher.onTextChanged = { [weak self] in self?.scheduleCheck() }
-        watcher.start()
-        isWatching = true
-
-        if CGPreflightListenEventAccess() {
-            keyMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.keyDown]) { [weak self] event in
-                MainActor.assumeIsolated {
-                    guard Self.boundaryKeyCodes.contains(event.keyCode),
-                          event.modifierFlags.isDisjoint(with: [.command, .control, .option]) else { return }
-                    self?.scheduleCheck()
-                }
-            }
-            Self.log.notice("Триггеры автозамены: уведомления Accessibility и монитор клавиш")
-        } else {
-            Self.log.notice("Триггеры автозамены: только уведомления Accessibility")
-        }
-    }
-
-    private func stopMonitor() {
-        pendingCheck?.cancel()
-        pendingCheck = nil
-        if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
-        keyMonitor = nil
-        guard isWatching else { return }
-        watcher.stop()
-        isWatching = false
     }
 
     private func startPermissionPoll() {
@@ -197,68 +165,59 @@ final class UltraSwitchService: ObservableObject {
         permissionPoll = nil
     }
 
-    // Снятие монитора живёт только в `stopMonitor()`: `NSEvent.removeMonitor`
-    // обязан вызываться на главном потоке, а `deinit` не изолирован.
-    // Сервис живёт столько же, сколько приложение, — утечь монитору некуда.
+    // MARK: - Набор
 
-    // MARK: - Auto flow
-
-    /// Текст в поле изменился — проверяем, не закончено ли слово.
-    private func scheduleCheck() {
-        guard !isExcludedApp() else { return }
-
-        pendingCheck?.cancel()
-        pendingCheck = Task { [weak self] in
-            try? await Task.sleep(for: Self.settleDelay)
-            guard !Task.isCancelled else { return }
-            self?.checkLastWord()
-        }
-    }
-
-    /// Читает слово перед кареткой и исправляет его, если словарь уверен в ошибке.
-    private func checkLastWord() {
-        guard let target = AXTextAccess.wordBeforeCaret(appPID: frontmostPID) else {
-            Self.log.debug("Поле ввода не отдало текст через Accessibility")
-            return
-        }
-        // Пустой хвост — каретка стоит сразу за буквой, слово ещё набирается.
-        // Правим только когда за словом уже есть разделитель.
-        guard !target.trailing.isEmpty else { return }
-        guard let verdict = judge.verdict(for: target.word) else {
-            // Само слово в лог не пишем — только длину: содержимое ввода
-            // не должно утекать даже в диагностику.
-            Self.log.debug("Слово из \(target.word.count, privacy: .public) букв: замена не нужна")
+    private func handle(_ character: Character) {
+        guard !isInjecting else { return }
+        guard !isExcludedApp() else {
+            buffer.clear()
             return
         }
 
-        Self.log.debug("Исправляю слово из \(target.word.count, privacy: .public) букв")
-        guard write(verdict.converted, over: target) else {
-            Self.log.notice("Заменить слово не удалось — раскладку не трогаю")
-            return
+        let completesWord = !character.isLetter
+        buffer.append(character)
+        if completesWord { checkCompletedWord() }
+    }
+
+    private func handleBackspace() {
+        guard !isInjecting else { return }
+        buffer.backspace()
+    }
+
+    /// Слово завершено разделителем — самое время его проверить.
+    private func checkCompletedWord() {
+        guard let candidate = buffer.completedForConversion(),
+              let verdict = judge.verdict(for: candidate.word) else { return }
+
+        replace(candidate.word, with: verdict.converted, tail: candidate.tail,
+                deleteCount: candidate.deleteCount, target: verdict.target)
+    }
+
+    /// Стирает набранное и печатает исправленный вариант.
+    /// Раскладка переключается только после подтверждённой отправки.
+    private func replace(_ word: String, with converted: String, tail: String,
+                         deleteCount: Int, target: KeyScript) {
+        Self.log.debug("Исправляю слово из \(word.count, privacy: .public) букв")
+        isInjecting = true
+
+        TextInjector.replaceBeforeCaret(deleteCount: deleteCount, with: converted + tail) { success in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.isInjecting = false
+                guard success else {
+                    Self.log.notice("Отправить исправление не удалось — раскладку не трогаю")
+                    return
+                }
+                self.buffer.replaceCompleted(with: converted)
+                self.inputSource.select(target)
+            }
         }
-        inputSource.select(verdict.target)
-    }
-
-    /// Пишет исправленное слово: сперва через Accessibility, при отказе —
-    /// перенабором клавишами.
-    /// Возвращает `false`, если слово заменить не удалось: переключать раскладку
-    /// в этом случае нельзя — иначе пользователь получает смену языка на
-    /// неисправленном слове.
-    private func write(_ text: String, over target: FocusedWord) -> Bool {
-        if AXTextAccess.replace(target, with: text, appPID: frontmostPID) { return true }
-
-        Self.log.debug("Accessibility не дал заменить текст — перенабираю клавишами")
-        return SyntheticTyping.replaceBeforeCaret(
-            deleteCount: target.caret - target.start,
-            with: text + target.trailing
-        )
-    }
-
-    private var frontmostPID: pid_t? {
-        NSWorkspace.shared.frontmostApplication?.processIdentifier
     }
 
     private func isExcludedApp() -> Bool {
+        // При защищённом вводе система не отдаёт нажатия никому, но проверяем
+        // явно, чтобы не полагаться только на это.
+        if IsSecureEventInputEnabled() { return true }
         guard let bundleID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier else { return true }
         if bundleID == Bundle.main.bundleIdentifier { return true }
         return Self.excludedBundleIDs.contains(bundleID)

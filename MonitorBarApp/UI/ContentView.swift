@@ -171,7 +171,9 @@ struct ContentView: View {
             UtilityToggleRow(title: "Auto Layout Fix", isOn: autoLayoutFix)
             if ultraSwitch.status.isBlocked {
                 Button { ultraSwitch.requestAccess() } label: {
-                    Text("Нужен доступ Accessibility — разрешить")
+                    Text(ultraSwitch.status == .needsAccessibility
+                         ? "Нужен доступ Accessibility — разрешить"
+                         : "Нужен доступ Input Monitoring — разрешить")
                         .font(.system(size: 10))
                         .foregroundStyle(.orange)
                         .padding(.horizontal, 16)

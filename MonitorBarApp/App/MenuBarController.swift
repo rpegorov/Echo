@@ -278,7 +278,7 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
                 }
             case .convertWord:
                 hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
-                    MainActor.assumeIsolated { self?.ultraSwitch.convertWordUnderCaret() }
+                    MainActor.assumeIsolated { self?.ultraSwitch.convertLastWord() }
                 }
             default:
                 hotKeys.register(shortcut, label: command.rawValue) { [weak self] in

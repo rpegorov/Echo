@@ -113,6 +113,7 @@ struct UltraSwitchPrefsView: View {
         case .running:              return "Автозамена активна"
         case .disabled:             return "Автозамена выключена"
         case .needsAccessibility:   return "Нужен доступ Accessibility"
+        case .needsInputMonitoring: return "Нужен доступ Input Monitoring"
         }
     }
 
@@ -123,7 +124,9 @@ struct UltraSwitchPrefsView: View {
         case .disabled:
             return "Включите оба тумблера ниже."
         case .needsAccessibility:
-            return "Это единственное разрешение, которое нужно автозамене. \(Self.afterUpdateHint)"
+            return "Без него исправление не дойдёт до чужого приложения. \(Self.afterUpdateHint)"
+        case .needsInputMonitoring:
+            return "Без него не видно, что вы набираете, и слово не с чем сравнивать. \(Self.afterUpdateHint)"
         }
     }
 
