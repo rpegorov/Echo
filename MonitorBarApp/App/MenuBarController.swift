@@ -262,7 +262,7 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
             if command.isUltraSwitchCommand && !settings.ultraSwitchEnabled { continue }
 
             if let layout = command.layout {
-                hotKeys.register(shortcut) { [weak self] in
+                hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
                     MainActor.assumeIsolated {
                         guard let self else { return }
                         self.windowManager.apply(layout, gap: CGFloat(self.settings.windowGap))
@@ -273,15 +273,15 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
 
             switch command {
             case .switchLayout:
-                hotKeys.register(shortcut) { [weak self] in
+                hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
                     MainActor.assumeIsolated { self?.ultraSwitch.switchLayout() }
                 }
             case .convertWord:
-                hotKeys.register(shortcut) { [weak self] in
+                hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
                     MainActor.assumeIsolated { self?.ultraSwitch.convertWordUnderCaret() }
                 }
             default:
-                hotKeys.register(shortcut) { [weak self] in
+                hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
                     MainActor.assumeIsolated { self?.openClipboard() }
                 }
             }

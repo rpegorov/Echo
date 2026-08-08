@@ -113,17 +113,38 @@ final class UltraSwitchService: ObservableObject {
     func requestAccess() {
         switch status {
         case .needsAccessibility:
-            // Запрос нужен не ради диалога, а чтобы приложение вообще попало
-            // в список Accessibility — иначе его пришлось бы добавлять вручную.
-            AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
+            // В списке Accessibility приложение уже есть — оно постоянно обращается
+            // к AX. Системный запрос показал бы второе окно поверх нашего перехода,
+            // поэтому здесь просто открываем нужную вкладку.
             open(pane: "Privacy_Accessibility")
+
         case .needsInputMonitoring:
-            // То же самое для Input Monitoring: без вызова приложения нет в списке.
-            _ = CGRequestListenEventAccess()
-            open(pane: "Privacy_ListenEvent")
+            // А в список Input Monitoring приложение попадает только после запроса —
+            // без него его пришлось бы добавлять вручную кнопкой «+». Поэтому первый
+            // раз показываем системный запрос (у него своя кнопка перехода), а если
+            // приложение уже зарегистрировано — сразу открываем вкладку.
+            if hasAskedForInputMonitoring {
+                open(pane: "Privacy_ListenEvent")
+            } else {
+                hasAskedForInputMonitoring = true
+                _ = CGRequestListenEventAccess()
+            }
+
         case .running, .disabled:
             break
         }
+    }
+
+    /// Запрос показывается один раз на версию: обновление меняет подпись, и в
+    /// списке появляется уже другое приложение — регистрировать надо заново.
+    private var hasAskedForInputMonitoring: Bool {
+        get { UserDefaults.standard.bool(forKey: Self.askedKey) }
+        set { UserDefaults.standard.set(newValue, forKey: Self.askedKey) }
+    }
+
+    private static var askedKey: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0"
+        return "ultraSwitch.askedListenEvent.\(version)"
     }
 
     private func open(pane: String) {

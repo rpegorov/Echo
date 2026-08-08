@@ -5,6 +5,7 @@
 
 import AppKit
 import Carbon.HIToolbox
+import os
 
 /// Регистрирует глобальные горячие клавиши через Carbon (RegisterEventHotKey).
 /// Глобальные хоткеи не требуют Accessibility; права нужны только для действий
@@ -16,6 +17,11 @@ final class HotKeyManager {
     private var handlerRef: EventHandlerRef?
     private var nextID: UInt32 = 1
     private let signature: OSType = 0x4D4F4E49 // 'MONI'
+
+    private static let log = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "Echo",
+        category: "HotKeys"
+    )
 
     init() {
         var spec = EventTypeSpec(
@@ -47,11 +53,13 @@ final class HotKeyManager {
     }
 
     private func fire(id: UInt32) {
+        Self.log.debug("Сработал хоткей #\(id, privacy: .public)")
         actions[id]?()
     }
 
     /// Регистрирует сочетание. `action` вызывается на главном потоке (Carbon).
-    func register(_ shortcut: KeyboardShortcut, action: @escaping () -> Void) {
+    /// `label` попадает в лог: молчащий хоткей иначе неотличим от неработающей команды.
+    func register(_ shortcut: KeyboardShortcut, label: String = "", action: @escaping () -> Void) {
         let id = nextID
         nextID += 1
         actions[id] = action
@@ -66,7 +74,12 @@ final class HotKeyManager {
             0,
             &ref
         )
-        if status == noErr { hotKeyRefs.append(ref) }
+        if status == noErr {
+            hotKeyRefs.append(ref)
+            Self.log.notice("Хоткей \(label, privacy: .public) — \(shortcut.displayString, privacy: .public): зарегистрирован")
+        } else {
+            Self.log.error("Хоткей \(label, privacy: .public) — \(shortcut.displayString, privacy: .public): ошибка \(status, privacy: .public)")
+        }
     }
 
     func unregisterAll() {

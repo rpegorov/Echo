@@ -207,6 +207,10 @@ final class AppSettings: ObservableObject {
     private static let shortcutsVersion = 1
 
     init() {
+        // Долитые дефолты обязаны попасть в хранилище: маркер версии пишется в
+        // конце init, и без сохранения следующий запуск остался бы без хоткеев.
+        var needsShortcutPersist = false
+
         windowManagerEnabled = defaults.object(forKey: Keys.enabled) as? Bool ?? true
         windowGap = defaults.object(forKey: Keys.gap) as? Double ?? 8
 
@@ -245,6 +249,7 @@ final class AppSettings: ObservableObject {
                 for command in WMCommand.allCases where result[command] == nil && command.isUltraSwitchCommand {
                     result[command] = command.defaultShortcut
                 }
+                needsShortcutPersist = true
             }
             shortcuts = result
         } else {
@@ -255,6 +260,7 @@ final class AppSettings: ObservableObject {
             shortcuts = defaultsMap
         }
 
+        if needsShortcutPersist { persistShortcuts() }
         defaults.set(Self.shortcutsVersion, forKey: Keys.shortcutsVersion)
     }
 
