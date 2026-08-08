@@ -13,13 +13,16 @@ import Foundation
 /// не выполняет.
 enum TextInjector {
 
+    /// Метка собственных событий: перехват обязан отличать их от набора
+    /// пользователя. Флага «сейчас идёт вставка» недостаточно — и отправка,
+    /// и доставка асинхронны, поэтому часть своих же нажатий возвращалась
+    /// в буфер уже после снятия флага.
+    static let eventMarker: Int64 = 0x4543_484F // 'ECHO'
+
     private static let backspaceKey: CGKeyCode = 51
 
-    /// Неназначенная клавиша: сама по себе не печатает ничего, поэтому в поле
-    /// попадает ровно то, что задано `keyboardSetUnicodeString`. С обычным
-    /// кодом (например 0 — это «a») проигнорированная строка обернулась бы
-    /// лишней буквой в чужом тексте.
-    private static let unassignedKey: CGKeyCode = 255
+    /// В одно событие влезает ограниченное число UTF-16 единиц — режем с запасом.
+    private static let chunkSize = 12
 
     /// Поля не всегда успевают обработать поток событий вплотную.
     private static let settleMicroseconds: useconds_t = 1800
@@ -32,7 +35,9 @@ enum TextInjector {
     /// Приватный источник: события не смешиваются с состоянием реальной
     /// клавиатуры, поэтому зажатый в этот момент модификатор их не искажает.
     private static func makeSource() -> CGEventSource? {
-        CGEventSource(stateID: .privateState)
+        let source = CGEventSource(stateID: .privateState)
+        source?.userData = eventMarker
+        return source
     }
 
     /// Стирает `deleteCount` символов перед кареткой и печатает `text`.
@@ -64,8 +69,10 @@ enum TextInjector {
     // MARK: - Private
 
     private static func post(key: CGKeyCode, source: CGEventSource, down: Bool) {
-        CGEvent(keyboardEventSource: source, virtualKey: key, keyDown: down)?
-            .post(tap: .cghidEventTap)
+        guard let event = CGEvent(keyboardEventSource: source, virtualKey: key, keyDown: down) else { return }
+        event.flags = []
+        event.setIntegerValueField(.eventSourceUserData, value: eventMarker)
+        event.post(tap: .cghidEventTap)
     }
 
     private static func type(_ text: String, source: CGEventSource) -> Bool {
@@ -73,17 +80,29 @@ enum TextInjector {
         guard !units.isEmpty else { return false }
 
         var posted = false
-        for isDown in [true, false] {
-            guard let event = CGEvent(keyboardEventSource: source, virtualKey: unassignedKey, keyDown: isDown) else {
-                continue
+        var index = 0
+        while index < units.count {
+            let chunk = Array(units[index..<min(index + chunkSize, units.count)])
+            for isDown in [true, false] {
+                posted = postChunk(chunk, keyDown: isDown, source: source) || posted
             }
-            units.withUnsafeBufferPointer { buffer in
-                event.keyboardSetUnicodeString(stringLength: buffer.count, unicodeString: buffer.baseAddress)
-            }
-            event.post(tap: .cghidEventTap)
-            posted = true
-            usleep(settleMicroseconds / 4)
+            index += chunkSize
+            usleep(settleMicroseconds / 2)
         }
         return posted
+    }
+
+    /// Код клавиши здесь не важен: содержимое задаёт `keyboardSetUnicodeString`.
+    /// Важно другое — сбросить флаги, иначе зажатый в этот момент модификатор
+    /// превратит печать в сочетание клавиш.
+    private static func postChunk(_ chunk: [UniChar], keyDown: Bool, source: CGEventSource) -> Bool {
+        guard let event = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: keyDown) else { return false }
+        event.flags = []
+        event.setIntegerValueField(.eventSourceUserData, value: eventMarker)
+        chunk.withUnsafeBufferPointer { buffer in
+            event.keyboardSetUnicodeString(stringLength: buffer.count, unicodeString: buffer.baseAddress)
+        }
+        event.post(tap: .cghidEventTap)
+        return true
     }
 }

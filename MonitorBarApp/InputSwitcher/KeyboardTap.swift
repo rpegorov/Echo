@@ -103,6 +103,10 @@ final class KeyboardTap {
             return .contextLost
 
         case .keyDown:
+            // Своя же вставка не должна попадать в буфер как набор.
+            if event.getIntegerValueField(.eventSourceUserData) == TextInjector.eventMarker {
+                return nil
+            }
             let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
             if keyCode == backspaceKeyCode { return .backspace }
             if navigationKeyCodes.contains(keyCode) { return .contextLost }

@@ -68,6 +68,11 @@ final class UltraSwitchService: ObservableObject {
     /// иначе замена попала бы в буфер как пользовательский набор.
     private var isInjecting = false
 
+    /// Сколько нажатий пользователя пришлось на время вставки. Они попали в
+    /// документ, но мимо буфера — значит, буфер больше не описывает текст,
+    /// и следующая замена стёрла бы не то. Такой буфер обнуляем.
+    private var keystrokesDuringInjection = 0
+
     init() {
         tap.onCharacter = { [weak self] character in self?.handle(character) }
         tap.onBackspace = { [weak self] in self?.handleBackspace() }
@@ -168,7 +173,10 @@ final class UltraSwitchService: ObservableObject {
     // MARK: - Набор
 
     private func handle(_ character: Character) {
-        guard !isInjecting else { return }
+        guard !isInjecting else {
+            keystrokesDuringInjection += 1
+            return
+        }
         guard !isExcludedApp() else {
             buffer.clear()
             return
@@ -180,7 +188,10 @@ final class UltraSwitchService: ObservableObject {
     }
 
     private func handleBackspace() {
-        guard !isInjecting else { return }
+        guard !isInjecting else {
+            keystrokesDuringInjection += 1
+            return
+        }
         buffer.backspace()
     }
 
@@ -199,6 +210,7 @@ final class UltraSwitchService: ObservableObject {
                          deleteCount: Int, target: KeyScript) {
         Self.log.debug("Исправляю слово из \(word.count, privacy: .public) букв")
         isInjecting = true
+        keystrokesDuringInjection = 0
 
         TextInjector.replaceBeforeCaret(deleteCount: deleteCount, with: converted + tail) { success in
             Task { @MainActor [weak self] in
@@ -206,9 +218,15 @@ final class UltraSwitchService: ObservableObject {
                 self.isInjecting = false
                 guard success else {
                     Self.log.notice("Отправить исправление не удалось — раскладку не трогаю")
+                    self.buffer.clear()
                     return
                 }
-                self.buffer.replaceCompleted(with: converted)
+                if self.keystrokesDuringInjection > 0 {
+                    Self.log.debug("Во время вставки набирали дальше — сбрасываю буфер")
+                    self.buffer.clear()
+                } else {
+                    self.buffer.replaceCompleted(with: converted)
+                }
                 self.inputSource.select(target)
             }
         }
