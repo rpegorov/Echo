@@ -11,26 +11,24 @@ import os
 /// Ultra Switch — мгновенная смена раскладки и исправление слов,
 /// набранных не в той раскладке («ghbdtn» → «привет»).
 ///
-/// Приложение не ведёт журнал нажатий: глобальный монитор смотрит только на
-/// код клавиши-разделителя (пробел, Enter, Tab) и никогда — на введённые
-/// символы. Само слово читается из поля ввода через Accessibility в момент
-/// проверки и живёт до конца обработки.
+/// Приложение не ведёт журнал нажатий и вообще не читает клавиатуру: о том,
+/// что слово закончено, сообщает сам Accessibility — уведомлением об изменении
+/// текста в поле. Слово читается из поля в момент проверки и живёт до конца
+/// обработки. Поэтому автозамене хватает одного разрешения.
 @MainActor
 final class UltraSwitchService: ObservableObject {
 
     /// Почему автозамена сейчас работает или не работает.
     enum Status: Equatable {
         case disabled
-        /// Нет доступа Accessibility — нечем ни прочитать слово, ни заменить его.
+        /// Нет доступа Accessibility — единственное, что нужно автозамене.
         case needsAccessibility
-        /// Нет Input Monitoring — глобальный монитор клавиш молчит.
-        case needsInputMonitoring
         case running
 
-        var isBlocked: Bool { self == .needsAccessibility || self == .needsInputMonitoring }
+        var isBlocked: Bool { self == .needsAccessibility }
     }
 
-    /// Коды клавиш, завершающих слово.
+    /// Коды клавиш, завершающих слово, — для дополнительного триггера по клавиатуре.
     private static let boundaryKeyCodes: Set<UInt16> = [49, 36, 76, 48] // space, return, keypad enter, tab
 
     /// Приложения, в которых автозамена не работает никогда.
@@ -58,8 +56,8 @@ final class UltraSwitchService: ObservableObject {
 
     private let inputSource = InputSourceService()
     private let judge = WordJudge()
+    private let watcher = AXTextWatcher()
 
-    private var keyMonitor: Any?
     private var pendingCheck: Task<Void, Never>?
     private var permissionPoll: Timer?
 
@@ -104,47 +102,14 @@ final class UltraSwitchService: ObservableObject {
 
     // MARK: - Permissions
 
-    /// Просит ровно то разрешение, которого не хватает прямо сейчас, и открывает
-    /// его вкладку в системных настройках.
+    /// Открывает вкладку Accessibility — единственное, что нужно автозамене.
     ///
-    /// Раньше оба запроса уходили подряд и пользователь получал два системных
-    /// окна одновременно. Теперь путь один: сначала Accessibility, и только
-    /// когда оно выдано — Input Monitoring.
+    /// Системный запрос доступа намеренно не вызывается: он показал бы второе
+    /// окно поверх этого перехода. В списке Accessibility приложение и так есть,
+    /// потому что постоянно обращается к AX.
     func requestAccess() {
-        switch status {
-        case .needsAccessibility:
-            // В списке Accessibility приложение уже есть — оно постоянно обращается
-            // к AX. Системный запрос показал бы второе окно поверх нашего перехода,
-            // поэтому здесь просто открываем нужную вкладку.
-            open(pane: "Privacy_Accessibility")
-
-        case .needsInputMonitoring:
-            // А в список Input Monitoring приложение попадает только после запроса —
-            // без него его пришлось бы добавлять вручную кнопкой «+». Поэтому первый
-            // раз показываем системный запрос (у него своя кнопка перехода), а если
-            // приложение уже зарегистрировано — сразу открываем вкладку.
-            if hasAskedForInputMonitoring {
-                open(pane: "Privacy_ListenEvent")
-            } else {
-                hasAskedForInputMonitoring = true
-                _ = CGRequestListenEventAccess()
-            }
-
-        case .running, .disabled:
-            break
-        }
-    }
-
-    /// Запрос показывается один раз на версию: обновление меняет подпись, и в
-    /// списке появляется уже другое приложение — регистрировать надо заново.
-    private var hasAskedForInputMonitoring: Bool {
-        get { UserDefaults.standard.bool(forKey: Self.askedKey) }
-        set { UserDefaults.standard.set(newValue, forKey: Self.askedKey) }
-    }
-
-    private static var askedKey: String {
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "0"
-        return "ultraSwitch.askedListenEvent.\(version)"
+        guard status.isBlocked else { return }
+        open(pane: "Privacy_Accessibility")
     }
 
     private func open(pane: String) {
@@ -159,8 +124,6 @@ final class UltraSwitchService: ObservableObject {
             newStatus = .disabled
         } else if !AXIsProcessTrusted() {
             newStatus = .needsAccessibility
-        } else if !CGPreflightListenEventAccess() {
-            newStatus = .needsInputMonitoring
         } else {
             newStatus = .running
         }
@@ -181,11 +144,32 @@ final class UltraSwitchService: ObservableObject {
         newStatus.isBlocked ? startPermissionPoll() : stopPermissionPoll()
     }
 
+    private var isWatching = false
+    private var keyMonitor: Any?
+
+    /// Триггеров два, и они дополняют друг друга. Уведомления Accessibility
+    /// работают на одном разрешении, но их шлют не все приложения; монитор
+    /// клавиш ловит границу слова там, где уведомлений нет, — но требует
+    /// Input Monitoring. Ставим оба, какой сработает первым — не важно:
+    /// проверка всё равно дебаунсится.
     private func startMonitor() {
-        guard keyMonitor == nil else { return }
+        guard !isWatching else { return }
         judge.warmUp()
-        keyMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.keyDown]) { [weak self] event in
-            MainActor.assumeIsolated { self?.handleKeyDown(event) }
+        watcher.onTextChanged = { [weak self] in self?.scheduleCheck() }
+        watcher.start()
+        isWatching = true
+
+        if CGPreflightListenEventAccess() {
+            keyMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.keyDown]) { [weak self] event in
+                MainActor.assumeIsolated {
+                    guard Self.boundaryKeyCodes.contains(event.keyCode),
+                          event.modifierFlags.isDisjoint(with: [.command, .control, .option]) else { return }
+                    self?.scheduleCheck()
+                }
+            }
+            Self.log.notice("Триггеры автозамены: уведомления Accessibility и монитор клавиш")
+        } else {
+            Self.log.notice("Триггеры автозамены: только уведомления Accessibility")
         }
     }
 
@@ -194,6 +178,9 @@ final class UltraSwitchService: ObservableObject {
         pendingCheck = nil
         if let keyMonitor { NSEvent.removeMonitor(keyMonitor) }
         keyMonitor = nil
+        guard isWatching else { return }
+        watcher.stop()
+        isWatching = false
     }
 
     private func startPermissionPoll() {
@@ -216,14 +203,9 @@ final class UltraSwitchService: ObservableObject {
 
     // MARK: - Auto flow
 
-    private func handleKeyDown(_ event: NSEvent) {
-        guard Self.boundaryKeyCodes.contains(event.keyCode) else { return }
-        guard event.modifierFlags.isDisjoint(with: [.command, .control, .option]) else { return }
-        guard !isExcludedApp() else {
-            Self.log.debug("Граница слова пропущена: приложение в списке исключений")
-            return
-        }
-        Self.log.debug("Граница слова: keyCode \(event.keyCode, privacy: .public)")
+    /// Текст в поле изменился — проверяем, не закончено ли слово.
+    private func scheduleCheck() {
+        guard !isExcludedApp() else { return }
 
         pendingCheck?.cancel()
         pendingCheck = Task { [weak self] in
@@ -239,6 +221,9 @@ final class UltraSwitchService: ObservableObject {
             Self.log.debug("Поле ввода не отдало текст через Accessibility")
             return
         }
+        // Пустой хвост — каретка стоит сразу за буквой, слово ещё набирается.
+        // Правим только когда за словом уже есть разделитель.
+        guard !target.trailing.isEmpty else { return }
         guard let verdict = judge.verdict(for: target.word) else {
             // Само слово в лог не пишем — только длину: содержимое ввода
             // не должно утекать даже в диагностику.
