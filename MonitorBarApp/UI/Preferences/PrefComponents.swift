@@ -43,3 +43,25 @@ struct PrefCaption: View {
             .fixedSize(horizontal: false, vertical: true)
     }
 }
+
+/// Сведения о приложении для разделов настроек.
+enum AppInfo {
+    static var name: String {
+        (Bundle.main.infoDictionary?["CFBundleDisplayName"] as? String)
+            ?? (Bundle.main.infoDictionary?["CFBundleName"] as? String)
+            ?? "Echo"
+    }
+
+    static var version: String {
+        let short = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+        return "\(short) (\(build))"
+    }
+
+    /// Подпись интервала опроса — общая для мониторинга и энергосбережения.
+    static func intervalLabel(_ seconds: Double) -> String {
+        seconds < 1
+            ? String(format: "every %.1fs", seconds)
+            : String(format: "every %gs", seconds)
+    }
+}
