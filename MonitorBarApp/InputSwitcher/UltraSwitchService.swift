@@ -59,6 +59,7 @@ final class UltraSwitchService: ObservableObject {
     private let inputSource = InputSourceService()
     private let judge = LayoutJudge()
     private let buffer = KeystrokeBuffer()
+    let snippets = SnippetStore()
     private let tap = KeyboardTap()
 
     private var permissionPoll: Timer?
@@ -196,12 +197,35 @@ final class UltraSwitchService: ObservableObject {
     }
 
     /// Слово завершено разделителем — самое время его проверить.
+    /// Сниппеты идут первыми: сокращение задано пользователем явно, и оно
+    /// важнее догадки словаря о раскладке.
     private func checkCompletedWord() {
+        if let token = buffer.completedToken(),
+           let expansion = snippets.expansion(for: token.token) {
+            Self.log.debug("Разворачиваю сниппет")
+            expand(expansion, tail: token.tail, deleteCount: token.deleteCount)
+            return
+        }
+
         guard let candidate = buffer.completedForConversion(),
               let verdict = judge.verdict(for: candidate.word) else { return }
 
         replace(candidate.word, with: verdict.converted, tail: candidate.tail,
                 deleteCount: candidate.deleteCount, target: verdict.target)
+    }
+
+    /// Подставляет сниппет. Раскладку при этом не трогаем: текст вставляется
+    /// как есть, и переключать язык пользователю тут незачем.
+    private func expand(_ expansion: String, tail: String, deleteCount: Int) {
+        isInjecting = true
+        keystrokesDuringInjection = 0
+
+        TextInjector.replaceBeforeCaret(deleteCount: deleteCount, with: expansion + tail) { _ in
+            Task { @MainActor [weak self] in
+                self?.isInjecting = false
+                self?.buffer.clear()
+            }
+        }
     }
 
     /// Стирает набранное и печатает исправленный вариант.

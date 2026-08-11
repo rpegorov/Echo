@@ -30,6 +30,7 @@ struct PreferencesView: View {
         case menuBar = "Menu Bar"
         case windowManager = "Window Manager"
         case ultraSwitch = "Ultra Switch"
+        case snippets = "Сниппеты"
         case keyboard = "Keyboard Shortcuts"
         case updates = "Updates"
         case clipboard = "Clipboard History"
@@ -44,6 +45,7 @@ struct PreferencesView: View {
             case .menuBar:       return "menubar.rectangle"
             case .windowManager: return "macwindow.on.rectangle"
             case .ultraSwitch:   return "globe"
+            case .snippets:      return "text.badge.plus"
             case .keyboard:      return "keyboard"
             case .updates:       return "arrow.down.circle"
             case .clipboard:     return "doc.on.clipboard"
@@ -92,6 +94,7 @@ struct PreferencesView: View {
         case .menuBar:       MenuBarPrefsView(settings: settings, metrics: metrics)
         case .windowManager: windowManagerSection
         case .ultraSwitch:   ultraSwitchSection
+        case .snippets:      SnippetsPrefsView(store: ultraSwitch.snippets, settings: settings)
         case .keyboard:      keyboardSection
         case .updates:       UpdatesPrefsView(updater: updater, version: appVersion)
         case .clipboard:     clipboardSection

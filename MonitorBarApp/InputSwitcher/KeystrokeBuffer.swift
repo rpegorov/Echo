@@ -31,9 +31,12 @@ final class KeystrokeBuffer {
     // MARK: - Ввод
 
     /// Добавляет напечатанный символ.
+    ///
+    /// Слово завершает только пробельный символ, а не любой не-буквенный:
+    /// сокращения сниппетов сплошь и рядом состоят из знаков (`@@`, `;sig`),
+    /// и обрыв на первом же символе делал бы их ненаходимыми.
     func append(_ character: Character) {
-        guard character.isLetter else {
-            // Не буква — слово закончилось, символ становится хвостом.
+        guard !character.isWhitespace else {
             complete(with: String(character))
             return
         }
@@ -78,11 +81,24 @@ final class KeystrokeBuffer {
 
     // MARK: - Выдача
 
-    /// Слово для автозамены — только что завершённое разделителем.
+    /// Завершённый разделителем кусок целиком, вместе со знаками, — для сниппетов.
     /// `deleteCount` — сколько символов придётся стереть, включая хвост.
-    func completedForConversion() -> (word: String, tail: String, deleteCount: Int)? {
+    func completedToken() -> (token: String, tail: String, deleteCount: Int)? {
         guard !completedWord.isEmpty, currentWord.isEmpty else { return nil }
         return (completedWord, completedTail, completedWord.count + completedTail.count)
+    }
+
+    /// Слово для автозамены раскладки: только буквенное начало куска.
+    /// Знаки после него уезжают в хвост и печатаются обратно как есть —
+    /// иначе «привет,» не исправлялось бы из-за запятой.
+    func completedForConversion() -> (word: String, tail: String, deleteCount: Int)? {
+        guard let completed = completedToken() else { return nil }
+
+        let letters = completed.token.prefix { $0.isLetter }
+        guard !letters.isEmpty else { return nil }
+
+        let trailingSigns = completed.token.dropFirst(letters.count)
+        return (String(letters), String(trailingSigns) + completed.tail, completed.deleteCount)
     }
 
     /// Слово для ручной конвертации по хоткею: сначала то, что набирается
