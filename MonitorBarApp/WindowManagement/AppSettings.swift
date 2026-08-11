@@ -13,13 +13,13 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
     case topLeft, topRight, bottomLeft, bottomRight
     case center, maximize
     case openClipboard
-    case switchLayout, convertWord
+    case switchLayout, convertWord, translateSelection
 
     var id: String { rawValue }
 
     /// Команды Ultra Switch регистрируются только при включённой фиче.
     var isUltraSwitchCommand: Bool {
-        self == .switchLayout || self == .convertWord
+        self == .switchLayout || self == .convertWord || self == .translateSelection
     }
 
     var title: String {
@@ -37,6 +37,7 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
         case .openClipboard: return "Open Clipboard History"
         case .switchLayout:  return "Switch Layout"
         case .convertWord:   return "Convert Last Word"
+        case .translateSelection: return "Перевести выделенное"
         }
     }
 
@@ -53,7 +54,7 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
         case .bottomRight:   return .bottomRight
         case .center:        return .center
         case .maximize:      return .maximize
-        case .openClipboard, .switchLayout, .convertWord: return nil
+        case .openClipboard, .switchLayout, .convertWord, .translateSelection: return nil
         }
     }
 
@@ -76,6 +77,7 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
         case .openClipboard: return KeyboardShortcut(keyCode: 9, flags: [.command, .shift]) // ⌘⇧V
         case .switchLayout:  return KeyboardShortcut(keyCode: 49, flags: [.option]) // ⌥Space
         case .convertWord:   return KeyboardShortcut(keyCode: 49, flags: [.option, .shift]) // ⌥⇧Space
+        case .translateSelection: return KeyboardShortcut(keyCode: 17, flags: [.control, .option]) // ⌃⌥T
         }
     }
 }
@@ -229,7 +231,7 @@ final class AppSettings: ObservableObject {
 
     /// Текущая версия набора хоткеев. При росте — в сохранённый набор
     /// доливаются дефолты команд, которых на прошлой версии ещё не было.
-    private static let shortcutsVersion = 1
+    private static let shortcutsVersion = 2
 
     init() {
         // Долитые дефолты обязаны попасть в хранилище: маркер версии пишется в

@@ -20,6 +20,7 @@ enum TextInjector {
     static let eventMarker: Int64 = 0x4543_484F // 'ECHO'
 
     private static let backspaceKey: CGKeyCode = 51
+    private static let cKey: CGKeyCode = 8
 
     /// В одно событие влезает ограниченное число UTF-16 единиц — режем с запасом.
     private static let chunkSize = 12
@@ -63,6 +64,29 @@ enum TextInjector {
             usleep(settleMicroseconds)
             let typed = type(text, source: source)
             completion?(typed)
+        }
+    }
+
+    /// Печатает текст, ничего не стирая, — для вставки поверх выделения.
+    static func type(_ text: String) {
+        guard !text.isEmpty else { return }
+        queue.async {
+            guard let source = makeSource() else { return }
+            _ = type(text, source: source)
+        }
+    }
+
+    /// Копирует выделение сочетанием ⌘C. Единственный способ забрать
+    /// выделенный текст, который понимают все приложения.
+    static func copySelection() {
+        queue.async {
+            guard let source = makeSource() else { return }
+            for isDown in [true, false] {
+                guard let event = CGEvent(keyboardEventSource: source, virtualKey: cKey, keyDown: isDown) else { continue }
+                event.flags = .maskCommand
+                event.setIntegerValueField(.eventSourceUserData, value: eventMarker)
+                event.post(tap: .cghidEventTap)
+            }
         }
     }
 

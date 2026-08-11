@@ -26,6 +26,7 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
     private let hotKeys = HotKeyManager()
     private lazy var snapper = WindowSnapper(windowManager: windowManager, settings: settings)
     private let ultraSwitch = UltraSwitchService()
+    private let translator = SelectionTranslator()
     private let updater = UpdaterService()
     private let detailState = DetailState()
 
@@ -319,6 +320,10 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
             case .convertWord:
                 hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
                     MainActor.assumeIsolated { self?.ultraSwitch.convertLastWord() }
+                }
+            case .translateSelection:
+                hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
+                    MainActor.assumeIsolated { self?.translator.translateSelection() }
                 }
             default:
                 hotKeys.register(shortcut, label: command.rawValue) { [weak self] in

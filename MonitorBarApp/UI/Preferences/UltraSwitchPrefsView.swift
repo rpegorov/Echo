@@ -57,10 +57,13 @@ struct UltraSwitchPrefsView: View {
                     shortcutRow(.switchLayout)
                     Divider().opacity(0.12)
                     shortcutRow(.convertWord)
+                    Divider().opacity(0.12)
+                    shortcutRow(.translateSelection)
                 }
             }
 
             PrefCaption("Повторная конвертация того же слова возвращает его обратно — это и есть отмена автоисправления.")
+            PrefCaption("Перевод работает на устройстве средствами macOS: выделенный текст заменяется переводом на другой язык из пары ru/en. В сеть ничего не уходит, буфер обмена возвращается на место.")
         }
     }
 
