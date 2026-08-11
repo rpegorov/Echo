@@ -5,6 +5,14 @@
     <description>Обновления Echo</description>
     <language>ru</language>
     <item>
+      <title>1.10</title>
+      <pubDate>Tue, 11 Aug 2026 15:03:13 +0300</pubDate>
+      <sparkle:version>1.10</sparkle:version>
+      <sparkle:shortVersionString>1.10</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.1</sparkle:minimumSystemVersion>
+      <enclosure url="https://github.com/rpegorov/Echo/releases/download/v1.10/Echo-1.10.dmg" type="application/octet-stream" length="3502205" sparkle:edSignature="qaZBmB3ypc0cN3JsmbiWavRl3hV4hzQ0pGVxswXzZx1h8h95cGTrLlmuzC3OTNS+VDzrt7DyZI5rwXtZYwi5BQ==" />
+    </item>
+    <item>
       <title>1.9</title>
       <pubDate>Tue, 11 Aug 2026 14:50:05 +0300</pubDate>
       <sparkle:version>1.9</sparkle:version>
