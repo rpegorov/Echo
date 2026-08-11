@@ -167,6 +167,26 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(lowPowerInterval, forKey: Keys.lowPowerInterval); onMonitoringChange?() }
     }
 
+    // MARK: - Menu Bar
+
+    /// Что показывать в строке меню: иконку, живые метрики или свою картинку.
+    @Published var menuBarIconMode: MenuBarIconMode {
+        didSet { defaults.set(menuBarIconMode.rawValue, forKey: Keys.menuBarMode); onMenuBarChange?() }
+    }
+
+    /// Какие метрики выводить в строке меню (для режима «Метрики»).
+    @Published var menuBarMetrics: [MetricTab] {
+        didSet {
+            defaults.set(menuBarMetrics.map(\.rawValue), forKey: Keys.menuBarMetrics)
+            onMenuBarChange?()
+        }
+    }
+
+    /// Путь к пользовательской картинке для строки меню.
+    @Published var customIconPath: String? {
+        didSet { defaults.set(customIconPath, forKey: Keys.menuBarIconPath); onMenuBarChange?() }
+    }
+
     // MARK: - Appearance
 
     /// Режим оформления (System / Light / Dark).
@@ -184,6 +204,8 @@ final class AppSettings: ObservableObject {
     var onLaunchAtLoginChange: (@MainActor () -> Void)?
     /// Включение/выключение Ultra Switch или автозамены.
     var onUltraSwitchChange: (@MainActor () -> Void)?
+    /// Изменение оформления строки меню.
+    var onMenuBarChange: (@MainActor () -> Void)?
 
     private let defaults = UserDefaults.standard
 
@@ -200,6 +222,9 @@ final class AppSettings: ObservableObject {
         static let ultraSwitch = "ultraSwitch.enabled"
         static let autoConvert = "ultraSwitch.autoConvert"
         static let shortcutsVersion = "wm.shortcuts.version"
+        static let menuBarMode = "menuBar.mode"
+        static let menuBarMetrics = "menuBar.metrics"
+        static let menuBarIconPath = "menuBar.iconPath"
     }
 
     /// Текущая версия набора хоткеев. При росте — в сохранённый набор
@@ -229,6 +254,13 @@ final class AppSettings: ObservableObject {
         // Appearance
         appearanceMode = (defaults.string(forKey: Keys.appearance)
             .flatMap(AppearanceMode.init(rawValue:))) ?? .system
+
+        // Menu Bar
+        menuBarIconMode = (defaults.string(forKey: Keys.menuBarMode)
+            .flatMap(MenuBarIconMode.init(rawValue:))) ?? .appIcon
+        menuBarMetrics = (defaults.stringArray(forKey: Keys.menuBarMetrics) ?? ["CPU"])
+            .compactMap(MetricTab.init(rawValue:))
+        customIconPath = defaults.string(forKey: Keys.menuBarIconPath)
 
         // Ultra Switch — обе фичи выключены по умолчанию: автозамена трогает
         // чужой ввод, включать её пользователь должен осознанно.

@@ -12,6 +12,7 @@ struct PreferencesView: View {
     @ObservedObject var windowManager: WindowManagerService
     let ultraSwitch: UltraSwitchService
     @ObservedObject var updater: UpdaterService
+    @ObservedObject var metrics: MetricsService
 
     @State private var section: PrefSection? = .general
     @State private var hasAXPermission = false
@@ -26,6 +27,7 @@ struct PreferencesView: View {
         case monitoring = "System Monitoring"
         case power = "Power Management"
         case appearance = "Appearance"
+        case menuBar = "Menu Bar"
         case windowManager = "Window Manager"
         case ultraSwitch = "Ultra Switch"
         case keyboard = "Keyboard Shortcuts"
@@ -39,6 +41,7 @@ struct PreferencesView: View {
             case .monitoring:    return "gauge.with.dots.needle.67percent"
             case .power:         return "battery.100.bolt"
             case .appearance:    return "paintbrush"
+            case .menuBar:       return "menubar.rectangle"
             case .windowManager: return "macwindow.on.rectangle"
             case .ultraSwitch:   return "globe"
             case .keyboard:      return "keyboard"
@@ -86,6 +89,7 @@ struct PreferencesView: View {
         case .monitoring:    monitoringSection
         case .power:         powerSection
         case .appearance:    appearanceSection
+        case .menuBar:       MenuBarPrefsView(settings: settings, metrics: metrics)
         case .windowManager: windowManagerSection
         case .ultraSwitch:   ultraSwitchSection
         case .keyboard:      keyboardSection

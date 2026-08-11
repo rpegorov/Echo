@@ -91,10 +91,16 @@ final class SystemUtilitiesService: ObservableObject {
             return
         }
 
+        // Яркость, громкость и управление воспроизведением приходят не как
+        // нажатия клавиш, а системными событиями (NX_SYSDEFINED, тип 14).
+        // Без этого бита клавиатура «заблокирована», но верхний ряд работает.
+        let systemDefinedEventType: UInt32 = 14
+
         let mask = CGEventMask(
             (1 << CGEventType.keyDown.rawValue)
             | (1 << CGEventType.keyUp.rawValue)
             | (1 << CGEventType.flagsChanged.rawValue)
+            | (1 << systemDefinedEventType)
         )
 
         guard let tap = CGEvent.tapCreate(

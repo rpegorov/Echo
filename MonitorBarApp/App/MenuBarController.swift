@@ -6,6 +6,7 @@
 //
 
 import Cocoa
+import Combine
 import ServiceManagement
 import SwiftUI
 
@@ -38,6 +39,9 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
     /// Глобальный монитор кликов вне поповера (для закрытия по клику на экране).
     private var outsideClickMonitor: Any?
 
+    /// Подписка на метрики — только ради строки меню в режиме «Метрики».
+    private var metricsObserver: AnyCancellable?
+
     override init() {
         super.init()
         setupStatusItem()
@@ -51,6 +55,7 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
         settings.onAppearanceChange   = { [weak self] in self?.applyAppearance() }
         settings.onLaunchAtLoginChange = { [weak self] in self?.applyLaunchAtLogin() }
         settings.onUltraSwitchChange  = { [weak self] in self?.applyUltraSwitch() }
+        settings.onMenuBarChange      = { [weak self] in self?.applyStatusItemAppearance() }
 
         observePowerNotifications()
         applyAppearance()
@@ -131,18 +136,35 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
 
     // MARK: - Setup
 
-    /// Создаёт иконку в строке меню (шаблонная, наследует цвет системы).
+    /// Создаёт иконку в строке меню и подписывается на обновления метрик:
+    /// в режиме «Метрики» содержимое перерисовывается на каждом опросе.
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         guard let button = statusItem.button else { return }
-        if let icon = NSImage(named: "MenuBarIcon") {
-            icon.isTemplate = false   // цветная non-template иконка (кольца в тонах воды)
-            button.image = icon
-        } else {
-            button.title = "◈"
-        }
         button.target = self
         button.action = #selector(togglePopover)
+
+        metricsObserver = metrics.$metrics
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self, self.settings.menuBarIconMode == .metrics else { return }
+                    self.applyStatusItemAppearance()
+                }
+            }
+        applyStatusItemAppearance()
+    }
+
+    /// Приводит строку меню в соответствие с настройками.
+    private func applyStatusItemAppearance() {
+        guard let button = statusItem.button else { return }
+        StatusItemPresenter.apply(
+            to: button,
+            mode: settings.menuBarIconMode,
+            metrics: metrics.metrics,
+            shownMetrics: settings.menuBarMetrics,
+            customIconPath: settings.customIconPath
+        )
     }
 
     /// Настраивает поповер с внедрёнными сервисами и обработчиком выбора метрики.
@@ -225,6 +247,7 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
 
         if let window = clipboardWindow {
             NSApp.activate(ignoringOtherApps: true)
+            positionNearMouse(window)
             window.makeKeyAndOrderFront(nil)
             return
         }
@@ -240,13 +263,30 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
         window.title = "Clipboard"
         window.setContentSize(NSSize(width: 380, height: 460))
         window.isReleasedWhenClosed = false
-        window.center()
+        positionNearMouse(window)
         window.delegate = self
         clipboardWindow = window
 
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
         updateMonitoringState()
+    }
+
+    /// Ставит окно под курсор мыши, а не в центр экрана: историю буфера
+    /// открывают, чтобы тут же выбрать запись, и тянуться к центру неудобно.
+    private func positionNearMouse(_ window: NSWindow) {
+        let mouse = NSEvent.mouseLocation
+        let screen = NSScreen.screens.first { $0.frame.contains(mouse) } ?? NSScreen.main
+        guard let visible = screen?.visibleFrame else { return }
+
+        let size = window.frame.size
+        // Окно вешаем чуть ниже и правее курсора — так он оказывается у его
+        // верхнего края, у первой записи списка.
+        var origin = CGPoint(x: mouse.x - 24, y: mouse.y - size.height + 24)
+
+        origin.x = min(max(origin.x, visible.minX), visible.maxX - size.width)
+        origin.y = min(max(origin.y, visible.minY), visible.maxY - size.height)
+        window.setFrameOrigin(origin)
     }
 
     // MARK: - Hotkeys
@@ -304,7 +344,8 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
             clipboard: clipboard,
             windowManager: windowManager,
             ultraSwitch: ultraSwitch,
-            updater: updater
+            updater: updater,
+            metrics: metrics
         )
         let hosting = NSHostingController(rootView: root)
 
