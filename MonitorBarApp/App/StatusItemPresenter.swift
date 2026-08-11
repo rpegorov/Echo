@@ -56,11 +56,48 @@ struct StatusItemPresenter {
 
         case .metrics:
             button.image = nil
-            button.attributedTitle = NSAttributedString(
-                string: text(for: metrics, shownMetrics: shownMetrics),
-                attributes: [.font: font]
-            )
+            button.attributedTitle = attributedText(for: metrics, shownMetrics: shownMetrics)
         }
+    }
+
+    /// Строка метрик с иконками: голые проценты не говорят, к чему они
+    /// относятся, а подписи словами не помещаются в строку меню.
+    static func attributedText(for metrics: SystemMetrics, shownMetrics: [MetricTab]) -> NSAttributedString {
+        let selected = shownMetrics.isEmpty ? [.cpu] : shownMetrics
+        let result = NSMutableAttributedString()
+
+        for tab in selected {
+            if result.length > 0 {
+                result.append(NSAttributedString(string: "  ", attributes: [.font: font]))
+            }
+            if let icon = symbol(for: tab) {
+                result.append(NSAttributedString(attachment: icon))
+                result.append(NSAttributedString(string: " ", attributes: [.font: font]))
+            }
+            result.append(NSAttributedString(
+                string: value(of: tab, in: metrics),
+                attributes: [.font: font]
+            ))
+        }
+        return result
+    }
+
+    /// Символ метрики как вложение в строку. Базовая линия выравнивается по
+    /// шрифту вручную — иначе иконка «висит» выше цифр.
+    private static func symbol(for tab: MetricTab) -> NSTextAttachment? {
+        let configuration = NSImage.SymbolConfiguration(pointSize: 11, weight: .medium)
+        guard let image = NSImage(systemSymbolName: tab.icon, accessibilityDescription: tab.rawValue)?
+            .withSymbolConfiguration(configuration) else { return nil }
+
+        let attachment = NSTextAttachment()
+        attachment.image = image
+        attachment.bounds = CGRect(
+            x: 0,
+            y: font.descender + 1,
+            width: image.size.width,
+            height: image.size.height
+        )
+        return attachment
     }
 
     /// Строка метрик для строки меню. Пустой выбор — показываем загрузку CPU,

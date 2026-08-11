@@ -46,9 +46,11 @@ struct MenuBarPrefsView: View {
                     Text("Метрики в строке меню")
                         .font(.system(size: 13, weight: .medium))
                     Spacer()
-                    Text(preview)
-                        .font(.system(size: 12, design: .monospaced))
-                        .foregroundStyle(.secondary)
+                    Text(AttributedString(StatusItemPresenter.attributedText(
+                        for: metrics.metrics,
+                        shownMetrics: settings.menuBarMetrics
+                    )))
+                    .foregroundStyle(.secondary)
                 }
                 PrefCaption("Обновляются с тем же интервалом, что и остальной мониторинг.")
 
@@ -61,11 +63,6 @@ struct MenuBarPrefsView: View {
                 }
             }
         }
-    }
-
-    /// Живой пример того, что окажется в строке меню.
-    private var preview: String {
-        StatusItemPresenter.text(for: metrics.metrics, shownMetrics: settings.menuBarMetrics)
     }
 
     /// Порядок в строке меню сохраняем таким же, как в списке настроек, —

@@ -56,7 +56,10 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
         settings.onAppearanceChange   = { [weak self] in self?.applyAppearance() }
         settings.onLaunchAtLoginChange = { [weak self] in self?.applyLaunchAtLogin() }
         settings.onUltraSwitchChange  = { [weak self] in self?.applyUltraSwitch() }
-        settings.onMenuBarChange      = { [weak self] in self?.applyStatusItemAppearance() }
+        settings.onMenuBarChange      = { [weak self] in
+            self?.applyStatusItemAppearance()
+            self?.updateMonitoringState()
+        }
 
         observePowerNotifications()
         applyAppearance()
@@ -100,8 +103,14 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
     }
 
     /// Запускает или останавливает опрос в зависимости от видимости UI и сна.
+    ///
+    /// Метрики в строке меню — такой же видимый интерфейс, как открытое окно:
+    /// без этого при закрытом поповере опрос вставал и в строке меню висели
+    /// цифры, замершие с прошлого открытия.
     private func updateMonitoringState() {
-        let uiVisible = popover.isShown || detailWindow != nil || clipboardWindow != nil
+        let menuBarShowsMetrics = settings.menuBarIconMode == .metrics
+        let uiVisible = menuBarShowsMetrics
+            || popover.isShown || detailWindow != nil || clipboardWindow != nil
         let shouldRun = !isAsleep && (!settings.pauseWhenHidden || uiVisible)
         shouldRun ? metrics.start() : metrics.stop()
     }
