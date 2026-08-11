@@ -97,9 +97,25 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
 
     /// Пересчитывает интервал опроса и решает, должен ли мониторинг работать.
     private func applyMonitoring() {
-        let lowPower = settings.lowPowerThrottle && ProcessInfo.processInfo.isLowPowerModeEnabled
-        metrics.setInterval(lowPower ? settings.lowPowerInterval : settings.updateInterval)
+        metrics.setInterval(currentInterval)
         updateMonitoringState()
+    }
+
+    /// Интервал зависит от того, на что смотрит пользователь.
+    ///
+    /// Открытый поповер или окно требуют плотного опроса, строка меню — нет:
+    /// цифрам в трее секундная точность не нужна, а опрос при закрытом
+    /// интерфейсе идёт постоянно, и на батарее это заметно.
+    private var currentInterval: Double {
+        if settings.lowPowerThrottle && ProcessInfo.processInfo.isLowPowerModeEnabled {
+            return settings.lowPowerInterval
+        }
+        return isDetailUIVisible ? settings.updateInterval : settings.menuBarInterval
+    }
+
+    /// Открыт ли поповер или одно из окон приложения.
+    private var isDetailUIVisible: Bool {
+        popover.isShown || detailWindow != nil || clipboardWindow != nil
     }
 
     /// Запускает или останавливает опрос в зависимости от видимости UI и сна.
@@ -109,9 +125,13 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
     /// цифры, замершие с прошлого открытия.
     private func updateMonitoringState() {
         let menuBarShowsMetrics = settings.menuBarIconMode == .metrics
-        let uiVisible = menuBarShowsMetrics
-            || popover.isShown || detailWindow != nil || clipboardWindow != nil
+        let uiVisible = menuBarShowsMetrics || isDetailUIVisible
         let shouldRun = !isAsleep && (!settings.pauseWhenHidden || uiVisible)
+
+        // Интервал пересчитываем здесь же: поповер открылся или закрылся —
+        // и плотность опроса должна смениться сразу, а не до следующей
+        // правки настроек.
+        metrics.setInterval(currentInterval)
         shouldRun ? metrics.start() : metrics.stop()
     }
 

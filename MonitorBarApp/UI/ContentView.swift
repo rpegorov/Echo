@@ -78,7 +78,7 @@ struct ContentView: View {
     // MARK: - Rings row (CPU / MEM / DISK)
 
     private var ringsRow: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: ringSpacing) {
             ringCell(.cpu)
             ringCell(.memory)
             ringCell(.disk)
@@ -88,10 +88,17 @@ struct ContentView: View {
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: DS.cornerLG))
     }
 
-    @ViewBuilder
+    /// Ячейки делят ширину поповера поровну и навсегда. Раньше ширину задавало
+    /// содержимое, и смена подписи на обновлении двигала все три кольца.
+    private var ringSpacing: CGFloat { 4 }
+
+    private var ringCellWidth: CGFloat {
+        (DS.popoverWidth - 24 - ringSpacing * 2) / 3
+    }
+
     private func ringCell(_ tab: MetricTab) -> some View {
         let d = metricData(for: tab)
-        CircularProgressView(
+        return CircularProgressView(
             progress:  d.progress,
             valueText: d.value,
             unitText:  d.unit,
@@ -99,6 +106,7 @@ struct ContentView: View {
             subLabel:  d.sub,
             action: { onSelect(tab) }
         )
+        .frame(width: ringCellWidth)
     }
 
     // MARK: - Network row

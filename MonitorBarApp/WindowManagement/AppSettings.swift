@@ -184,6 +184,13 @@ final class AppSettings: ObservableObject {
         }
     }
 
+    /// Интервал опроса, когда открыта только строка меню, секунды.
+    /// Отдельный от основного: цифры в трее не требуют секундной точности,
+    /// а опрос при закрытом интерфейсе идёт постоянно и тратит батарею.
+    @Published var menuBarInterval: Double {
+        didSet { defaults.set(menuBarInterval, forKey: Keys.menuBarInterval); onMonitoringChange?() }
+    }
+
     /// Путь к пользовательской картинке для строки меню.
     @Published var customIconPath: String? {
         didSet { defaults.set(customIconPath, forKey: Keys.menuBarIconPath); onMenuBarChange?() }
@@ -227,6 +234,7 @@ final class AppSettings: ObservableObject {
         static let menuBarMode = "menuBar.mode"
         static let menuBarMetrics = "menuBar.metrics"
         static let menuBarIconPath = "menuBar.iconPath"
+        static let menuBarInterval = "menuBar.interval"
     }
 
     /// Текущая версия набора хоткеев. При росте — в сохранённый набор
@@ -263,6 +271,7 @@ final class AppSettings: ObservableObject {
         menuBarMetrics = (defaults.stringArray(forKey: Keys.menuBarMetrics) ?? ["CPU"])
             .compactMap(MetricTab.init(rawValue:))
         customIconPath = defaults.string(forKey: Keys.menuBarIconPath)
+        menuBarInterval = defaults.object(forKey: Keys.menuBarInterval) as? Double ?? 5.0
 
         // Ultra Switch — обе фичи выключены по умолчанию: автозамена трогает
         // чужой ввод, включать её пользователь должен осознанно.

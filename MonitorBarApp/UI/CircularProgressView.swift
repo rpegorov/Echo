@@ -58,7 +58,13 @@ struct CircularProgressView: View {
                 Text(subLabel)
                     .font(.system(size: 9))
                     .foregroundStyle(.tertiary)
+                    .monospacedDigit()
                     .lineLimit(1)
+                    .truncationMode(.tail)
+                    // Ширину ячейки задаёт ряд, а не длина подписи: иначе на
+                    // каждом обновлении ячейки переразмерялись и кольца ползли
+                    // в стороны.
+                    .frame(maxWidth: .infinity)
                     .padding(.top, 2)
             }
             .padding(.vertical, 10)

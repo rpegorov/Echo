@@ -30,7 +30,9 @@ struct MenuBarPrefsView: View {
             }
 
             switch settings.menuBarIconMode {
-            case .metrics: metricsPicker
+            case .metrics:
+                metricsPicker
+                intervalCard
             case .custom:  customPicker
             case .appIcon: EmptyView()
             }
@@ -61,6 +63,24 @@ struct MenuBarPrefsView: View {
                     }
                     .toggleStyle(.checkbox)
                 }
+            }
+        }
+    }
+
+    private var intervalCard: some View {
+        PrefCard {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Как часто обновлять в строке меню")
+                        .font(.system(size: 13, weight: .medium))
+                    Spacer()
+                    Text(String(format: "раз в %g с", settings.menuBarInterval))
+                        .font(.system(size: 12, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
+                Slider(value: $settings.menuBarInterval, in: 1...30, step: 1)
+                    .tint(DS.accent)
+                PrefCaption("Пока открыт поповер или окно, опрос идёт с обычным интервалом из раздела System Monitoring. Этот — для случая, когда виден только трей: реже опрос, меньше расход батареи.")
             }
         }
     }
