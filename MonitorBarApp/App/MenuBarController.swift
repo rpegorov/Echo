@@ -188,6 +188,12 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
     /// Приводит строку меню в соответствие с настройками.
     private func applyStatusItemAppearance() {
         guard let button = statusItem.button else { return }
+
+        // Ширина иконки фиксируется по самым длинным значениям: меняющаяся
+        // ширина двигала бы поповер, привязанный к этой кнопке.
+        statusItem.length = settings.menuBarIconMode == .metrics
+            ? StatusItemPresenter.widestWidth(shownMetrics: settings.menuBarMetrics)
+            : NSStatusItem.variableLength
         StatusItemPresenter.apply(
             to: button,
             mode: settings.menuBarIconMode,

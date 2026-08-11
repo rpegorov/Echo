@@ -107,17 +107,44 @@ struct StatusItemPresenter {
         return selected.map { value(of: $0, in: metrics) }.joined(separator: " · ")
     }
 
+    /// Значения дополняются пробелами до постоянной ширины.
+    ///
+    /// Иначе «9%» и «16%» дают разную ширину иконки, строка меню
+    /// переразмеряется, а привязанный к ней поповер прыгает вбок вместе с
+    /// содержимым — именно это выглядело как «кольца наползают слева».
     private static func value(of tab: MetricTab, in metrics: SystemMetrics) -> String {
         switch tab {
         case .cpu:
-            return String(format: "%.0f%%", metrics.cpu.usage)
+            return percent(metrics.cpu.usage)
         case .memory:
-            return String(format: "%.0f%%", metrics.ram.usagePercent)
+            return percent(metrics.ram.usagePercent)
         case .disk:
-            return String(format: "%.0f%%", metrics.disk.usagePercent)
+            return percent(metrics.disk.usagePercent)
         case .network:
-            return "↓\(metrics.network.downloadFormatted)"
+            return "↓" + pad(metrics.network.downloadFormatted, to: 9)
         }
+    }
+
+    private static func percent(_ value: Double) -> String {
+        String(format: "%3.0f%%", min(max(value, 0), 100))
+    }
+
+    private static func pad(_ text: String, to width: Int) -> String {
+        text.count >= width ? text : String(repeating: " ", count: width - text.count) + text
+    }
+
+    /// Ширина иконки при самых длинных возможных значениях. Задаётся один раз,
+    /// чтобы строка меню не меняла размер вообще никогда.
+    static func widestWidth(shownMetrics: [MetricTab]) -> CGFloat {
+        var sample = SystemMetrics()
+        sample.cpu.usage = 100
+        sample.ram.used = 100
+        sample.ram.total = 100
+        sample.disk.used = 100
+        sample.disk.total = 100
+        sample.network.download = 999 * 1024
+
+        return attributedText(for: sample, shownMetrics: shownMetrics).size().width + 10
     }
 
     // MARK: - Картинки
