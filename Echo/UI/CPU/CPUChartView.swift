@@ -7,24 +7,38 @@ import SwiftUI
 
 struct CPUChartView: View {
     let history: [Double]
-
+    let timestamps: [Date]
+    let samples: [ResourceSnapshot]
+    @State private var hoverIndex: Int?
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                gridLines(size: geometry.size)
-
-                linePath(values: history, max: 100, size: geometry.size, closed: true)
-                    .fill(LinearGradient(
-                        colors: [Color.blue.opacity(0.30), .clear],
-                        startPoint: .top, endPoint: .bottom))
-
-                linePath(values: history, max: 100, size: geometry.size, closed: false)
-                    .stroke(Color.blue, style: StrokeStyle(lineWidth: 1.5, lineJoin: .round))
-
-                yAxisLabels(size: geometry.size)
-                xAxisLabels(size: geometry.size)
+        VStack(spacing: 2) {
+            GeometryReader { geometry in
+                ZStack {
+                    gridLines(size: geometry.size)
+                    linePath(values: history, max: 100, size: geometry.size, closed: true)
+                        .fill(LinearGradient(colors: [Color.blue.opacity(0.30), .clear], startPoint: .top, endPoint: .bottom))
+                    linePath(values: history, max: 100, size: geometry.size, closed: false)
+                        .stroke(Color.blue, style: StrokeStyle(lineWidth: 1.5, lineJoin: .round))
+                    yAxisLabels(size: geometry.size)
+                    if let hoverIndex, samples.indices.contains(hoverIndex), timestamps.indices.contains(hoverIndex) {
+                        ChartTooltip(timestamp: timestamps[hoverIndex], title: samples[hoverIndex].cpuProcessName, details: [String(format: "CPU %.1f%%", samples[hoverIndex].cpuPercent)])
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                            .padding(8)
+                    }
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onContinuousHover { phase in
+                            if case .active(let location) = phase, !history.isEmpty {
+                                hoverIndex = min(max(Int(location.x / max(geometry.size.width, 1) * CGFloat(history.count)), 0), history.count - 1)
+                            } else { hoverIndex = nil }
+                        }
+                }
             }
+            .frame(maxHeight: .infinity)
+            ChartTimeAxis(timestamps: timestamps)
+                .frame(height: 22)
         }
+        .padding(.bottom, 4)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: DS.cornerMD))
     }
 
@@ -58,19 +72,6 @@ struct CPUChartView: View {
         return path
     }
 
-    private func xAxisLabels(size: CGSize) -> some View {
-        HStack {
-            Text("60s ago")
-            Spacer()
-            Text("now")
-        }
-        .font(.system(size: 10, design: .monospaced))
-        .foregroundStyle(.tertiary)
-        .padding(.horizontal, 6)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-        .padding(.bottom, 4)
-    }
-
     private func gridLines(size: CGSize) -> some View {
         Canvas { context, canvasSize in
             let fractions: [CGFloat] = [0.25, 0.50, 0.75, 1.0]
@@ -102,5 +103,64 @@ struct CPUChartView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+
+struct ChartTimeAxis: View {
+    let timestamps: [Date]
+
+    private static let formatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss"
+        return formatter
+    }()
+
+    var body: some View {
+        let indices = tickIndices
+        HStack(spacing: 0) {
+            ForEach(indices, id: \.self) { index in
+                Text(label(at: index))
+                    .frame(maxWidth: .infinity, alignment: index == indices.first ? .leading : index == indices.last ? .trailing : .center)
+            }
+        }
+        .font(.system(size: 10, design: .monospaced))
+        .foregroundStyle(.tertiary)
+        .padding(.horizontal, 8)
+    }
+
+    private var tickIndices: [Int] {
+        guard !timestamps.isEmpty else { return [0] }
+        return Array(Set([0, timestamps.count / 3, timestamps.count * 2 / 3, timestamps.count - 1])).sorted()
+    }
+
+    private func label(at index: Int) -> String {
+        guard timestamps.indices.contains(index) else { return "--:--:--" }
+        return Self.formatter.string(from: timestamps[index])
+    }
+}
+
+
+struct ChartTooltip: View {
+    let timestamp: Date
+    let title: String
+    let details: [String]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(timestamp, format: .dateTime.hour().minute().second())
+                .font(.system(size: 11, weight: .semibold, design: .monospaced))
+            Text(title)
+                .font(.system(size: 11, weight: .medium))
+                .lineLimit(1)
+            ForEach(details, id: \.self) { detail in
+                Text(detail)
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(8)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: DS.cornerSM))
+        .shadow(radius: 3)
     }
 }

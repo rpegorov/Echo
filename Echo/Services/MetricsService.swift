@@ -15,11 +15,14 @@ final class MetricsService: ObservableObject {
     @Published var cpuHistory:     [Double]                          = []
     @Published var ramHistory:     [(used: Double, total: Double)]   = []
     @Published var networkHistory: [(download: Double, upload: Double)] = []
+    @Published var historyDates: [Date] = []
+    @Published var resourceHistory: [ResourceSnapshot] = []
 
     private let cpu:     any CPUMonitoring
     private let ram:     any RAMMonitoring
     private let disk:    any DiskMonitoring
     private let network: any NetworkMonitoring
+    private let processes = ProcessMonitor()
 
     private var task: Task<Void, Never>?
 
@@ -67,18 +70,20 @@ final class MetricsService: ObservableObject {
         async let ramInfo    = ram.info()
         async let diskInfo   = disk.info()
         async let netSpeed   = network.speed()
+        async let topCPU     = processes.topByCPU(limit: 1)
+        async let topRAM     = processes.topByRAM(limit: 1)
 
-        let (usage, ramData, diskData, netData) = await (cpuUsage, ramInfo, diskInfo, netSpeed)
+        let (usage, ramData, diskData, netData, cpuProcesses, ramProcesses) = await (cpuUsage, ramInfo, diskInfo, netSpeed, topCPU, topRAM)
 
         metrics.cpu.usage    = usage
         metrics.ram          = ramData
         metrics.disk         = diskData
         metrics.network      = netData
 
-        appendHistory(cpu: usage, ram: ramData, net: netData)
+        appendHistory(cpu: usage, ram: ramData, net: netData, cpuProcess: cpuProcesses.first, ramProcess: ramProcesses.first, at: .now)
     }
 
-    private func appendHistory(cpu: Double, ram: RAMMetrics, net: NetworkMetrics) {
+    private func appendHistory(cpu: Double, ram: RAMMetrics, net: NetworkMetrics, cpuProcess: MonitoredProcess?, ramProcess: MonitoredProcess?, at timestamp: Date) {
         cpuHistory.append(cpu)
         if cpuHistory.count > 60 { cpuHistory.removeFirst() }
 
@@ -88,6 +93,12 @@ final class MetricsService: ObservableObject {
         if ramHistory.count > 60 { ramHistory.removeFirst() }
 
         networkHistory.append((download: net.download, upload: net.upload))
-        if networkHistory.count > 60 { networkHistory.removeFirst() }
+        resourceHistory.append(ResourceSnapshot(cpuProcessName: cpuProcess?.name ?? "—", cpuPercent: cpuProcess?.value ?? 0, ramProcessName: ramProcess?.name ?? "—", ramMB: ramProcess?.value ?? 0))
+        historyDates.append(timestamp)
+        if networkHistory.count > 60 {
+            networkHistory.removeFirst()
+            historyDates.removeFirst()
+            resourceHistory.removeFirst()
+        }
     }
 }

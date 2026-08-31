@@ -7,30 +7,44 @@ import SwiftUI
 
 struct MemoryChartView: View {
     let history: [(used: Double, total: Double)]
-
+    let timestamps: [Date]
+    let samples: [ResourceSnapshot]
+    @State private var hoverIndex: Int?
     private var maxTotal: Double {
         let t = history.map(\.total).max() ?? 1
         return max(t, 1)
     }
 
     var body: some View {
-        GeometryReader { geometry in
-            let mt = maxTotal
-            ZStack {
-                gridLines(size: geometry.size)
-
-                linePath(values: history.map(\.used), max: mt, size: geometry.size, closed: true)
-                    .fill(LinearGradient(
-                        colors: [Color.blue.opacity(0.30), .clear],
-                        startPoint: .top, endPoint: .bottom))
-
-                linePath(values: history.map(\.used), max: mt, size: geometry.size, closed: false)
-                    .stroke(Color.blue, style: StrokeStyle(lineWidth: 1.5, lineJoin: .round))
-
-                yAxisLabels(size: geometry.size, maxTotal: mt)
-                xAxisLabels(size: geometry.size)
+        VStack(spacing: 2) {
+            GeometryReader { geometry in
+                let mt = maxTotal
+                ZStack {
+                    gridLines(size: geometry.size)
+                    linePath(values: history.map(\.used), max: mt, size: geometry.size, closed: true)
+                        .fill(LinearGradient(colors: [Color.blue.opacity(0.30), .clear], startPoint: .top, endPoint: .bottom))
+                    linePath(values: history.map(\.used), max: mt, size: geometry.size, closed: false)
+                        .stroke(Color.blue, style: StrokeStyle(lineWidth: 1.5, lineJoin: .round))
+                    yAxisLabels(size: geometry.size, maxTotal: mt)
+                    if let hoverIndex, samples.indices.contains(hoverIndex), timestamps.indices.contains(hoverIndex) {
+                        ChartTooltip(timestamp: timestamps[hoverIndex], title: samples[hoverIndex].ramProcessName, details: [String(format: "RAM %.0f MB", samples[hoverIndex].ramMB)])
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                            .padding(8)
+                    }
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onContinuousHover { phase in
+                            if case .active(let location) = phase, !history.isEmpty {
+                                hoverIndex = min(max(Int(location.x / max(geometry.size.width, 1) * CGFloat(history.count)), 0), history.count - 1)
+                            } else { hoverIndex = nil }
+                        }
+                }
             }
+            .frame(maxHeight: .infinity)
+            ChartTimeAxis(timestamps: timestamps)
+                .frame(height: 22)
         }
+        .padding(.bottom, 4)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: DS.cornerMD))
     }
 
@@ -62,19 +76,6 @@ struct MemoryChartView: View {
             path.closeSubpath()
         }
         return path
-    }
-
-    private func xAxisLabels(size: CGSize) -> some View {
-        HStack {
-            Text("60s ago")
-            Spacer()
-            Text("now")
-        }
-        .font(.system(size: 10, design: .monospaced))
-        .foregroundStyle(.tertiary)
-        .padding(.horizontal, 6)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-        .padding(.bottom, 4)
     }
 
     private func gridLines(size: CGSize) -> some View {

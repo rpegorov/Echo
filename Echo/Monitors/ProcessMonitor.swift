@@ -19,6 +19,13 @@ struct FileInfo: Sendable {
     let size: Int64
 }
 
+struct ResourceSnapshot: Sendable {
+    let cpuProcessName: String
+    let cpuPercent: Double
+    let ramProcessName: String
+    let ramMB: Double
+}
+
 /// Монитор процессов и файлов.
 /// topFilesBySize кэшируется на 30 секунд — обход домашней директории дорогой.
 actor ProcessMonitor: ProcessMonitoring {

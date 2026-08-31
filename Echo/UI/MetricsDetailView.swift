@@ -98,9 +98,9 @@ struct MetricsDetailView: View {
     @ViewBuilder
     private var chartView: some View {
         switch state.tab {
-        case .cpu:     CPUChartView(history: metrics.cpuHistory)
-        case .memory:  MemoryChartView(history: metrics.ramHistory)
-        case .network: NetworkChartView(history: metrics.networkHistory)
+        case .cpu:     CPUChartView(history: metrics.cpuHistory, timestamps: metrics.historyDates, samples: metrics.resourceHistory)
+        case .memory:  MemoryChartView(history: metrics.ramHistory, timestamps: metrics.historyDates, samples: metrics.resourceHistory)
+        case .network: NetworkChartView(history: metrics.networkHistory, timestamps: metrics.historyDates)
         case .disk:    DiskUsageBarView(used: metrics.metrics.disk.used, total: metrics.metrics.disk.total)
         }
     }
