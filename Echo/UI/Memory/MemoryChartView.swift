@@ -1,27 +1,34 @@
 //
-//  CPUChartView.swift
+//  MemoryChartView.swift
 //  MonitorBarApp
 //
 
 import SwiftUI
 
-struct CPUChartView: View {
-    let history: [Double]
+struct MemoryChartView: View {
+    let history: [(used: Double, total: Double)]
+
+    private var maxTotal: Double {
+        let t = history.map(\.total).max() ?? 1
+        return max(t, 1)
+    }
 
     var body: some View {
         GeometryReader { geometry in
+            let mt = maxTotal
             ZStack {
                 gridLines(size: geometry.size)
 
-                linePath(values: history, max: 100, size: geometry.size, closed: true)
+                linePath(values: history.map(\.used), max: mt, size: geometry.size, closed: true)
                     .fill(LinearGradient(
                         colors: [Color.blue.opacity(0.30), .clear],
                         startPoint: .top, endPoint: .bottom))
 
-                linePath(values: history, max: 100, size: geometry.size, closed: false)
+                linePath(values: history.map(\.used), max: mt, size: geometry.size, closed: false)
                     .stroke(Color.blue, style: StrokeStyle(lineWidth: 1.5, lineJoin: .round))
 
-                yAxisLabels(size: geometry.size)
+                yAxisLabels(size: geometry.size, maxTotal: mt)
+                xAxisLabels(size: geometry.size)
             }
         }
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: DS.cornerMD))
@@ -57,6 +64,19 @@ struct CPUChartView: View {
         return path
     }
 
+    private func xAxisLabels(size: CGSize) -> some View {
+        HStack {
+            Text("60s ago")
+            Spacer()
+            Text("now")
+        }
+        .font(.system(size: 10, design: .monospaced))
+        .foregroundStyle(.tertiary)
+        .padding(.horizontal, 6)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        .padding(.bottom, 4)
+    }
+
     private func gridLines(size: CGSize) -> some View {
         Canvas { context, canvasSize in
             let fractions: [CGFloat] = [0.25, 0.50, 0.75, 1.0]
@@ -72,13 +92,16 @@ struct CPUChartView: View {
         }
     }
 
-    private func yAxisLabels(size: CGSize) -> some View {
-        let items: [(label: String, fraction: CGFloat)] = [
-            ("100%", 0.25),
-            ("75%",  0.50),
-            ("50%",  0.75),
-            ("25%",  1.00),
-        ]
+    private func yAxisLabels(size: CGSize, maxTotal: Double) -> some View {
+        // history уже хранит значения в гигабайтах — повторно делить не нужно.
+        let gbTotal = maxTotal
+        let step = gbTotal / 4
+        let items: [(label: String, fraction: CGFloat)] = (0..<4).map { i in
+            let gb = gbTotal - step * Double(i)
+            let label = String(format: "%.0f GB", gb)
+            let fraction = CGFloat(i + 1) * 0.25
+            return (label, fraction)
+        }
         return ZStack(alignment: .topLeading) {
             ForEach(items.indices, id: \.self) { i in
                 Text(items[i].label)

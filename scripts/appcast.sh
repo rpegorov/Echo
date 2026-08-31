@@ -6,7 +6,7 @@
 # Использование:  ./scripts/appcast.sh <version> <path-to-dmg> [notes-file]
 #
 # Приватный ключ лежит в связке ключей (создан через generate_keys) и здесь
-# не хранится. Публичный — в MonitorBarApp/Info.plist (SUPublicEDKey).
+# не хранится. Публичный — в Echo/Info.plist (SUPublicEDKey).
 #
 set -euo pipefail
 
@@ -24,22 +24,22 @@ DOWNLOAD_URL="https://github.com/$REPO_SLUG/releases/download/v$VERSION/$(basena
 [[ -f "$DMG" ]] || { echo "✗ Нет файла: $DMG"; exit 1; }
 
 # --- Инструменты Sparkle из resolved-пакета SPM ---
-BUILD_DIR="$(xcodebuild -project MonitorBarApp.xcodeproj -scheme MonitorBarApp -showBuildSettings 2>/dev/null \
+BUILD_DIR="$(xcodebuild -project Echo.xcodeproj -scheme Echo -showBuildSettings 2>/dev/null \
   | awk -F' = ' '/^ *BUILD_DIR = /{print $2; exit}')"
 TOOLS="${BUILD_DIR%/Build/Products}/SourcePackages/artifacts/sparkle/Sparkle/bin"
 if [[ ! -x "$TOOLS/sign_update" ]]; then
   TOOLS="$(dirname "$(find ~/Library/Developer/Xcode/DerivedData -path '*artifacts/sparkle/Sparkle/bin/sign_update' 2>/dev/null | head -1)")"
 fi
 [[ -x "$TOOLS/sign_update" ]] || {
-  echo "✗ Не найден sign_update. Сначала:  xcodebuild -project MonitorBarApp.xcodeproj -resolvePackageDependencies"
+  echo "✗ Не найден sign_update. Сначала:  xcodebuild -project Echo.xcodeproj -resolvePackageDependencies"
   exit 1
 }
 
-echo "▶ Подписываю $DMG…"
+echo "▶ Подписываю ${DMG}…"
 SIGN_OUTPUT="$("$TOOLS/sign_update" "$DMG")"   # sparkle:edSignature="…" length="…"
 echo "  $SIGN_OUTPUT"
 
-MIN_OS="$(awk -F' = ' '/MACOSX_DEPLOYMENT_TARGET = /{print $2; exit}' MonitorBarApp.xcodeproj/project.pbxproj | tr -d ' ;')"
+MIN_OS="$(awk -F' = ' '/MACOSX_DEPLOYMENT_TARGET = /{print $2; exit}' Echo.xcodeproj/project.pbxproj | tr -d ' ;')"
 
 NOTES=""
 [[ -n "$NOTES_FILE" && -f "$NOTES_FILE" ]] && NOTES="$(cat "$NOTES_FILE")"

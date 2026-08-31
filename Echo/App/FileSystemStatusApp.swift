@@ -9,7 +9,7 @@ import SwiftUI
 
 /// Главная точка входа приложения для мониторинга системы
 @main
-struct MonitorBarApp: App {
+struct Echo: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     var body: some Scene {

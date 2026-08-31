@@ -9,8 +9,8 @@
 set -euo pipefail
 
 # --- Настройки ---
-PROJECT="MonitorBarApp.xcodeproj"
-SCHEME="MonitorBarApp"
+PROJECT="Echo.xcodeproj"
+SCHEME="Echo"
 CONFIG="Release"
 APP_DISPLAY="Echo"               # как назвать .app и том DMG
 
@@ -28,9 +28,9 @@ DIST_DIR="dist"
 # каждого обновления. Сертификат создаётся один раз: scripts/setup-signing.sh
 SIGN_IDENTITY="Echo Self-Signed"
 if security find-certificate -c "$SIGN_IDENTITY" >/dev/null 2>&1; then
-  echo "▶ Подпишу сертификатом «$SIGN_IDENTITY» — доступы переживут обновление"
+  echo "▶ Подпишу сертификатом «${SIGN_IDENTITY}» — доступы переживут обновление"
 else
-  echo "▶ Сертификата «$SIGN_IDENTITY» нет — собираю ad-hoc"
+  echo "▶ Сертификата «${SIGN_IDENTITY}» нет — собираю ad-hoc"
   echo "  (после каждого обновления доступы придётся выдавать заново;"
   echo "   чтобы это прекратить, один раз запусти scripts/setup-signing.sh)"
   SIGN_IDENTITY="-"

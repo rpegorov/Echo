@@ -2,6 +2,7 @@
 //  ProcessMonitor.swift
 //  MonitorBarApp
 
+import Darwin
 import Foundation
 
 /// Информация о процессе.
@@ -46,6 +47,11 @@ actor ProcessMonitor: ProcessMonitoring {
             else { return nil }
             return MonitoredProcess(name: String(components[2]), pid: pid, value: rss / 1024)
         }
+    }
+
+    func terminate(pid: Int32) async -> Bool {
+        guard pid > 1 else { return false }
+        return Darwin.kill(pid, SIGTERM) == 0
     }
 
     func topFilesBySize(limit: Int = 10) async -> [FileInfo] {

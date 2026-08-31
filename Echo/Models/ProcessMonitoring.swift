@@ -1,9 +1,11 @@
+import Darwin
 import Foundation
 
 /// Протокол для получения списков процессов и файлов.
 protocol ProcessMonitoring: Sendable {
     func topByCPU(limit: Int) async -> [MonitoredProcess]
     func topByRAM(limit: Int) async -> [MonitoredProcess]
+    func terminate(pid: Int32) async -> Bool
     /// Топ файлов по размеру. Результат кэшируется реализацией.
     func topFilesBySize(limit: Int) async -> [FileInfo]
 }
@@ -30,6 +32,8 @@ struct MockProcessMonitor: ProcessMonitoring {
             MonitoredProcess(name: "Slack",           pid: 7890, value: 512),
         ].prefix(limit).map { $0 }
     }
+
+    func terminate(pid: Int32) async -> Bool { true }
 
     func topFilesBySize(limit: Int) async -> [FileInfo] {
         [

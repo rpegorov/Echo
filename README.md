@@ -101,8 +101,8 @@ This restores the _"Allow apps from Anywhere"_ option in System Settings → Pri
 
 ```bash
 git clone <repo-url>
-cd MonitorBarApp
-open MonitorBarApp.xcodeproj   # build & run in Xcode (⌘R)
+cd Echo
+open Echo.xcodeproj   # build & run in Xcode (⌘R)
 # or quick run:
 ./run.sh
 ```

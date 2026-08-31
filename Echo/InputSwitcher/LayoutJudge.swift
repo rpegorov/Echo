@@ -41,6 +41,7 @@ struct LayoutJudge: Sendable {
     func verdict(for word: String) -> Verdict? {
         guard Self.lengthRange.contains(word.count),
               word.allSatisfy(\.isLetter),
+              word.unicodeScalars.allSatisfy({ $0.isASCII || $0.value >= 0x0400 }),
               let script = LayoutTranslit.script(of: word),
               let converted = LayoutTranslit.convert(word, from: script),
               converted != word else { return nil }

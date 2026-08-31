@@ -1,11 +1,11 @@
 //
-//  CPUProcessListView.swift
+//  MemoryProcessListView.swift
 //  MonitorBarApp
 //
 
 import SwiftUI
 
-struct CPUProcessListView: View {
+struct MemoryProcessListView: View {
     let searchText: String
     @State private var topProcesses: [MonitoredProcess] = []
     @State private var monitor = ProcessMonitor()
@@ -26,7 +26,9 @@ struct CPUProcessListView: View {
                 ScrollView {
                     LazyVStack(spacing: 3) {
                         ForEach(Array(filtered.enumerated()), id: \.element.id) { index, process in
-                            ProcessRowView(rank: index + 1, name: process.name, value: process.value, showCPU: true)
+                            ProcessRowView(rank: index + 1, name: process.name, value: process.value, showCPU: false) {
+                                Task { _ = await monitor.terminate(pid: process.pid) }
+                            }
                         }
                     }
                 }
@@ -35,7 +37,7 @@ struct CPUProcessListView: View {
         .frame(maxHeight: .infinity)
         .task {
             while !Task.isCancelled {
-                topProcesses = await monitor.topByCPU(limit: 20)
+                topProcesses = await monitor.topByRAM(limit: 20)
                 try? await Task.sleep(for: .seconds(2))
             }
         }

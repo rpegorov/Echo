@@ -94,11 +94,10 @@ final class KeystrokeBuffer {
     func completedForConversion() -> (word: String, tail: String, deleteCount: Int)? {
         guard let completed = completedToken() else { return nil }
 
-        let letters = completed.token.prefix { $0.isLetter }
-        guard !letters.isEmpty else { return nil }
-
-        let trailingSigns = completed.token.dropFirst(letters.count)
-        return (String(letters), String(trailingSigns) + completed.tail, completed.deleteCount)
+        // Автозамена не должна угадывать внутри токена с пунктуацией:
+        // «сердо,jkmysq» — это уже не отдельное слово.
+        guard completed.token.allSatisfy(\.isLetter) else { return nil }
+        return (completed.token, completed.tail, completed.deleteCount)
     }
 
     /// Слово для ручной конвертации по хоткею: сначала то, что набирается

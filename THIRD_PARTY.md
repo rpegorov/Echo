@@ -2,7 +2,7 @@
 
 ## Языковые данные (словари и триграммы RU/EN)
 
-Файлы `MonitorBarApp/InputSwitcher/Resources/words_ru.json`, `words_en.json`,
+Файлы `Echo/InputSwitcher/Resources/words_ru.json`, `words_en.json`,
 `trigrams_ru.json`, `trigrams_en.json` взяты из проекта **keyswitcher**
 (<https://github.com/graninilya/keyswitcher>) и распространяются под лицензией MIT.
 

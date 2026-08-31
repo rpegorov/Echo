@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-SCHEME="MonitorBarApp"
+SCHEME="Echo"
 CONFIG="Debug"
 APP_NAME="Echo"
 

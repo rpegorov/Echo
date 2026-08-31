@@ -11,7 +11,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-VERSION="${1:-$(awk -F' = ' '/MARKETING_VERSION = /{print $2; exit}' MonitorBarApp.xcodeproj/project.pbxproj | tr -d ' ;')}"
+VERSION="${1:-$(awk -F' = ' '/MARKETING_VERSION = /{print $2; exit}' Echo.xcodeproj/project.pbxproj | tr -d ' ;')}"
 TAG="v$VERSION"
 DMG="dist/Echo-$VERSION.dmg"
 
@@ -29,7 +29,7 @@ fi
 # сборки, а не из Info.plist — правка самого файла ни на что не влияет.
 # Sparkle сравнивает CFBundleVersion, поэтому держим обе строки равными релизу.
 sed -i '' -E "s/(MARKETING_VERSION = ).*/\1$VERSION;/; s/(CURRENT_PROJECT_VERSION = ).*/\1$VERSION;/" \
-  MonitorBarApp.xcodeproj/project.pbxproj
+  Echo.xcodeproj/project.pbxproj
 
 # --- Сборка DMG ---
 bash scripts/make-dmg.sh
@@ -39,7 +39,7 @@ bash scripts/make-dmg.sh
 # Подпись EdDSA и запись в docs/appcast.xml должны попасть в main ДО публикации
 # релиза: приложение читает фид именно из ветки main.
 bash scripts/appcast.sh "$VERSION" "$DMG"
-git add MonitorBarApp/Info.plist MonitorBarApp.xcodeproj/project.pbxproj docs/appcast.xml
+git add Echo/Info.plist Echo.xcodeproj/project.pbxproj docs/appcast.xml
 if ! git diff --cached --quiet; then
   git commit -m "release: Echo $VERSION"
   git push origin HEAD

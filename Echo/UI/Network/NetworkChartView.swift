@@ -39,6 +39,8 @@ struct NetworkChartView: View {
                 linePath(values: history.map(\.upload), max: maxValue, size: geometry.size, closed: false)
                     .stroke(Color.green, style: StrokeStyle(lineWidth: 1.5, lineJoin: .round))
 
+                yAxisLabels(size: geometry.size, maxValue: maxValue)
+                xAxisLabels(size: geometry.size)
                 legend
             }
         }
@@ -74,6 +76,38 @@ struct NetworkChartView: View {
             path.closeSubpath()
         }
         return path
+    }
+
+    private func yAxisLabels(size: CGSize, maxValue: Double) -> some View {
+        let step = maxValue / 4
+        let items = (0..<5).map { i in
+            let value = maxValue - step * Double(i)
+            return String(format: "%.0f KB/s", value)
+        }
+        return VStack(alignment: .leading, spacing: 0) {
+            ForEach(items.indices, id: \.self) { i in
+                Text(items[i])
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundStyle(.tertiary)
+                if i < items.count - 1 { Spacer() }
+            }
+        }
+        .padding(.leading, 6)
+        .padding(.vertical, 4)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    }
+
+    private func xAxisLabels(size: CGSize) -> some View {
+        HStack {
+            Text("60s ago")
+            Spacer()
+            Text("now")
+        }
+        .font(.system(size: 10, design: .monospaced))
+        .foregroundStyle(.tertiary)
+        .padding(.horizontal, 6)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        .padding(.bottom, 4)
     }
 
     private func gridLines(size: CGSize) -> some View {

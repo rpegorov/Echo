@@ -11,27 +11,27 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		E127768E2EE708D00033CB07 /* MonitorBarApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MonitorBarApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E127768E2EE708D00033CB07 /* Echo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Echo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		E127769B2EE708D00033CB07 /* Exceptions for "MonitorBarApp" folder in "MonitorBarApp" target */ = {
+		E127769B2EE708D00033CB07 /* Exceptions for "Echo" folder in "Echo" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-				"MonitorBarApp-Bridging-Header.h",
+				"Echo-Bridging-Header.h",
 			);
-			target = E127768D2EE708D00033CB07 /* MonitorBarApp */;
+			target = E127768D2EE708D00033CB07 /* Echo */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		E12776902EE708D00033CB07 /* MonitorBarApp */ = {
+		E12776902EE708D00033CB07 /* Echo */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				E127769B2EE708D00033CB07 /* Exceptions for "MonitorBarApp" folder in "MonitorBarApp" target */,
+				E127769B2EE708D00033CB07 /* Exceptions for "Echo" folder in "Echo" target */,
 			);
-			path = MonitorBarApp;
+			path = Echo;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -51,7 +51,7 @@
 		E12776842EE708D00033CB07 = {
 			isa = PBXGroup;
 			children = (
-				E12776902EE708D00033CB07 /* MonitorBarApp */,
+				E12776902EE708D00033CB07 /* Echo */,
 				E127768F2EE708D00033CB07 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -59,7 +59,7 @@
 		E127768F2EE708D00033CB07 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				E127768E2EE708D00033CB07 /* MonitorBarApp.app */,
+				E127768E2EE708D00033CB07 /* Echo.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -77,9 +77,9 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		E127768D2EE708D00033CB07 /* MonitorBarApp */ = {
+		E127768D2EE708D00033CB07 /* Echo */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = E127769C2EE708D00033CB07 /* Build configuration list for PBXNativeTarget "MonitorBarApp" */;
+			buildConfigurationList = E127769C2EE708D00033CB07 /* Build configuration list for PBXNativeTarget "Echo" */;
 			buildPhases = (
 				E12776892EE708D00033CB07 /* Headers */,
 				E127768A2EE708D00033CB07 /* Sources */,
@@ -91,14 +91,14 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				E12776902EE708D00033CB07 /* MonitorBarApp */,
+				E12776902EE708D00033CB07 /* Echo */,
 			);
-			name = MonitorBarApp;
+			name = Echo;
 			packageProductDependencies = (
 				E1AA00022EE708D00033CB07 /* Sparkle */,
 			);
-			productName = MonitorBarApp;
-			productReference = E127768E2EE708D00033CB07 /* MonitorBarApp.app */;
+			productName = Echo;
+			productReference = E127768E2EE708D00033CB07 /* Echo.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -116,7 +116,7 @@
 					};
 				};
 			};
-			buildConfigurationList = E12776882EE708D00033CB07 /* Build configuration list for PBXProject "MonitorBarApp" */;
+			buildConfigurationList = E12776882EE708D00033CB07 /* Build configuration list for PBXProject "Echo" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -133,7 +133,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				E127768D2EE708D00033CB07 /* MonitorBarApp */,
+				E127768D2EE708D00033CB07 /* Echo */,
 			);
 		};
 /* End PBXProject section */
@@ -184,16 +184,16 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1.12;
+				CURRENT_PROJECT_VERSION = 1.13;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=macosx*]" = DL4RXZL3D2;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = MonitorBarApp/Info.plist;
+				INFOPLIST_FILE = Echo/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(USER_APPS_DIR)";
-				MARKETING_VERSION = 1.12;
-				PRODUCT_BUNDLE_IDENTIFIER = rostislav.egorov.MonitorBarApp;
+				MARKETING_VERSION = 1.13;
+				PRODUCT_BUNDLE_IDENTIFIER = rostislav.egorov.Echo;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -203,7 +203,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "MonitorBarApp/MonitorBarApp-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "Echo/Echo-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 6.0;
@@ -217,16 +217,16 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1.12;
+				CURRENT_PROJECT_VERSION = 1.13;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=macosx*]" = DL4RXZL3D2;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = MonitorBarApp/Info.plist;
+				INFOPLIST_FILE = Echo/Info.plist;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INSTALL_PATH = "$(USER_APPS_DIR)";
-				MARKETING_VERSION = 1.12;
-				PRODUCT_BUNDLE_IDENTIFIER = rostislav.egorov.MonitorBarApp;
+				MARKETING_VERSION = 1.13;
+				PRODUCT_BUNDLE_IDENTIFIER = rostislav.egorov.Echo;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -236,7 +236,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "MonitorBarApp/MonitorBarApp-Bridging-Header.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "Echo/Echo-Bridging-Header.h";
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 6.0;
 				WRAPPER_EXTENSION = app;
@@ -366,7 +366,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		E12776882EE708D00033CB07 /* Build configuration list for PBXProject "MonitorBarApp" */ = {
+		E12776882EE708D00033CB07 /* Build configuration list for PBXProject "Echo" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				E127769F2EE708D00033CB07 /* Debug */,
@@ -375,7 +375,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		E127769C2EE708D00033CB07 /* Build configuration list for PBXNativeTarget "MonitorBarApp" */ = {
+		E127769C2EE708D00033CB07 /* Build configuration list for PBXNativeTarget "Echo" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				E127769D2EE708D00033CB07 /* Debug */,
