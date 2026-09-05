@@ -43,7 +43,10 @@ final class KeystrokeBuffer {
         // Новое слово началось сразу после завершённого — прошлое больше не наше.
         if !completedWord.isEmpty && currentWord.isEmpty { dropCompleted() }
 
-        guard currentWord.count < Self.maxWordLength else { clear(); return }
+        guard currentWord.count < Self.maxWordLength else {
+            clear()
+            return
+        }
         currentWord.append(character)
     }
 
@@ -104,7 +107,9 @@ final class KeystrokeBuffer {
     /// сейчас, иначе последнее завершённое.
     func wordForManualConversion() -> (word: String, tail: String, deleteCount: Int)? {
         if !currentWord.isEmpty {
-            return (currentWord, "", currentWord.count)
+            // Возвращаем completedTail — это разделитель (пробел и т.д.), стоявший
+            // перед текущим словом. Без него replaceBeforeCaret сотрёт его бэспейсами.
+            return (currentWord, completedTail, currentWord.count + completedTail.count)
         }
         return completedForConversion()
     }
