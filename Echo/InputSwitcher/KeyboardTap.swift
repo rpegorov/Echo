@@ -110,6 +110,15 @@ final class KeyboardTap {
             let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
             if keyCode == backspaceKeyCode { return .backspace }
             if navigationKeyCodes.contains(keyCode) { return .contextLost }
+            // ⌥⇧Space — горячая клавиша ручной конвертации. Carbon поглощает
+            // её для поля ввода, но CGEventTap всё равно видит пробельный символ.
+            // Нельзя добавлять этот несуществующий в поле пробел в completedTail:
+            // иначе повторная конвертация сотрёт пробел перед словом.
+            if keyCode == 49,
+               event.flags.contains(.maskAlternate),
+               event.flags.contains(.maskShift) {
+                return nil
+            }
             // Сочетания с командой или контролом — команды, а не набор текста.
             if event.flags.contains(.maskCommand) || event.flags.contains(.maskControl) {
                 return .contextLost
