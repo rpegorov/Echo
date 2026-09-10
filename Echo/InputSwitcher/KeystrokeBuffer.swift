@@ -117,10 +117,10 @@ final class KeystrokeBuffer {
     /// Заменяет содержимое буфера на исправленный вариант — чтобы повторная
     /// конвертация работала как отмена, а не как замена «в никуда».
     func replaceCompleted(with word: String) {
-        guard !completedWord.isEmpty else {
+        if !currentWord.isEmpty {
             currentWord = word
-            return
+        } else {
+            completedWord = word
         }
-        completedWord = word
     }
 }
