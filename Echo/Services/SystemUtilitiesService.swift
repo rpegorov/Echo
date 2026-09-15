@@ -30,7 +30,15 @@ private func keyboardEventCallback(
         }
         return Unmanaged.passUnretained(event)
     }
-    // Поглощаем нажатия — клавиатура «не реагирует», можно протирать.
+
+    // Не блокируем модификаторы (включая Caps Lock) и системные события
+    // верхнего ряда клавиатуры: яркость, громкость и управление воспроизведением.
+    let systemDefinedEventType: UInt32 = 14
+    if type == .flagsChanged || type.rawValue == systemDefinedEventType {
+        return Unmanaged.passUnretained(event)
+    }
+
+    // Обычные нажатия поглощаем — клавиатура «не реагирует», можно протирать.
     return nil
 }
 
