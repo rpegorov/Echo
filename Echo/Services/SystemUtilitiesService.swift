@@ -9,6 +9,7 @@ import CoreGraphics
 import Foundation
 import IOKit
 import IOKit.pwr_mgt
+import os
 
 // MARK: - Event tap callback (file scope)
 
@@ -31,15 +32,37 @@ private func keyboardEventCallback(
         return Unmanaged.passUnretained(event)
     }
 
-    // Блокируем все события клавиатуры, включая модификаторы (Caps Lock) и
-    // системные NX_SYSDEFINED-события функциональных клавиш (яркость, громкость,
-    // F1–F12). События отключения тапа обработаны выше и должны быть пропущены.
+    // Блокируем все события клавиатуры: клавиши, модификаторы (Caps Lock) и
+    // служебные клавиши. Верхний ряд приходит сюда обычными keyDown, потому что
+    // на время очистки переведён в режим F1–F12 (см. suppressFnRow()).
+    // События отключения тапа обработаны выше и должны быть пропущены.
     return nil
 }
 
 /// Сервис системных утилит: предотвращение сна и блокировка клавиатуры.
 @MainActor
 final class SystemUtilitiesService: ObservableObject {
+
+    private static let log = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "Echo",
+        category: "KeyboardCleaning"
+    )
+
+    private static let fnStateKey = "com.apple.keyboard.fnState" as CFString
+    private static let fnStateRecoveryKey = "KeyboardCleaningRestoresFnState"
+
+    /// Значение `com.apple.keyboard.fnState` до включения очистки.
+    private var previousFnState: Bool?
+
+    init() {
+        // Приложение могли убить во время очистки — возвращаем настройку,
+        // иначе верхний ряд клавиатуры останется в режиме F1–F12.
+        if let stored = UserDefaults.standard.object(forKey: Self.fnStateRecoveryKey) as? Bool {
+            UserDefaults.standard.removeObject(forKey: Self.fnStateRecoveryKey)
+            Self.setFnState(stored)
+            Self.log.info("Keyboard cleaning: fn row restored after abnormal exit")
+        }
+    }
 
     @Published var preventSleepEnabled: Bool = false {
         didSet {
@@ -94,9 +117,9 @@ final class SystemUtilitiesService: ObservableObject {
             return
         }
 
-        // Яркость, громкость и управление воспроизведением приходят не как
-        // нажатия клавиш, а системными событиями (NX_SYSDEFINED, тип 14).
-        // Без этого бита клавиатура «заблокирована», но верхний ряд работает.
+        // NX_SYSDEFINED (тип 14) оставляем в маске: служебные клавиши части
+        // клавиатур приходят этим типом. Верхний ряд самого Mac закрывается
+        // переводом в режим F1–F12 — см. suppressFnRow().
         let systemDefinedEventType: UInt32 = 14
 
         let mask = CGEventMask(
@@ -130,9 +153,11 @@ final class SystemUtilitiesService: ObservableObject {
         runLoopSource = source
         sharedKeyboardTap = tap
         keyboardCleaningNeedsPermission = false
+        suppressFnRow()
     }
 
     private func disableKeyboardCleaning() {
+        restoreFnRow()
         guard let tap = eventTap else { return }
         CGEvent.tapEnable(tap: tap, enable: false)
         if let source = runLoopSource {
@@ -144,13 +169,72 @@ final class SystemUtilitiesService: ObservableObject {
         sharedKeyboardTap = nil
     }
 
+    // MARK: - Fn row
+
+    /// Верхний ряд (яркость, громкость, F1–F12) система доставляет событиями
+    /// NX_SYSDEFINED: их обрабатывают системные демоны до оконного сервера,
+    /// поэтому тап на уровне сессии этих событий не видит, а тап уровня HID
+    /// доступен только root — `CGEvent.tapCreate` возвращает для него NULL
+    /// (CGEventTapLocation). Чтобы очистка закрывала и ряд, переводим его в режим
+    /// стандартных функциональных клавиш: тогда нажатия приходят обычными keyDown
+    /// и поглощаются тапом. Настройку возвращаем при выключении.
+    private func suppressFnRow() {
+        let current = Self.fnState()
+        guard !current else {
+            Self.log.info("Keyboard cleaning: fn row already uses standard function keys")
+            return
+        }
+        previousFnState = current
+        UserDefaults.standard.set(current, forKey: Self.fnStateRecoveryKey)
+        Self.setFnState(true)
+        Self.log.info("Keyboard cleaning: fn row switched to standard function keys")
+    }
+
+    private func restoreFnRow() {
+        let previous =
+            previousFnState
+            ?? UserDefaults.standard.object(forKey: Self.fnStateRecoveryKey) as? Bool
+        previousFnState = nil
+        UserDefaults.standard.removeObject(forKey: Self.fnStateRecoveryKey)
+        guard let previous else { return }
+        Self.setFnState(previous)
+        Self.log.info("Keyboard cleaning: fn row restored")
+    }
+
+    /// `com.apple.keyboard.fnState` из глобального домена (аналог `defaults read -g`).
+    private static func fnState() -> Bool {
+        CFPreferencesCopyValue(
+            fnStateKey,
+            kCFPreferencesAnyApplication,
+            kCFPreferencesCurrentUser,
+            kCFPreferencesAnyHost
+        ) as? Bool ?? false
+    }
+
+    private static func setFnState(_ enabled: Bool) {
+        CFPreferencesSetValue(
+            fnStateKey,
+            enabled ? kCFBooleanTrue : kCFBooleanFalse,
+            kCFPreferencesAnyApplication,
+            kCFPreferencesCurrentUser,
+            kCFPreferencesAnyHost
+        )
+        CFPreferencesSynchronize(
+            kCFPreferencesAnyApplication,
+            kCFPreferencesCurrentUser,
+            kCFPreferencesAnyHost
+        )
+    }
+
     /// Показывает системный диалог «Allow in System Settings» (Accessibility).
     /// Ключ задаём строкой ("AXTrustedCheckOptionPrompt") — это значение
     /// константы kAXTrustedCheckOptionPrompt, так избегаем неоднозначного
     /// импорта Unmanaged<CFString> между версиями SDK.
     private func requestAccessibilityPermission() {
         AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+        if let url = URL(
+            string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
+        {
             NSWorkspace.shared.open(url)
         }
     }
