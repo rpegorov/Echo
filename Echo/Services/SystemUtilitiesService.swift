@@ -31,14 +31,9 @@ private func keyboardEventCallback(
         return Unmanaged.passUnretained(event)
     }
 
-    // Не блокируем модификаторы (включая Caps Lock) и системные события
-    // верхнего ряда клавиатуры: яркость, громкость и управление воспроизведением.
-    let systemDefinedEventType: UInt32 = 14
-    if type == .flagsChanged || type.rawValue == systemDefinedEventType {
-        return Unmanaged.passUnretained(event)
-    }
-
-    // Обычные нажатия поглощаем — клавиатура «не реагирует», можно протирать.
+    // Блокируем все события клавиатуры, включая модификаторы (Caps Lock) и
+    // системные NX_SYSDEFINED-события функциональных клавиш (яркость, громкость,
+    // F1–F12). События отключения тапа обработаны выше и должны быть пропущены.
     return nil
 }
 
