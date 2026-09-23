@@ -15,6 +15,7 @@ struct ContentView: View {
     @ObservedObject var clipboard: ClipboardService
     @ObservedObject var settings: AppSettings
     @ObservedObject var ultraSwitch: UltraSwitchService
+    @EnvironmentObject private var loc: Localizer
 
     /// Открыть детальное окно для выбранной метрики (реализуется владельцем поповера).
     let onSelect: (MetricTab) -> Void
@@ -102,7 +103,7 @@ struct ContentView: View {
             progress:  d.progress,
             valueText: d.value,
             unitText:  d.unit,
-            name:      tab.rawValue.uppercased(),
+            name:      loc.t(tab.titleKey).uppercased(),
             subLabel:  d.sub,
             action: { onSelect(tab) }
         )
@@ -117,7 +118,7 @@ struct ContentView: View {
                 Image(systemName: "network")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(DS.accent)
-                Text("Network")
+                Text(loc.t(MetricTab.network.titleKey))
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -155,7 +156,7 @@ struct ContentView: View {
     private var utilitiesSection: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("UTILITIES")
+                Text(loc.t(PopoverKey.utilitiesSectionTitle))
                     .font(.system(size: 9, weight: .semibold))
                     .foregroundStyle(.tertiary)
                     .tracking(1.2)
@@ -165,23 +166,23 @@ struct ContentView: View {
             .padding(.top, 12)
             .padding(.bottom, 6)
 
-            UtilityToggleRow(title: "Keyboard Cleaning", isOn: $utilities.keyboardCleaningEnabled)
+            UtilityToggleRow(title: loc.t(PopoverKey.keyboardCleaningTitle), isOn: $utilities.keyboardCleaningEnabled)
             if utilities.keyboardCleaningNeedsPermission {
-                Text("Grant Accessibility access, then toggle again.")
+                Text(loc.t(PopoverKey.keyboardCleaningPermissionHint))
                     .font(.system(size: 10))
                     .foregroundStyle(.orange)
                     .padding(.horizontal, 16)
                     .padding(.bottom, 4)
                     .transition(.opacity)
             }
-            UtilityToggleRow(title: "Prevent Sleep", isOn: $utilities.preventSleepEnabled)
+            UtilityToggleRow(title: loc.t(PopoverKey.preventSleepTitle), isOn: $utilities.preventSleepEnabled)
 
-            UtilityToggleRow(title: "Auto Layout Fix", isOn: $settings.autoConvertEnabled)
+            UtilityToggleRow(title: loc.t(PopoverKey.autoLayoutFixTitle), isOn: $settings.autoConvertEnabled)
             if ultraSwitch.status.isBlocked {
                 Button { ultraSwitch.requestAccess() } label: {
                     Text(ultraSwitch.status == .needsAccessibility
-                         ? "Нужен доступ Accessibility — разрешить"
-                         : "Нужен доступ Input Monitoring — разрешить")
+                         ? loc.t(PopoverKey.accessibilityAccessRequired)
+                         : loc.t(PopoverKey.inputMonitoringAccessRequired))
                         .font(.system(size: 10))
                         .foregroundStyle(.orange)
                         .padding(.horizontal, 16)
@@ -192,11 +193,11 @@ struct ContentView: View {
                 .transition(.opacity)
             }
 
-            UtilityToggleRow(title: "Clipboard History", isOn: $clipboard.isEnabled)
+            UtilityToggleRow(title: loc.t(PopoverKey.clipboardHistoryTitle), isOn: $clipboard.isEnabled)
             if clipboard.isEnabled {
                 Button { onOpenClipboard() } label: {
                     HStack {
-                        Text("Open history")
+                        Text(loc.t(PopoverKey.openHistory))
                             .font(.system(size: 12))
                             .foregroundStyle(DS.accent)
                         Spacer()
@@ -227,7 +228,7 @@ struct ContentView: View {
             Button { onOpenPreferences() } label: {
                 HStack(spacing: 5) {
                     Image(systemName: "gearshape")
-                    Text("Preferences")
+                    Text(loc.t(CommonKey.preferences))
                 }
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
@@ -239,7 +240,7 @@ struct ContentView: View {
             Button {
                 NSApplication.shared.terminate(nil)
             } label: {
-                Text("Quit")
+                Text(loc.t(CommonKey.quit))
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
             }
