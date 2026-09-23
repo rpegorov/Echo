@@ -4,14 +4,16 @@
 //
 
 import Foundation
+import Synchronization
 
 /// Resolves the macOS application that owns an executable, so helper
 /// processes (e.g. Chrome renderers) are attributed to their parent `.app`.
 enum AppAttribution {
 
-    private static let cacheLock = NSLock()
-    // Guarded exclusively by `cacheLock` — never accessed outside it.
-    nonisolated(unsafe) private static var cache: [String: (name: String, bundleID: String?)] = [:]
+    // A `Mutex`-protected cache: no `nonisolated(unsafe)` escape hatch needed,
+    // since `Mutex` itself is the synchronization primitive (Synchronization
+    // framework, macOS 15+).
+    private static let cache = Mutex<[String: (name: String, bundleID: String?)]>([:])
 
     /// - Parameters:
     ///   - path: The process's executable path, if known.
@@ -21,19 +23,12 @@ enum AppAttribution {
             return (fallbackName, nil)
         }
 
-        cacheLock.lock()
-        let cached = cache[bundlePath]
-        cacheLock.unlock()
-        if let cached {
+        if let cached = cache.withLock({ $0[bundlePath] }) {
             return cached
         }
 
         let resolved = resolve(bundlePath: bundlePath)
-
-        cacheLock.lock()
-        cache[bundlePath] = resolved
-        cacheLock.unlock()
-
+        cache.withLock { $0[bundlePath] = resolved }
         return resolved
     }
 
@@ -60,8 +55,11 @@ enum AppAttribution {
             return (defaultName, nil)
         }
 
-        let name = (bundle.object(forInfoDictionaryKey: "CFBundleName") as? String)
-            ?? (bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String)
+        // Prefer the user-facing display name (e.g. "Google Chrome") over the
+        // internal bundle name (e.g. "Chrome"), since this is what the user
+        // recognizes as the app that drained their battery.
+        let name = (bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String)
+            ?? (bundle.object(forInfoDictionaryKey: "CFBundleName") as? String)
             ?? defaultName
 
         return (name, bundle.bundleIdentifier)

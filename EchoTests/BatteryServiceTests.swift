@@ -142,8 +142,11 @@ private final class FakeBatteryHistoryStore: BatteryHistoryStoring, @unchecked S
 /// `sleep(for:)` and suspends; the test resumes it explicitly, one tick at a
 /// time, and can wait until the loop is back inside `sleep` (meaning the
 /// previous tick finished running).
+/// `@unchecked Sendable`: all mutable state is confined to `@MainActor`
+/// (the only isolation this fake is ever driven from in tests), matching the
+/// now-`Sendable` `TickSleeper` protocol without introducing a separate lock.
 @MainActor
-private final class FakeTickSleeper: TickSleeper {
+private final class FakeTickSleeper: TickSleeper, @unchecked Sendable {
     private var pendingSleeps: [CheckedContinuation<Void, Error>] = []
     private var sleepCallWaiters: [CheckedContinuation<Void, Never>] = []
 
@@ -168,6 +171,15 @@ private final class FakeTickSleeper: TickSleeper {
         guard !pendingSleeps.isEmpty else { return }
         pendingSleeps.removeFirst().resume()
         await waitUntilWaitingForSleep()
+    }
+
+    /// Resumes the oldest pending sleep without waiting for the loop to reach
+    /// another `sleep()` call afterwards. Use this after `stop()`: a
+    /// cancelled loop is contractually not expected to sleep again, so
+    /// `advanceOneTick()`'s post-resume wait would hang forever.
+    func resumePendingSleepWithoutWaiting() {
+        guard !pendingSleeps.isEmpty else { return }
+        pendingSleeps.removeFirst().resume()
     }
 }
 
@@ -232,10 +244,13 @@ struct BatteryServiceTests {
     func twoTicksAppendExactlyOneInterval() async {
         let store = FakeBatteryHistoryStore()
         let sleeper = FakeTickSleeper()
+        // Baseline snapshot, then one tick with genuine usage since baseline
+        // (100 - 0). The queue is exhausted after that, so the second tick
+        // reuses this same last snapshot as both its baseline and its
+        // current reading — a zero delta, correctly producing no interval.
         let energy = FakeProcessEnergyReading([
             Fixtures.snapshot(0, machTime: 0),
             Fixtures.snapshot(100, machTime: 1),
-            Fixtures.snapshot(250, machTime: 2),
         ])
         let service = makeService(store: store, energy: energy, sleeper: sleeper)
 
@@ -276,7 +291,11 @@ struct BatteryServiceTests {
         #expect(observer.stopCallCount >= 1)
 
         let intervalsBefore = store.appendedIntervals.count
-        await sleeper.advanceOneTick()
+        // A cancelled loop is not expected to reach `sleep()` again, so we
+        // resume its pending sleep directly rather than via `advanceOneTick()`
+        // (which would wait for exactly that — a wait that would never
+        // resolve).
+        sleeper.resumePendingSleepWithoutWaiting()
         // Give any (incorrectly) still-running loop a chance to act; nothing
         // should happen since the loop was cancelled. No real delay: just
         // yield the cooperative scheduler a few times.

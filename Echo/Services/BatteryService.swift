@@ -20,18 +20,11 @@ final class BatteryService: ObservableObject {
     private static let compactInterval: TimeInterval = 60 * 60
     private static let topAppsLimit = 10
 
-    // The protocols below are not declared `Sendable`, but every real
-    // conformer (`PowerSourceMonitor`, `ProcessEnergySampler`,
-    // `BatteryHistoryStore`, `ContinuousTickSleeper`) is either a stateless
-    // struct or an actor, so calling across the `await` boundary is safe;
-    // `nonisolated(unsafe)` only opts these lets out of the compiler's
-    // (overly conservative) Sendable check, matching the existing pattern in
-    // AppAttribution.swift and SystemUtilitiesService.swift.
-    private nonisolated(unsafe) let power: PowerSourceReading
+    private let power: PowerSourceReading
     private let observer: PowerSourceObserving
-    private nonisolated(unsafe) let energy: ProcessEnergyReading
-    private nonisolated(unsafe) let store: BatteryHistoryStoring
-    private nonisolated(unsafe) let sleeper: TickSleeper
+    private let energy: ProcessEnergyReading
+    private let store: BatteryHistoryStoring
+    private let sleeper: TickSleeper
     private let tick: Duration
     private let now: () -> Date
 

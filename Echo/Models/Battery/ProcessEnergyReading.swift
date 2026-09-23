@@ -6,6 +6,6 @@
 import Foundation
 
 /// Samples per-process energy counters for all visible processes.
-protocol ProcessEnergyReading {
+protocol ProcessEnergyReading: Sendable {
     func snapshot() async -> ProcessEnergySnapshot
 }

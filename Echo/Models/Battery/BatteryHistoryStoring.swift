@@ -6,7 +6,7 @@
 import Foundation
 
 /// Persists battery readings and energy intervals to durable storage.
-protocol BatteryHistoryStoring {
+protocol BatteryHistoryStoring: Sendable {
     func load(since: Date) async throws -> BatteryHistory
     func append(_ reading: BatteryReading) async throws
     func append(_ interval: EnergyInterval) async throws

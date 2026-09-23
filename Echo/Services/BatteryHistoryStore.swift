@@ -23,10 +23,18 @@ actor BatteryHistoryStore: BatteryHistoryStoring {
     init(fileURL: URL) {
         self.fileURL = fileURL
         let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
+        // `.iso8601` truncates to whole seconds, so a round trip through this
+        // store would silently drop sub-second precision and break equality
+        // on the decoded `Date`. `.secondsSince1970`/`.millisecondsSince1970`
+        // fare no better: converting to a 1970 epoch adds a subtraction of
+        // two large `Double`s (`timeIntervalSinceReferenceDate` minus the
+        // ~978M-second 2001 offset) that itself loses precision. `.deferredToDate`
+        // encodes `Date`'s own `timeIntervalSinceReferenceDate` verbatim, with
+        // no epoch conversion, so the round trip is exact.
+        encoder.dateEncodingStrategy = .deferredToDate
         self.encoder = encoder
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
+        decoder.dateDecodingStrategy = .deferredToDate
         self.decoder = decoder
     }
 

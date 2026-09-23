@@ -59,8 +59,8 @@ struct BatteryTimelineTests {
         let intervals = BatteryTimeline.chargingIntervals(readings)
 
         #expect(intervals.count == 1)
-        #expect(intervals.first?.start == readings[0].date)
-        #expect(intervals.first?.end == readings[2].date)
+        #expect(intervals.first?.lowerBound == readings[0].date)
+        #expect(intervals.first?.upperBound == readings[2].date)
     }
 
     @Test("Multiple gaps larger than maxGap produce one segment per contiguous run")
