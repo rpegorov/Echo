@@ -13,29 +13,20 @@ import SwiftUI
 /// Управляет иконкой в строке меню, поповером и отдельным детальным окном.
 /// Держит единственные экземпляры сервисов, общие для поповера и окна.
 @MainActor
-final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
+final class MenuBarController: NSObject, NSPopoverDelegate {
 
     private var statusItem: NSStatusItem!
     private let popover = NSPopover()
 
-    private let metrics = MetricsService()
-    private let utilities = SystemUtilitiesService()
-    private let clipboard = ClipboardService()
-    private let settings = AppSettings()
-    private let windowManager = WindowManagerService()
-    private let hotKeys = HotKeyManager()
-    private lazy var snapper = WindowSnapper(windowManager: windowManager, settings: settings)
-    private let ultraSwitch = UltraSwitchService()
-    private let translator = SelectionTranslator()
-    private let updater = UpdaterService()
-    private let detailState = DetailState()
-
-    private var detailWindow: NSWindow?
-    private var clipboardWindow: NSWindow?
-    private var preferencesWindow: NSWindow?
-
-    /// Система в режиме сна — мониторинг приостановлен.
-    private var isAsleep = false
+    private let environment: AppEnvironment
+    private lazy var windows = AppWindows(environment: environment)
+    private lazy var hotKeyRegistrar = HotKeyRegistrar(
+        settings: environment.settings,
+        windowManager: environment.windowManager,
+        ultraSwitch: environment.ultraSwitch,
+        translator: environment.translator,
+        onClipboardCommand: { [weak self] in self?.openClipboard() }
+    )
 
     /// Глобальный монитор кликов вне поповера (для закрытия по клику на экране).
     private var outsideClickMonitor: Any?
@@ -43,108 +34,59 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
     /// Подписка на метрики — только ради строки меню в режиме «Метрики».
     private var metricsObserver: AnyCancellable?
 
-    override init() {
+    convenience override init() {
+        self.init(environment: AppEnvironment())
+    }
+
+    init(environment: AppEnvironment) {
+        self.environment = environment
         super.init()
+
         setupStatusItem()
         setupPopover()
 
+        windows.onWindowClosed = { [weak self] in self?.environment.monitoring.updateMonitoringState() }
+        environment.monitoring.isUIVisible = { [weak self] in self?.isDetailUIVisible ?? false }
+        environment.monitoring.menuBarShowsMetrics = { [weak self] in self?.environment.settings.menuBarIconMode == .metrics }
+
+        let settings = environment.settings
         settings.onChange = { [weak self] in
-            self?.registerHotKeys()
+            self?.hotKeyRegistrar.registerAll()
             self?.updateSnapper()
         }
-        settings.onMonitoringChange   = { [weak self] in self?.applyMonitoring() }
+        settings.onMonitoringChange   = { [weak self] in self?.environment.monitoring.applyMonitoring() }
         settings.onAppearanceChange   = { [weak self] in self?.applyAppearance() }
         settings.onLaunchAtLoginChange = { [weak self] in self?.applyLaunchAtLogin() }
         settings.onUltraSwitchChange  = { [weak self] in self?.applyUltraSwitch() }
         settings.onMenuBarChange      = { [weak self] in
             self?.applyStatusItemAppearance()
-            self?.updateMonitoringState()
+            self?.environment.monitoring.updateMonitoringState()
         }
 
-        observePowerNotifications()
+        environment.monitoring.start()
         applyAppearance()
-        applyMonitoring()   // задаёт интервал и стартует/останавливает по политике энергосбережения
-        registerHotKeys()
+        hotKeyRegistrar.registerAll()
         updateSnapper()
         applyUltraSwitch()
     }
 
-    // MARK: - Power & monitoring policy
-
-    /// Подписка на сон/пробуждение и смену режима энергосбережения.
-    private func observePowerNotifications() {
-        let workspace = NSWorkspace.shared.notificationCenter
-        workspace.addObserver(forName: NSWorkspace.willSleepNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self, self.settings.pauseOnSleep else { return }
-                self.isAsleep = true
-                self.updateMonitoringState()
-            }
-        }
-        workspace.addObserver(forName: NSWorkspace.didWakeNotification, object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self else { return }
-                self.isAsleep = false
-                self.applyMonitoring()
-            }
-        }
-        NotificationCenter.default.addObserver(
-            forName: .NSProcessInfoPowerStateDidChange, object: nil, queue: .main
-        ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.applyMonitoring() }
-        }
-    }
-
-    /// Пересчитывает интервал опроса и решает, должен ли мониторинг работать.
-    private func applyMonitoring() {
-        metrics.setInterval(currentInterval)
-        updateMonitoringState()
-    }
-
-    /// Интервал зависит от того, на что смотрит пользователь.
-    ///
-    /// Открытый поповер или окно требуют плотного опроса, строка меню — нет:
-    /// цифрам в трее секундная точность не нужна, а опрос при закрытом
-    /// интерфейсе идёт постоянно, и на батарее это заметно.
-    private var currentInterval: Double {
-        if settings.lowPowerThrottle && ProcessInfo.processInfo.isLowPowerModeEnabled {
-            return settings.lowPowerInterval
-        }
-        return isDetailUIVisible ? settings.updateInterval : settings.menuBarInterval
-    }
+    // MARK: - Monitoring visibility
 
     /// Открыт ли поповер или одно из окон приложения.
     private var isDetailUIVisible: Bool {
-        popover.isShown || detailWindow != nil || clipboardWindow != nil
-    }
-
-    /// Запускает или останавливает опрос в зависимости от видимости UI и сна.
-    ///
-    /// Метрики в строке меню — такой же видимый интерфейс, как открытое окно:
-    /// без этого при закрытом поповере опрос вставал и в строке меню висели
-    /// цифры, замершие с прошлого открытия.
-    private func updateMonitoringState() {
-        let menuBarShowsMetrics = settings.menuBarIconMode == .metrics
-        let uiVisible = menuBarShowsMetrics || isDetailUIVisible
-        let shouldRun = !isAsleep && (!settings.pauseWhenHidden || uiVisible)
-
-        // Интервал пересчитываем здесь же: поповер открылся или закрылся —
-        // и плотность опроса должна смениться сразу, а не до следующей
-        // правки настроек.
-        metrics.setInterval(currentInterval)
-        shouldRun ? metrics.start() : metrics.stop()
+        popover.isShown || windows.isAnyWindowVisible
     }
 
     // MARK: - Appearance & login
 
     private func applyAppearance() {
-        NSApp.appearance = settings.appearanceMode.nsAppearance
+        NSApp.appearance = environment.settings.appearanceMode.nsAppearance
     }
 
     /// Регистрирует/снимает агент автозапуска под текущий флаг.
     private func applyLaunchAtLogin() {
         do {
-            if settings.launchAtLogin {
+            if environment.settings.launchAtLogin {
                 if SMAppService.mainApp.status != .enabled { try SMAppService.mainApp.register() }
             } else {
                 if SMAppService.mainApp.status == .enabled { try SMAppService.mainApp.unregister() }
@@ -156,12 +98,13 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
 
     /// Запускает/останавливает drag-to-snap по флагу Window Manager.
     private func updateSnapper() {
-        settings.windowManagerEnabled ? snapper.start() : snapper.stop()
+        environment.settings.windowManagerEnabled ? environment.snapper.start() : environment.snapper.stop()
     }
 
     /// Включает автозамену раскладки только когда включены и фича, и авторежим.
     private func applyUltraSwitch() {
-        ultraSwitch.apply(autoEnabled: settings.ultraSwitchEnabled && settings.autoConvertEnabled)
+        let settings = environment.settings
+        environment.ultraSwitch.apply(autoEnabled: settings.ultraSwitchEnabled && settings.autoConvertEnabled)
     }
 
     // MARK: - Setup
@@ -174,11 +117,11 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
         button.target = self
         button.action = #selector(togglePopover)
 
-        metricsObserver = metrics.$metrics
+        metricsObserver = environment.metrics.$metrics
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in
                 MainActor.assumeIsolated {
-                    guard let self, self.settings.menuBarIconMode == .metrics else { return }
+                    guard let self, self.environment.settings.menuBarIconMode == .metrics else { return }
                     self.applyStatusItemAppearance()
                 }
             }
@@ -188,6 +131,7 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
     /// Приводит строку меню в соответствие с настройками.
     private func applyStatusItemAppearance() {
         guard let button = statusItem.button else { return }
+        let settings = environment.settings
 
         // Ширина иконки фиксируется по самым длинным значениям: меняющаяся
         // ширина двигала бы поповер, привязанный к этой кнопке.
@@ -197,7 +141,7 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
         StatusItemPresenter.apply(
             to: button,
             mode: settings.menuBarIconMode,
-            metrics: metrics.metrics,
+            metrics: environment.metrics.metrics,
             shownMetrics: settings.menuBarMetrics,
             customIconPath: settings.customIconPath
         )
@@ -210,11 +154,11 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
         popover.delegate = self
 
         let root = ContentView(
-            metrics: metrics,
-            utilities: utilities,
-            clipboard: clipboard,
-            settings: settings,
-            ultraSwitch: ultraSwitch,
+            metrics: environment.metrics,
+            utilities: environment.utilities,
+            clipboard: environment.clipboard,
+            settings: environment.settings,
+            ultraSwitch: environment.ultraSwitch,
             onSelect: { [weak self] tab in self?.openDetail(tab) },
             onOpenClipboard: { [weak self] in self?.openClipboard() },
             onOpenPreferences: { [weak self] in self?.openPreferences() }
@@ -239,188 +183,34 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
         }
     }
 
-    // MARK: - Detail window
+    // MARK: - Windows
 
-    /// Открывает (или выводит на передний план) детальное окно для метрики.
-    /// Отдельное NSWindow вместо .sheet: поповер `.transient` закрывается при
-    /// потере фокуса, поэтому модальная презентация из него невозможна.
     private func openDetail(_ tab: MetricTab) {
-        detailState.tab = tab
         popover.performClose(nil)
-
-        if let window = detailWindow {
-            NSApp.activate(ignoringOtherApps: true)
-            window.makeKeyAndOrderFront(nil)
-            return
-        }
-
-        let root = MetricsDetailView(state: detailState, metrics: metrics)
-        let hosting = NSHostingController(rootView: root)
-
-        let window = NSWindow(contentViewController: hosting)
-        window.styleMask = [.titled, .closable, .miniaturizable, .fullSizeContentView]
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
-        window.isMovableByWindowBackground = true
-//        window.title = "Monitor Bar"
-        window.setContentSize(DS.detailSize)
-        window.contentMinSize = NSSize(width: 480, height: 420)
-        window.isReleasedWhenClosed = false
-        window.center()
-        window.delegate = self
-        detailWindow = window
-
-        NSApp.activate(ignoringOtherApps: true)
-        window.makeKeyAndOrderFront(nil)
-        updateMonitoringState()
+        windows.openDetail(tab)
+        environment.monitoring.updateMonitoringState()
     }
 
-    // MARK: - Clipboard window
-
-    /// Открывает (или выводит вперёд) окно истории буфера обмена.
     private func openClipboard() {
         popover.performClose(nil)
-
-        if let window = clipboardWindow {
-            NSApp.activate(ignoringOtherApps: true)
-            positionNearMouse(window)
-            window.makeKeyAndOrderFront(nil)
-            return
-        }
-
-        let root = ClipboardHistoryView(service: clipboard)
-        let hosting = NSHostingController(rootView: root)
-
-        let window = NSWindow(contentViewController: hosting)
-        window.styleMask = [.titled, .closable, .fullSizeContentView]
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
-        window.isMovableByWindowBackground = true
-        window.title = "Clipboard"
-        window.setContentSize(NSSize(width: 380, height: 460))
-        window.isReleasedWhenClosed = false
-        positionNearMouse(window)
-        window.delegate = self
-        clipboardWindow = window
-
-        NSApp.activate(ignoringOtherApps: true)
-        window.makeKeyAndOrderFront(nil)
-        updateMonitoringState()
+        windows.openClipboard()
+        environment.monitoring.updateMonitoringState()
     }
-
-    /// Ставит окно под курсор мыши, а не в центр экрана: историю буфера
-    /// открывают, чтобы тут же выбрать запись, и тянуться к центру неудобно.
-    private func positionNearMouse(_ window: NSWindow) {
-        let mouse = NSEvent.mouseLocation
-        let screen = NSScreen.screens.first { $0.frame.contains(mouse) } ?? NSScreen.main
-        guard let visible = screen?.visibleFrame else { return }
-
-        let size = window.frame.size
-        // Окно вешаем чуть ниже и правее курсора — так он оказывается у его
-        // верхнего края, у первой записи списка.
-        var origin = CGPoint(x: mouse.x - 24, y: mouse.y - size.height + 24)
-
-        origin.x = min(max(origin.x, visible.minX), visible.maxX - size.width)
-        origin.y = min(max(origin.y, visible.minY), visible.maxY - size.height)
-        window.setFrameOrigin(origin)
-    }
-
-    // MARK: - Hotkeys
-
-    /// Перерегистрирует глобальные хоткеи по текущим настройкам.
-    /// Оконные команды регистрируются только если включён Window Manager,
-    /// команды раскладки — только если включён Ultra Switch; clipboard — всегда.
-    private func registerHotKeys() {
-        hotKeys.unregisterAll()
-        for command in WMCommand.allCases {
-            guard let shortcut = settings.shortcut(for: command) else { continue }
-            if command.isWindowCommand && !settings.windowManagerEnabled { continue }
-            if command.isUltraSwitchCommand && !settings.ultraSwitchEnabled { continue }
-
-            if let layout = command.layout {
-                hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
-                    MainActor.assumeIsolated {
-                        guard let self else { return }
-                        self.windowManager.apply(layout, gap: CGFloat(self.settings.windowGap))
-                    }
-                }
-                continue
-            }
-
-            switch command {
-            case .switchLayout:
-                hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
-                    MainActor.assumeIsolated { self?.ultraSwitch.switchLayout() }
-                }
-            case .convertWord:
-                hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
-                    MainActor.assumeIsolated { self?.ultraSwitch.convertLastWord() }
-                }
-            case .translateSelection:
-                hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
-                    MainActor.assumeIsolated { self?.translator.translateSelection() }
-                }
-            default:
-                hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
-                    MainActor.assumeIsolated { self?.openClipboard() }
-                }
-            }
-        }
-    }
-
-    // MARK: - Preferences window
 
     private func openPreferences() {
         popover.performClose(nil)
-
-        if let window = preferencesWindow {
-            NSApp.activate(ignoringOtherApps: true)
-            window.makeKeyAndOrderFront(nil)
-            return
-        }
-
-        let root = PreferencesView(
-            settings: settings,
-            clipboard: clipboard,
-            windowManager: windowManager,
-            ultraSwitch: ultraSwitch,
-            updater: updater,
-            metrics: metrics
-        )
-        let hosting = NSHostingController(rootView: root)
-
-        let window = NSWindow(contentViewController: hosting)
-        window.styleMask = [.titled, .closable, .fullSizeContentView]
-        window.title = "Preferences"
-        window.setContentSize(NSSize(width: 720, height: 520))
-        window.isReleasedWhenClosed = false
-        window.center()
-        window.delegate = self
-        preferencesWindow = window
-
-        NSApp.activate(ignoringOtherApps: true)
-        window.makeKeyAndOrderFront(nil)
-    }
-
-    // MARK: - NSWindowDelegate
-
-    func windowWillClose(_ notification: Notification) {
-        guard let closed = notification.object as? NSWindow else { return }
-        if closed == detailWindow { detailWindow = nil }
-        if closed == clipboardWindow { clipboardWindow = nil }
-        if closed == preferencesWindow { preferencesWindow = nil }
-        updateMonitoringState()
+        windows.openPreferences()
     }
 
     // MARK: - NSPopoverDelegate
 
     func popoverDidShow(_ notification: Notification) {
-        updateMonitoringState()
+        environment.monitoring.updateMonitoringState()
         installOutsideClickMonitor()
     }
 
     func popoverDidClose(_ notification: Notification) {
-        updateMonitoringState()
+        environment.monitoring.updateMonitoringState()
         removeOutsideClickMonitor()
     }
 
