@@ -5,13 +5,23 @@
 
 import Foundation
 
-/// Strings for the popover (S1a owns cases and the Popover table).
-enum PopoverKey: LocalizedKey {
-    static var table: String { "Popover" }
+/// Strings for the popover and the clipboard history window (S1a owns cases and the Popover table).
+enum PopoverKey: String, LocalizedKey {
+    case utilitiesSectionTitle
+    case keyboardCleaningTitle
+    case keyboardCleaningPermissionHint
+    case preventSleepTitle
+    case autoLayoutFixTitle
+    case accessibilityAccessRequired
+    case inputMonitoringAccessRequired
+    case clipboardHistoryTitle
+    case openHistory
+    case clear
+    case done
+    case clipboardEmptyTitle
+    case clipboardEmptyHint
+    case clipboardImageLabel
+    case clipboardMoreFiles
 
-    var rawValue: String {
-        switch self {}
-    }
-    init?(rawValue: String) { nil }
-    static var allCases: [PopoverKey] { [] }
+    static var table: String { "Popover" }
 }
