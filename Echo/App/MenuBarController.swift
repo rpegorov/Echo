@@ -159,9 +159,9 @@ final class MenuBarController: NSObject, NSWindowDelegate, NSPopoverDelegate {
         settings.windowManagerEnabled ? snapper.start() : snapper.stop()
     }
 
-    /// Включает автозамену раскладки только когда включены и фича, и авторежим.
+    /// Автозамена раскладки не зависит от хоткеев Ultra Switch.
     private func applyUltraSwitch() {
-        ultraSwitch.apply(autoEnabled: settings.ultraSwitchEnabled && settings.autoConvertEnabled)
+        ultraSwitch.apply(autoEnabled: settings.autoConvertEnabled)
     }
 
     // MARK: - Setup

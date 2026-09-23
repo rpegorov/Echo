@@ -37,7 +37,7 @@ struct CPUProcessListView: View {
         .frame(maxHeight: .infinity)
         .task {
             while !Task.isCancelled {
-                topProcesses = await monitor.topByCPU(limit: 20)
+                topProcesses = await monitor.topByCPU(limit: 10)
                 try? await Task.sleep(for: .seconds(2))
             }
         }

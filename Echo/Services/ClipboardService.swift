@@ -15,8 +15,19 @@ final class ClipboardService: ObservableObject {
     @Published var isEnabled: Bool = false {
         didSet {
             guard oldValue != isEnabled else { return }
+            UserDefaults.standard.set(isEnabled, forKey: Self.enabledKey)
             isEnabled ? start() : stop()
         }
+    }
+
+    /// Флаг переживает перезапуск; само содержимое истории — нет.
+    private static let enabledKey = "clipboard.enabled"
+
+    /// Восстанавливает сохранённое состояние: `didSet` в init не срабатывает,
+    /// поэтому опрос буфера запускается явно.
+    init() {
+        isEnabled = UserDefaults.standard.bool(forKey: Self.enabledKey)
+        if isEnabled { start() }
     }
 
     @Published private(set) var items: [ClipboardItem] = []

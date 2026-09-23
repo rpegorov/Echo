@@ -62,11 +62,19 @@ final class SystemUtilitiesService: ObservableObject {
             Self.setFnState(stored)
             Self.log.info("Keyboard cleaning: fn row restored after abnormal exit")
         }
+        // Prevent Sleep переживает перезапуск; очистка клавиатуры — намеренно нет,
+        // иначе приложение стартовало бы с заблокированной клавиатурой.
+        // `didSet` в init не срабатывает, поэтому assertion создаётся явно.
+        preventSleepEnabled = UserDefaults.standard.bool(forKey: Self.preventSleepKey)
+        if preventSleepEnabled { enablePreventSleep() }
     }
+
+    private static let preventSleepKey = "utilities.preventSleep"
 
     @Published var preventSleepEnabled: Bool = false {
         didSet {
             guard oldValue != preventSleepEnabled else { return }
+            UserDefaults.standard.set(preventSleepEnabled, forKey: Self.preventSleepKey)
             preventSleepEnabled ? enablePreventSleep() : disablePreventSleep()
         }
     }

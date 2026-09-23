@@ -37,7 +37,7 @@ struct MemoryProcessListView: View {
         .frame(maxHeight: .infinity)
         .task {
             while !Task.isCancelled {
-                topProcesses = await monitor.topByRAM(limit: 20)
+                topProcesses = await monitor.topByRAM(limit: 10)
                 try? await Task.sleep(for: .seconds(2))
             }
         }

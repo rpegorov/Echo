@@ -40,7 +40,6 @@ struct UltraSwitchPrefsView: View {
                 }
                 .toggleStyle(.switch)
                 .tint(DS.accent)
-                .disabled(!settings.ultraSwitchEnabled)
             }
 
             PrefCard {

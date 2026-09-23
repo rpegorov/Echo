@@ -176,7 +176,7 @@ struct ContentView: View {
             }
             UtilityToggleRow(title: "Prevent Sleep", isOn: $utilities.preventSleepEnabled)
 
-            UtilityToggleRow(title: "Auto Layout Fix", isOn: autoLayoutFix)
+            UtilityToggleRow(title: "Auto Layout Fix", isOn: $settings.autoConvertEnabled)
             if ultraSwitch.status.isBlocked {
                 Button { ultraSwitch.requestAccess() } label: {
                     Text(ultraSwitch.status == .needsAccessibility
@@ -219,17 +219,6 @@ struct ContentView: View {
         .padding(.bottom, 6)
     }
 
-    /// Тумблер поповера включает автоисправление вместе с самой фичей,
-    /// а выключает только автозамену — хоткеи раскладки остаются рабочими.
-    private var autoLayoutFix: Binding<Bool> {
-        Binding(
-            get: { settings.ultraSwitchEnabled && settings.autoConvertEnabled },
-            set: { isOn in
-                if isOn { settings.ultraSwitchEnabled = true }
-                settings.autoConvertEnabled = isOn
-            }
-        )
-    }
 
     // MARK: - Footer
 
