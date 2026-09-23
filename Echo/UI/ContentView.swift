@@ -38,6 +38,12 @@ struct ContentView: View {
                     .padding(.horizontal, 12)
                     .padding(.top, 10)
 
+                if battery.hasBattery {
+                    BatteryRow(reading: battery.current, onSelect: { onSelect(.battery) })
+                        .padding(.horizontal, 12)
+                        .padding(.top, 8)
+                }
+
                 sectionDivider
                     .padding(.top, 12)
 
@@ -77,17 +83,13 @@ struct ContentView: View {
             ?? "Echo"
     }
 
-    // MARK: - Rings row (CPU / MEM / DISK / [Battery])
+    // MARK: - Rings row (CPU / MEM / DISK)
 
     private var ringsRow: some View {
         HStack(spacing: ringSpacing) {
             ringCell(.cpu)
             ringCell(.memory)
             ringCell(.disk)
-            if battery.hasBattery {
-                BatteryRingCell(reading: battery.current, action: { onSelect(.battery) })
-                    .frame(width: ringCellWidth)
-            }
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 4)
@@ -98,8 +100,8 @@ struct ContentView: View {
     /// содержимое, и смена подписи на обновлении двигала все три кольца.
     private var ringSpacing: CGFloat { 4 }
 
-    /// Число ячеек в ряду колец: 3 постоянных плюс Battery, когда есть батарея.
-    private var ringCellCount: Int { battery.hasBattery ? 4 : 3 }
+    /// Число ячеек в ряду колец: CPU / MEM / DISK.
+    private var ringCellCount: Int { 3 }
 
     private var ringCellWidth: CGFloat {
         let count = CGFloat(ringCellCount)
@@ -269,25 +271,23 @@ struct ContentView: View {
         switch tab {
         case .cpu:
             let pct = metrics.metrics.cpu.usage
-            return (pct, "\(Int(pct))", "%", "\(metrics.metrics.cpu.coreCount) cores")
+            return (pct, "\(Int(pct))", "%", RingMetricFormatter.cpuCores(metrics.metrics.cpu.coreCount, using: loc))
 
         case .memory:
-            let pct  = metrics.metrics.ram.usagePercent
-            let used = Double(metrics.metrics.ram.used)  / 1_073_741_824
-            let tot  = Double(metrics.metrics.ram.total) / 1_073_741_824
-            return (pct, "\(Int(pct))", "%", String(format: "%.0f/%.0f GB", used, tot))
+            let pct = metrics.metrics.ram.usagePercent
+            let sub = RingMetricFormatter.memoryUsage(usedBytes: metrics.metrics.ram.used, totalBytes: metrics.metrics.ram.total, using: loc)
+            return (pct, "\(Int(pct))", "%", sub)
 
         case .disk:
-            let pct  = metrics.metrics.disk.usagePercent
-            let used = ByteCountFormatter.string(fromByteCount: metrics.metrics.disk.used,  countStyle: .decimal)
-            let tot  = ByteCountFormatter.string(fromByteCount: metrics.metrics.disk.total, countStyle: .decimal)
-            return (pct, "\(Int(pct))", "%", "\(used)/\(tot)")
+            let pct = metrics.metrics.disk.usagePercent
+            let sub = RingMetricFormatter.diskUsage(usedBytes: metrics.metrics.disk.used, totalBytes: metrics.metrics.disk.total, using: loc)
+            return (pct, "\(Int(pct))", "%", sub)
 
         case .network:
             return (0, "", "", "")
 
         case .battery:
-            // Battery ring is built explicitly via BatteryRingCell — unreachable.
+            // Battery is shown as BatteryRow, not a ring — unreachable.
             return (0, "", "", "")
         }
     }

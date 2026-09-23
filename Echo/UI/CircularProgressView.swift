@@ -61,6 +61,10 @@ struct CircularProgressView: View {
                     .monospacedDigit()
                     .lineLimit(1)
                     .truncationMode(.tail)
+                    // Safety net only — the default (unscaled) text must already
+                    // fit ringCellWidth at DS.popoverWidth; this just guards
+                    // against an unusually long localized string.
+                    .minimumScaleFactor(0.8)
                     // Ширину ячейки задаёт ряд, а не длина подписи: иначе на
                     // каждом обновлении ячейки переразмерялись и кольца ползли
                     // в стороны.

@@ -72,7 +72,18 @@ private func specifierCount(_ value: String) -> Int {
 
 private struct XCStringsCatalog: Decodable {
     struct StringUnit: Decodable { let state: String }
-    struct Localization: Decodable { let stringUnit: StringUnit? }
+    struct PluralVariation: Decodable { let stringUnit: StringUnit }
+    struct PluralVariations: Decodable {
+        let one: PluralVariation?
+        let few: PluralVariation?
+        let many: PluralVariation?
+        let other: PluralVariation
+    }
+    struct Variations: Decodable { let plural: PluralVariations }
+    struct Localization: Decodable {
+        let stringUnit: StringUnit?
+        let variations: Variations?
+    }
     struct Entry: Decodable { let localizations: [String: Localization]? }
     let strings: [String: Entry]
 }
@@ -94,8 +105,20 @@ private func checkCatalog<K: LocalizedKey>(for keyType: K.Type, in tablesDir: UR
 
     for (key, entry) in catalog.strings {
         for language in ["en", "ru"] {
-            let state = entry.localizations?[language]?.stringUnit?.state
-            #expect(state == "translated", "\(K.table).xcstrings key '\(key)' is not translated for \(language)")
+            guard let localization = entry.localizations?[language] else {
+                Issue.record("\(K.table).xcstrings key '\(key)' is not translated for \(language)")
+                continue
+            }
+            if let unit = localization.stringUnit {
+                #expect(unit.state == "translated", "\(K.table).xcstrings key '\(key)' is not translated for \(language)")
+            } else if let plural = localization.variations?.plural {
+                let variants = [plural.one, plural.few, plural.many, plural.other].compactMap { $0 }
+                for variant in variants {
+                    #expect(variant.stringUnit.state == "translated", "\(K.table).xcstrings key '\(key)' has an untranslated plural variant for \(language)")
+                }
+            } else {
+                Issue.record("\(K.table).xcstrings key '\(key)' has neither a stringUnit nor plural variations for \(language)")
+            }
         }
     }
 }

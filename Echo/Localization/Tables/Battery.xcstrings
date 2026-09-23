@@ -42,6 +42,20 @@
         "en": { "stringUnit": { "state": "translated", "value": "On battery" } },
         "ru": { "stringUnit": { "state": "translated", "value": "От батареи" } }
       }
+    },
+    "onPowerAdapter": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "On power adapter" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "От сети" } }
+      }
+    },
+    "charged": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Charged" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Заряжено" } }
+      }
     }
   },
   "version": "1.0"

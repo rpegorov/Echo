@@ -57,6 +57,29 @@
         "ru": { "stringUnit": { "state": "translated", "value": "ЦП %1$.1f%%" } }
       }
     },
+    "cpuCoresCount": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": { "stringUnit": { "state": "translated", "value": "%lld core" } },
+              "other": { "stringUnit": { "state": "translated", "value": "%lld cores" } }
+            }
+          }
+        },
+        "ru": {
+          "variations": {
+            "plural": {
+              "one": { "stringUnit": { "state": "translated", "value": "%lld ядро" } },
+              "few": { "stringUnit": { "state": "translated", "value": "%lld ядра" } },
+              "many": { "stringUnit": { "state": "translated", "value": "%lld ядер" } },
+              "other": { "stringUnit": { "state": "translated", "value": "%lld ядра" } }
+            }
+          }
+        }
+      }
+    },
     "ramTooltipValue": {
       "extractionState": "manual",
       "localizations": {
@@ -69,6 +92,27 @@
       "localizations": {
         "en": { "stringUnit": { "state": "translated", "value": "%1$.0f GB" } },
         "ru": { "stringUnit": { "state": "translated", "value": "%1$.0f ГБ" } }
+      }
+    },
+    "memoryUsageGB": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "%1$.0f/%2$.0f GB" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "%1$.0f/%2$.0f ГБ" } }
+      }
+    },
+    "diskUsageGB": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "%1$.0f/%2$.0f GB" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "%1$.0f/%2$.0f ГБ" } }
+      }
+    },
+    "diskUsageTB": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "%1$@/%2$@ TB" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "%1$@/%2$@ ТБ" } }
       }
     },
     "networkTooltipTitle": {

@@ -13,6 +13,8 @@ enum BatteryKey: String, LocalizedKey {
     case currentUserProcessesFootnote
     case charging
     case onBattery
+    case onPowerAdapter
+    case charged
 
     static var table: String { "Battery" }
 }

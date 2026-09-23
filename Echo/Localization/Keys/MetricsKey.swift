@@ -17,8 +17,12 @@ enum MetricsKey: String, LocalizedKey {
     case speedUnitMB
 
     case cpuTooltipValue
+    case cpuCoresCount
     case ramTooltipValue
     case ramAxisGB
+    case memoryUsageGB
+    case diskUsageGB
+    case diskUsageTB
     case networkTooltipTitle
     case networkDownloadValue
     case networkUploadValue
