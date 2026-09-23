@@ -58,7 +58,7 @@ struct MenuBarPrefsView: View {
                 }
                 PrefCaption(loc.t(PreferencesKey.menuBarMetricsCaption))
 
-                ForEach(MetricTab.allCases, id: \.self) { tab in
+                ForEach(MetricTab.menuBarSelectable, id: \.self) { tab in
                     Toggle(isOn: binding(for: tab)) {
                         Label(loc.t(tab.titleKey), systemImage: tab.icon)
                             .font(.system(size: 12))
@@ -100,7 +100,7 @@ struct MenuBarPrefsView: View {
                 } else {
                     selected.removeAll { $0 == tab }
                 }
-                settings.menuBarMetrics = MetricTab.allCases.filter { selected.contains($0) }
+                settings.menuBarMetrics = MetricTab.menuBarSelectable.filter { selected.contains($0) }
             }
         )
     }

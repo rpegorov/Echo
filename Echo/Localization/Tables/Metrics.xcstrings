@@ -29,6 +29,13 @@
         "ru": { "stringUnit": { "state": "translated", "value": "Диск" } }
       }
     },
+    "tabBattery": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Battery" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Батарея" } }
+      }
+    },
     "speedUnitKB": {
       "extractionState": "manual",
       "localizations": {
@@ -356,6 +363,27 @@
       "localizations": {
         "en": { "stringUnit": { "state": "translated", "value": "Terminate process" } },
         "ru": { "stringUnit": { "state": "translated", "value": "Завершить процесс" } }
+      }
+    },
+    "processValueCPU": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "%1$.1f%%" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "%1$.1f%%" } }
+      }
+    },
+    "processValueMemory": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "%1$.0f MB" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "%1$.0f МБ" } }
+      }
+    },
+    "processValueEnergyShare": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "%1$.0f%%" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "%1$.0f%%" } }
       }
     }
   },

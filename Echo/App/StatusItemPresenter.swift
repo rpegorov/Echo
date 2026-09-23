@@ -101,6 +101,9 @@ struct StatusItemPresenter {
             return percent(metrics.disk.usagePercent)
         case .network:
             return "↓" + pad(SpeedFormatter.format(kbPerSec: metrics.network.download, using: localizer), to: 9)
+        case .battery:
+            // Battery isn't offered in menuBarSelectable yet — unreachable until wired.
+            return ""
         }
     }
 

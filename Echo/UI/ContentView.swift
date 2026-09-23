@@ -276,6 +276,10 @@ struct ContentView: View {
 
         case .network:
             return (0, "", "", "")
+
+        case .battery:
+            // Ring cells are built explicitly (.cpu/.memory/.disk) — unreachable until wired.
+            return (0, "", "", "")
         }
     }
 

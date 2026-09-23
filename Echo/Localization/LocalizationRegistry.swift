@@ -13,6 +13,7 @@ enum LocalizationRegistry {
         MetricsKey.self,
         PreferencesKey.self,
         InputKey.self,
-        SystemKey.self
+        SystemKey.self,
+        BatteryKey.self
     ]
 }
