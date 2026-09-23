@@ -9,21 +9,22 @@ import SwiftUI
 struct SnippetsPrefsView: View {
     @ObservedObject var store: SnippetStore
     @ObservedObject var settings: AppSettings
+    @EnvironmentObject private var loc: Localizer
 
     @State private var abbreviation = ""
     @State private var expansion = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            PrefTitle("Сниппеты")
+            PrefTitle(loc.t(InputKey.snippetsTitle))
 
             PrefCard {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Как это работает")
+                    Text(loc.t(InputKey.snippetsHowItWorksTitle))
                         .font(.system(size: 13, weight: .medium))
-                    PrefCaption("Набираете сокращение, ставите пробел — на его месте оказывается заданный текст. Регистр и раскладка не важны: «ЬЬ» найдёт сниппет «mm».")
+                    PrefCaption(loc.t(InputKey.snippetsHowItWorksCaption))
                     if !settings.autoConvertEnabled {
-                        PrefCaption("Сейчас не работает: сниппеты используют тот же перехват набора, что и автоисправление раскладки. Включите его в разделе Ultra Switch.")
+                        PrefCaption(loc.t(InputKey.snippetsDisabledWarning))
                             .foregroundStyle(.orange)
                     }
                 }
@@ -31,18 +32,18 @@ struct SnippetsPrefsView: View {
 
             PrefCard {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Новый сниппет")
+                    Text(loc.t(InputKey.snippetsNewTitle))
                         .font(.system(size: 13, weight: .medium))
                     HStack(spacing: 8) {
-                        TextField("сокращение", text: $abbreviation)
+                        TextField(loc.t(InputKey.snippetsAbbreviationPlaceholder), text: $abbreviation)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 140)
                         Image(systemName: "arrow.right")
                             .font(.system(size: 11))
                             .foregroundStyle(.tertiary)
-                        TextField("во что разворачивается", text: $expansion)
+                        TextField(loc.t(InputKey.snippetsExpansionPlaceholder), text: $expansion)
                             .textFieldStyle(.roundedBorder)
-                        Button("Добавить", action: add)
+                        Button(loc.t(InputKey.addButton), action: add)
                             .buttonStyle(.borderedProminent)
                             .tint(DS.accent)
                             .disabled(abbreviation.isEmpty || expansion.isEmpty)
@@ -52,7 +53,7 @@ struct SnippetsPrefsView: View {
 
             if store.snippets.isEmpty {
                 PrefCard {
-                    PrefCaption("Пока ни одного сниппета. Обычно сюда кладут почту, подпись, номер телефона и заготовки писем.")
+                    PrefCaption(loc.t(InputKey.snippetsEmptyCaption))
                 }
             } else {
                 PrefCard {

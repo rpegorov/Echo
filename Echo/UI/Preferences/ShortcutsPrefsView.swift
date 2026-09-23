@@ -9,6 +9,7 @@ import SwiftUI
 /// Сочетания раскладки живут в своём разделе, рядом с самой фичей.
 struct ShortcutsPrefsView: View {
     @ObservedObject var settings: AppSettings
+    @EnvironmentObject private var loc: Localizer
 
     private var windowCommands: [WMCommand] {
         WMCommand.allCases.filter { $0.isWindowCommand }
@@ -16,7 +17,7 @@ struct ShortcutsPrefsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            PrefTitle("Keyboard Shortcuts")
+            PrefTitle(loc.t(InputKey.shortcutsTitle))
 
             PrefCard {
                 VStack(spacing: 0) {
@@ -27,7 +28,7 @@ struct ShortcutsPrefsView: View {
                 }
             }
 
-            Text("Clipboard History")
+            Text(loc.t(InputKey.clipboardHistorySectionTitle))
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.tertiary)
                 .padding(.top, 6)
@@ -40,7 +41,7 @@ struct ShortcutsPrefsView: View {
 
     private func row(_ command: WMCommand) -> some View {
         HStack {
-            Text(command.title)
+            Text(loc.t(command.titleKey))
                 .font(.system(size: 13))
             Spacer()
             ShortcutRecorderView(command: command, settings: settings)

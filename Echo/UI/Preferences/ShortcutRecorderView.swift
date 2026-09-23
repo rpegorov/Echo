@@ -10,6 +10,7 @@ import SwiftUI
 struct ShortcutRecorderView: View {
     let command: WMCommand
     @ObservedObject var settings: AppSettings
+    @EnvironmentObject private var loc: Localizer
 
     @State private var recording = false
     @State private var monitor: Any?
@@ -43,8 +44,9 @@ struct ShortcutRecorderView: View {
     }
 
     private var label: String {
-        if recording { return "Press keys…" }
-        return settings.shortcut(for: command)?.displayString ?? "None"
+        if recording { return loc.t(InputKey.shortcutRecording) }
+        guard let shortcut = settings.shortcut(for: command) else { return loc.t(CommonKey.none) }
+        return shortcut.displayString(spaceName: loc.t(InputKey.keySpace))
     }
 
     private func toggleRecording() {

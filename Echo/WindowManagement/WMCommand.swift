@@ -20,22 +20,23 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
         self == .switchLayout || self == .convertWord || self == .translateSelection
     }
 
-    var title: String {
+    /// Localization key for the command's display name (Input table).
+    var titleKey: InputKey {
         switch self {
-        case .leftHalf:      return "Left Half"
-        case .rightHalf:     return "Right Half"
-        case .topHalf:       return "Top Half"
-        case .bottomHalf:    return "Bottom Half"
-        case .topLeft:       return "Top Left"
-        case .topRight:      return "Top Right"
-        case .bottomLeft:    return "Bottom Left"
-        case .bottomRight:   return "Bottom Right"
-        case .center:        return "Center"
-        case .maximize:      return "Maximize"
-        case .openClipboard: return "Open Clipboard History"
-        case .switchLayout:  return "Switch Layout"
-        case .convertWord:   return "Convert Last Word"
-        case .translateSelection: return "Перевести выделенное"
+        case .leftHalf:      return .commandLeftHalf
+        case .rightHalf:     return .commandRightHalf
+        case .topHalf:       return .commandTopHalf
+        case .bottomHalf:    return .commandBottomHalf
+        case .topLeft:       return .commandTopLeft
+        case .topRight:      return .commandTopRight
+        case .bottomLeft:    return .commandBottomLeft
+        case .bottomRight:   return .commandBottomRight
+        case .center:        return .commandCenter
+        case .maximize:      return .commandMaximize
+        case .openClipboard: return .commandOpenClipboard
+        case .switchLayout:  return .commandSwitchLayout
+        case .convertWord:   return .commandConvertWord
+        case .translateSelection: return .commandTranslateSelection
         }
     }
 

@@ -9,13 +9,14 @@ import SwiftUI
 struct WindowManagerPrefsView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var windowManager: WindowManagerService
+    @EnvironmentObject private var loc: Localizer
     let hasAXPermission: Bool
     let systemTilingEnabled: Bool
     let onDisableSystemTiling: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            PrefTitle("Window Manager")
+            PrefTitle(loc.t(InputKey.windowManagerTitle))
 
             hasAXPermission ? AnyView(permissionGranted) : AnyView(permissionMissing)
             if settings.windowManagerEnabled && systemTilingEnabled { tilingConflict }
@@ -23,9 +24,9 @@ struct WindowManagerPrefsView: View {
             PrefCard {
                 Toggle(isOn: $settings.windowManagerEnabled) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Enable Window Manager")
+                        Text(loc.t(InputKey.windowManagerEnableTitle))
                             .font(.system(size: 13, weight: .medium))
-                        PrefCaption("По умолчанию работает при перетаскивании окна; зажмите Shift, чтобы временно отключить.")
+                        PrefCaption(loc.t(InputKey.windowManagerEnableCaption))
                     }
                 }
                 .toggleStyle(.switch)
@@ -35,10 +36,10 @@ struct WindowManagerPrefsView: View {
             PrefCard {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text("Window spacing")
+                        Text(loc.t(InputKey.windowSpacingTitle))
                             .font(.system(size: 13, weight: .medium))
                         Spacer()
-                        Text("\(Int(settings.windowGap)) px")
+                        Text(loc.t(InputKey.windowSpacingValue, Int64(settings.windowGap)))
                             .font(.system(size: 12, design: .rounded))
                             .foregroundStyle(.secondary)
                     }
@@ -56,7 +57,7 @@ struct WindowManagerPrefsView: View {
             HStack(spacing: 10) {
                 Image(systemName: "checkmark.seal.fill")
                     .foregroundStyle(.green)
-                Text("Accessibility доступ выдан")
+                Text(loc.t(InputKey.accessibilityGrantedTitle))
                     .font(.system(size: 13, weight: .medium))
                 Spacer()
             }
@@ -70,17 +71,17 @@ struct WindowManagerPrefsView: View {
                     Image(systemName: "lock.shield")
                         .foregroundStyle(.orange)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Нужен доступ Accessibility")
+                        Text(loc.t(InputKey.accessibilityMissingTitle))
                             .font(.system(size: 13, weight: .medium))
-                        PrefCaption("Включите \(AppInfo.name) в System Settings → Privacy & Security → Accessibility. Статус обновится здесь автоматически.")
+                        PrefCaption(loc.t(InputKey.accessibilityMissingCaption, AppInfo.name))
                     }
                     Spacer()
                 }
                 HStack(spacing: 10) {
-                    Button("Открыть настройки") { windowManager.openAccessibilitySettings() }
+                    Button(loc.t(InputKey.openSettingsButton)) { windowManager.openAccessibilitySettings() }
                         .buttonStyle(.borderedProminent)
                         .tint(DS.accent)
-                    Button("Перезапустить приложение") { windowManager.relaunchApp() }
+                    Button(loc.t(InputKey.relaunchAppButton)) { windowManager.relaunchApp() }
                         .buttonStyle(.bordered)
                 }
             }
@@ -94,17 +95,17 @@ struct WindowManagerPrefsView: View {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(.orange)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Конфликт с тайлингом macOS")
+                        Text(loc.t(InputKey.tilingConflictTitle))
                             .font(.system(size: 13, weight: .medium))
-                        PrefCaption("Системный тайлинг macOS тоже магнитит окна к краям. Отключите его, чтобы не было конфликта.")
+                        PrefCaption(loc.t(InputKey.tilingConflictCaption))
                     }
                     Spacer()
                 }
                 HStack(spacing: 10) {
-                    Button("Отключить тайлинг macOS", action: onDisableSystemTiling)
+                    Button(loc.t(InputKey.disableSystemTilingButton), action: onDisableSystemTiling)
                         .buttonStyle(.borderedProminent)
                         .tint(DS.accent)
-                    Button("Открыть настройки") { windowManager.openTilingSettings() }
+                    Button(loc.t(InputKey.openSettingsButton)) { windowManager.openTilingSettings() }
                         .buttonStyle(.bordered)
                 }
             }

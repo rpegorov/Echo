@@ -28,25 +28,38 @@ struct KeyboardShortcut: Codable, Equatable {
         return carbon
     }
 
-    /// Человекочитаемая запись, напр. "⌃⌘←".
+    /// Человекочитаемая запись для логов, напр. "⌃⌘←". Не для UI — "Space" не переведено.
+    // l10n-exempt: log-only, kept stable for diagnostics regardless of app language
     var displayString: String {
+        modifierGlyphs + Self.keySymbol(keyCode)
+    }
+
+    /// UI-facing rendering: the spelled-out key name (currently only "Space") is
+    /// supplied by the caller through `Localizer`, so the label follows the app language.
+    func displayString(spaceName: String) -> String {
+        modifierGlyphs + Self.keySymbol(keyCode, spaceName: spaceName)
+    }
+
+    private var modifierGlyphs: String {
         let flags = NSEvent.ModifierFlags(rawValue: UInt(modifiers))
         var result = ""
         if flags.contains(.control) { result += "⌃" }
         if flags.contains(.option)  { result += "⌥" }
         if flags.contains(.shift)   { result += "⇧" }
         if flags.contains(.command) { result += "⌘" }
-        result += Self.keySymbol(keyCode)
         return result
     }
 
-    /// Символ клавиши по виртуальному keyCode (ANSI-раскладка).
-    static func keySymbol(_ code: UInt32) -> String {
+    /// Символ клавиши по виртуальному keyCode (ANSI-раскладка). `spaceName` overrides the
+    /// spelled-out name for the Space key when rendering for UI; omit it for logs.
+    static func keySymbol(_ code: UInt32, spaceName: String? = nil) -> String {
+        if code == 49, let spaceName { return spaceName }
         if let special = specialKeys[code] { return special }
         if let letter = ansiKeys[code] { return letter }
         return "?"
     }
 
+    // l10n-exempt: log-only fallback keyed by physical key code, not user-facing UI
     private static let specialKeys: [UInt32: String] = [
         123: "←", 124: "→", 125: "↓", 126: "↑",
         36: "↩", 48: "⇥", 49: "Space", 51: "⌫", 53: "⎋", 76: "⌅"
