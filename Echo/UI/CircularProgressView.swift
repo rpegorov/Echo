@@ -56,8 +56,8 @@ struct CircularProgressView: View {
                     .padding(.top, 8)
 
                 Text(subLabel)
-                    .font(.system(size: 9))
-                    .foregroundStyle(.tertiary)
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundStyle(.secondary)
                     .monospacedDigit()
                     .lineLimit(1)
                     .truncationMode(.tail)
