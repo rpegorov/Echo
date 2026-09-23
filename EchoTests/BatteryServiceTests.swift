@@ -262,6 +262,29 @@ struct BatteryServiceTests {
         #expect(store.appendedIntervals.count == 1)
     }
 
+    @Test("Three snapshots across two ticks append two EnergyIntervals with their own totals")
+    func threeSnapshotsTwoTicksAppendTwoIntervals() async {
+        let store = FakeBatteryHistoryStore()
+        let sleeper = FakeTickSleeper()
+        // Baseline (0), then one snapshot per tick with continued drain
+        // (0 -> 100 -> 250): each tick must append its own interval, sized to
+        // the delta since the previous snapshot, not just the first tick.
+        let energy = FakeProcessEnergyReading([
+            Fixtures.snapshot(0, machTime: 0),
+            Fixtures.snapshot(100, machTime: 1),
+            Fixtures.snapshot(250, machTime: 2),
+        ])
+        let service = makeService(store: store, energy: energy, sleeper: sleeper)
+
+        service.start()
+        await sleeper.waitUntilWaitingForSleep()
+        await sleeper.advanceOneTick()
+        await sleeper.advanceOneTick()
+
+        #expect(store.appendedIntervals.count == 2)
+        #expect(store.appendedIntervals.map(\.totalEnergyNJ) == [100, 150])
+    }
+
     @Test("On AC power, ticks never append an EnergyInterval")
     func onACTicksAppendNoIntervals() async {
         let store = FakeBatteryHistoryStore()
@@ -304,6 +327,27 @@ struct BatteryServiceTests {
     }
 
     // MARK: Negative
+
+    @Test("After stop(), a power-source change delivered via the observer's stored callback appends nothing")
+    func powerSourceChangeAfterStopAppendsNothing() async {
+        let store = FakeBatteryHistoryStore()
+        let sleeper = FakeTickSleeper()
+        let observer = FakePowerSourceObserving()
+        let service = makeService(store: store, observer: observer, sleeper: sleeper)
+
+        service.start()
+        await sleeper.waitUntilWaitingForSleep()
+        service.stop()
+
+        let readingsBefore = store.appendedReadings.count
+        // Simulates the IOKit callback firing after stop() has already run
+        // (the fake keeps its own reference to the closure, unlike the real
+        // observer which drops it in stop()).
+        observer.fireChange()
+        for _ in 0..<5 { await Task.yield() }
+
+        #expect(store.appendedReadings.count == readingsBefore)
+    }
 
     @Test("hasBattery == false: start() does nothing — no observer, no ticks, no store access")
     func noBatteryStartIsNoOp() async {

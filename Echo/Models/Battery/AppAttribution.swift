@@ -13,6 +13,8 @@ enum AppAttribution {
     // A `Mutex`-protected cache: no `nonisolated(unsafe)` escape hatch needed,
     // since `Mutex` itself is the synchronization primitive (Synchronization
     // framework, macOS 15+).
+    // Intentionally unbounded: keyed by installed `.app` bundle paths, a
+    // finite set on any given Mac, so it cannot grow without bound.
     private static let cache = Mutex<[String: (name: String, bundleID: String?)]>([:])
 
     /// - Parameters:

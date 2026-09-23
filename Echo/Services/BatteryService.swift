@@ -32,6 +32,13 @@ final class BatteryService: ObservableObject {
     private var energyBaseline: ProcessEnergySnapshot?
     private var lastCompactDate: Date?
 
+    /// Owns power-source-change processing: the IOKit callback only enqueues,
+    /// this single consumer task drains one at a time, so changes stay
+    /// serialized and `stop()` can cancel every in-flight one instead of
+    /// leaving untracked `Task`s that could append after shutdown.
+    private var powerChangeContinuation: AsyncStream<Void>.Continuation?
+    private var powerChangeConsumerTask: Task<Void, Never>?
+
     init(
         power: PowerSourceReading,
         observer: PowerSourceObserving,
@@ -68,6 +75,11 @@ final class BatteryService: ObservableObject {
         runLoopTask?.cancel()
         runLoopTask = nil
         observer.stop()
+
+        powerChangeContinuation?.finish()
+        powerChangeContinuation = nil
+        powerChangeConsumerTask?.cancel()
+        powerChangeConsumerTask = nil
     }
 
     // MARK: - Startup
@@ -82,12 +94,23 @@ final class BatteryService: ObservableObject {
         }
         guard !Task.isCancelled else { return }
 
+        startPowerChangeConsumer()
         observer.start { [weak self] in
             self?.handlePowerSourceChange()
         }
 
         lastCompactDate = now()
         await runTickLoop()
+    }
+
+    private func startPowerChangeConsumer() {
+        let (stream, continuation) = AsyncStream<Void>.makeStream()
+        powerChangeContinuation = continuation
+        powerChangeConsumerTask = Task { [weak self] in
+            for await _ in stream {
+                await self?.processPowerSourceChange()
+            }
+        }
     }
 
     private func loadInitialHistory() async {
@@ -103,12 +126,14 @@ final class BatteryService: ObservableObject {
     // MARK: - Power-source change
 
     private func handlePowerSourceChange() {
-        Task { [weak self] in
-            await self?.processPowerSourceChange()
-        }
+        powerChangeContinuation?.yield()
     }
 
     private func processPowerSourceChange() async {
+        // Defends against a change that was already enqueued when stop() ran:
+        // the stream is drained cooperatively, so a pending yield can still
+        // reach here after `runLoopTask` was cleared.
+        guard runLoopTask != nil else { return }
         guard let reading = power.read() else { return }
         let previous = current
         current = reading
