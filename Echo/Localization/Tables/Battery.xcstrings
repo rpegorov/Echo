@@ -4,29 +4,29 @@
     "noDataYet": {
       "extractionState": "manual",
       "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "No data yet" } },
-        "ru": { "stringUnit": { "state": "translated", "value": "Пока нет данных" } }
+        "en": { "stringUnit": { "state": "translated", "value": "No battery data yet" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Данных о батарее пока нет" } }
       }
     },
     "chargingNoDrain": {
       "extractionState": "manual",
       "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Charging — no drain data for this moment" } },
-        "ru": { "stringUnit": { "state": "translated", "value": "Идёт зарядка — данных о расходе для этого момента нет" } }
+        "en": { "stringUnit": { "state": "translated", "value": "No drain data while charging" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Нет данных о расходе во время зарядки" } }
       }
     },
     "storageError": {
       "extractionState": "manual",
       "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Couldn't read battery history: %1$@" } },
-        "ru": { "stringUnit": { "state": "translated", "value": "Не удалось прочитать историю батареи: %1$@" } }
+        "en": { "stringUnit": { "state": "translated", "value": "Battery history error: %1$@" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Ошибка истории батареи: %1$@" } }
       }
     },
     "currentUserProcessesFootnote": {
       "extractionState": "manual",
       "localizations": {
-        "en": { "stringUnit": { "state": "translated", "value": "Shows only the current user's processes" } },
-        "ru": { "stringUnit": { "state": "translated", "value": "Показаны только процессы текущего пользователя" } }
+        "en": { "stringUnit": { "state": "translated", "value": "Processes of the current user" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Процессы текущего пользователя" } }
       }
     },
     "charging": {
