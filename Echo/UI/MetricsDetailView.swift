@@ -50,7 +50,7 @@ struct MetricsDetailView: View {
     private var tabBar: some View {
         Group {
             HStack(spacing: 4) {
-                ForEach(MetricTab.allCases, id: \.self) { tab in
+                ForEach(MetricTab.visibleCases(hasBattery: false), id: \.self) { tab in
                     Button {
                         withAnimation(.easeInOut(duration: 0.2)) { state.tab = tab }
                     } label: {
@@ -103,6 +103,7 @@ struct MetricsDetailView: View {
         case .memory:  MemoryChartView(history: metrics.ramHistory, timestamps: metrics.historyDates, samples: metrics.resourceHistory)
         case .network: NetworkChartView(history: metrics.networkHistory, timestamps: metrics.historyDates)
         case .disk:    DiskUsageBarView(used: metrics.metrics.disk.used, total: metrics.metrics.disk.total)
+        case .battery: EmptyView() // battery.detailTab — not wired yet, see UnwiredCapabilities
         }
     }
 
@@ -113,6 +114,7 @@ struct MetricsDetailView: View {
         case .memory:  MemoryProcessListView(searchText: searchText)
         case .network: NetworkStatsView(current: metrics.metrics.network, history: metrics.networkHistory)
         case .disk:    DiskDetailView(diskUsed: metrics.metrics.disk.used, diskTotal: metrics.metrics.disk.total)
+        case .battery: EmptyView() // battery.detailTab — not wired yet, see UnwiredCapabilities
         }
     }
 }

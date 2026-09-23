@@ -186,6 +186,7 @@ final class AppSettings: ObservableObject {
             .flatMap(MenuBarIconMode.init(rawValue:))) ?? .appIcon
         menuBarMetrics = (defaults.stringArray(forKey: Keys.menuBarMetrics) ?? ["CPU"])
             .compactMap(MetricTab.init(rawValue:))
+            .filter { MetricTab.menuBarSelectable.contains($0) }
         customIconPath = defaults.string(forKey: Keys.menuBarIconPath)
         menuBarInterval = defaults.object(forKey: Keys.menuBarInterval) as? Double ?? 5.0
 

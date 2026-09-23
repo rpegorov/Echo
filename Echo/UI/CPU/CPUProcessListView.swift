@@ -27,7 +27,7 @@ struct CPUProcessListView: View {
                 ScrollView {
                     LazyVStack(spacing: 3) {
                         ForEach(Array(filtered.enumerated()), id: \.element.id) { index, process in
-                            ProcessRowView(rank: index + 1, name: process.name, value: process.value, showCPU: true) {
+                            ProcessRowView(rank: index + 1, name: process.name, value: .cpuPercent(process.value)) {
                                 Task { _ = await monitor.terminate(pid: process.pid) }
                             }
                         }

@@ -1,0 +1,48 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "noDataYet": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "No data yet" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Пока нет данных" } }
+      }
+    },
+    "chargingNoDrain": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Charging — no drain data for this moment" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Идёт зарядка — данных о расходе для этого момента нет" } }
+      }
+    },
+    "storageError": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Couldn't read battery history: %1$@" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Не удалось прочитать историю батареи: %1$@" } }
+      }
+    },
+    "currentUserProcessesFootnote": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Shows only the current user's processes" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Показаны только процессы текущего пользователя" } }
+      }
+    },
+    "charging": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Charging" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Зарядка" } }
+      }
+    },
+    "onBattery": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "On battery" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "От батареи" } }
+      }
+    }
+  },
+  "version": "1.0"
+}

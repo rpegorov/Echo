@@ -11,6 +11,7 @@ enum MetricsKey: String, LocalizedKey {
     case tabMemory
     case tabNetwork
     case tabDisk
+    case tabBattery
 
     case speedUnitKB
     case speedUnitMB
@@ -66,6 +67,10 @@ enum MetricsKey: String, LocalizedKey {
 
     case terminateProcessHelp
 
+    case processValueCPU
+    case processValueMemory
+    case processValueEnergyShare
+
     static var table: String { "Metrics" }
 }
 
@@ -77,6 +82,7 @@ extension MetricTab {
         case .memory:  return .tabMemory
         case .network: return .tabNetwork
         case .disk:    return .tabDisk
+        case .battery: return .tabBattery
         }
     }
 }
