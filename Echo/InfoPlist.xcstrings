@@ -1,0 +1,40 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "NSAppleEventsUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Echo needs access to control your keyboard for the Keyboard Cleaning feature."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Echo нужен доступ к управлению клавиатурой для функции очистки клавиатуры."
+          }
+        }
+      }
+    },
+    "NSSystemAdministrationUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Echo needs accessibility access to enable Keyboard Cleaning and Prevent Sleep features."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Echo нужен доступ для универсального доступа, чтобы включить функции очистки клавиатуры и предотвращения сна."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

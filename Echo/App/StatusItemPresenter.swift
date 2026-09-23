@@ -26,8 +26,11 @@ struct StatusItemPresenter {
         mode: MenuBarIconMode,
         metrics: SystemMetrics,
         shownMetrics: [MetricTab],
-        customIconPath: String?
+        customIconPath: String?,
+        localizer: Localizer
     ) {
+        button.setAccessibilityLabel(localizer.t(SystemKey.statusItemAccessibilityDescription))
+
         switch mode {
         case .appIcon:
             button.attributedTitle = NSAttributedString(string: "")
