@@ -39,8 +39,11 @@ final class UpdaterService: ObservableObject {
     private var cancellable: AnyCancellable?
 
     init() {
+        // startingUpdater: false — конструктор не должен иметь побочных эффектов,
+        // чтобы AppEnvironment можно было создавать в тестах напрямую. Реальный
+        // запуск — через start(), вызываемый только при настоящем старте приложения.
         controller = SPUStandardUpdaterController(
-            startingUpdater: true,
+            startingUpdater: false,
             updaterDelegate: nil,
             userDriverDelegate: nil
         )
@@ -52,6 +55,12 @@ final class UpdaterService: ObservableObject {
             .sink { [weak self] value in
                 MainActor.assumeIsolated { self?.canCheck = value }
             }
+    }
+
+    /// Запускает Sparkle и планирует фоновые проверки обновлений. Вызывать
+    /// только при настоящем запуске приложения, не в тестах.
+    func start() {
+        controller.startUpdater()
     }
 
     /// Ручная проверка: показывает окно Sparkle даже если обновлений нет.

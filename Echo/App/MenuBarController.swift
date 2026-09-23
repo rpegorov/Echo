@@ -34,14 +34,11 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
     /// Подписка на метрики — только ради строки меню в режиме «Метрики».
     private var metricsObserver: AnyCancellable?
 
-    convenience override init() {
-        self.init(environment: AppEnvironment())
-    }
-
     init(environment: AppEnvironment) {
         self.environment = environment
         super.init()
 
+        environment.updater.start()
         setupStatusItem()
         setupPopover()
 
@@ -162,7 +159,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
             onOpenClipboard: { [weak self] in self?.openClipboard() },
             onOpenPreferences: { [weak self] in self?.openPreferences() }
         )
-        let hosting = NSHostingController(rootView: root)
+        let hosting = HostingFactory.make(root, localizer: environment.localizer)
         hosting.view.wantsLayer = true
         popover.contentViewController = hosting
     }

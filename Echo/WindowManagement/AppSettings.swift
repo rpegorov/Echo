@@ -104,6 +104,13 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(appearanceMode.rawValue, forKey: Keys.appearance); onAppearanceChange?() }
     }
 
+    // MARK: - Language
+
+    /// Выбор языка интерфейса: следовать системе или зафиксированный язык.
+    @Published var language: LanguagePreference {
+        didSet { defaults.set(language.rawValue, forKey: Keys.language); onLanguageChange?() }
+    }
+
     /// Вызывается при изменении набора хоткеев или флага включения — для перерегистрации.
     var onChange: (@MainActor () -> Void)?
     /// Изменения, влияющие на цикл мониторинга (интервал, паузы, троттлинг).
@@ -116,6 +123,8 @@ final class AppSettings: ObservableObject {
     var onUltraSwitchChange: (@MainActor () -> Void)?
     /// Изменение оформления строки меню.
     var onMenuBarChange: (@MainActor () -> Void)?
+    /// Изменение выбора языка интерфейса.
+    var onLanguageChange: (@MainActor () -> Void)?
 
     private let defaults: UserDefaults
 
@@ -136,6 +145,7 @@ final class AppSettings: ObservableObject {
         static let menuBarMetrics = "menuBar.metrics"
         static let menuBarIconPath = "menuBar.iconPath"
         static let menuBarInterval = "menuBar.interval"
+        static let language = "general.language"
     }
 
     /// Текущая версия набора хоткеев. При росте — в сохранённый набор
@@ -166,6 +176,10 @@ final class AppSettings: ObservableObject {
         // Appearance
         appearanceMode = (defaults.string(forKey: Keys.appearance)
             .flatMap(AppearanceMode.init(rawValue:))) ?? .system
+
+        // Language
+        language = (defaults.string(forKey: Keys.language)
+            .flatMap(LanguagePreference.init(rawValue:))) ?? .system
 
         // Menu Bar
         menuBarIconMode = (defaults.string(forKey: Keys.menuBarMode)

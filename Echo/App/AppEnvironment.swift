@@ -22,11 +22,12 @@ final class AppEnvironment {
     let translator: SelectionTranslator
     let updater: UpdaterService
     let detailState: DetailState
+    let localizer: Localizer
 
     lazy var snapper = WindowSnapper(windowManager: windowManager, settings: settings)
     let monitoring: MonitoringCoordinator
 
-    init(defaults: UserDefaults = .standard) {
+    init(defaults: UserDefaults = .standard, system: SystemLanguages = .live) {
         settings = AppSettings(defaults: defaults)
         metrics = MetricsService()
         utilities = SystemUtilitiesService()
@@ -36,6 +37,12 @@ final class AppEnvironment {
         translator = SelectionTranslator()
         updater = UpdaterService()
         detailState = DetailState()
+        localizer = Localizer(preference: settings.language, system: system)
         monitoring = MonitoringCoordinator(settings: settings, metrics: metrics)
+
+        settings.onLanguageChange = { [weak self] in
+            guard let self else { return }
+            self.localizer.apply(self.settings.language)
+        }
     }
 }

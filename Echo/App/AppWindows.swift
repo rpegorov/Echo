@@ -48,7 +48,7 @@ final class AppWindows: NSObject, NSWindowDelegate {
         }
 
         let root = MetricsDetailView(state: environment.detailState, metrics: environment.metrics)
-        let hosting = NSHostingController(rootView: root)
+        let hosting = HostingFactory.make(root, localizer: environment.localizer)
 
         let window = NSWindow(contentViewController: hosting)
         window.styleMask = [.titled, .closable, .miniaturizable, .fullSizeContentView]
@@ -78,7 +78,7 @@ final class AppWindows: NSObject, NSWindowDelegate {
         }
 
         let root = ClipboardHistoryView(service: environment.clipboard)
-        let hosting = NSHostingController(rootView: root)
+        let hosting = HostingFactory.make(root, localizer: environment.localizer)
 
         let window = NSWindow(contentViewController: hosting)
         window.styleMask = [.titled, .closable, .fullSizeContentView]
@@ -130,7 +130,7 @@ final class AppWindows: NSObject, NSWindowDelegate {
             updater: environment.updater,
             metrics: environment.metrics
         )
-        let hosting = NSHostingController(rootView: root)
+        let hosting = HostingFactory.make(root, localizer: environment.localizer)
 
         let window = NSWindow(contentViewController: hosting)
         window.styleMask = [.titled, .closable, .fullSizeContentView]

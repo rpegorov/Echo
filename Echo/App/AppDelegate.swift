@@ -24,7 +24,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     /// Инициализирует контроллер строки меню, кроме случая запуска под тестами
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard !isRunningAsTestHost else { return }
-        menuBarController = MenuBarController()
+        menuBarController = MenuBarController(environment: AppEnvironment())
         isComposed = true
     }
 
