@@ -78,7 +78,10 @@ final class AppWindows: NSObject, NSWindowDelegate {
             return
         }
 
-        let root = ClipboardHistoryView(service: environment.clipboard)
+        let root = ClipboardHistoryView(
+            service: environment.clipboard,
+            onClose: { [weak self] in self?.clipboardWindow?.close() }
+        )
         let hosting = HostingFactory.make(root, localizer: environment.localizer)
 
         let window = NSWindow(contentViewController: hosting)

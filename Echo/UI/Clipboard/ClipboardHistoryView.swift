@@ -8,7 +8,9 @@ import SwiftUI
 
 struct ClipboardHistoryView: View {
     @ObservedObject var service: ClipboardService
-    @Environment(\.dismiss) private var dismiss
+    /// Закрывает окно истории: `dismiss` из окружения не действует на NSWindow
+    /// с NSHostingController, поэтому владелец окна передаёт закрытие явно.
+    let onClose: () -> Void
     @EnvironmentObject private var loc: Localizer
 
     var body: some View {
@@ -37,7 +39,7 @@ struct ClipboardHistoryView: View {
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
                 .disabled(service.items.isEmpty)
-            Button(loc.t(PopoverKey.done)) { dismiss() }
+            Button(loc.t(PopoverKey.done)) { onClose() }
                 .buttonStyle(.plain)
                 .foregroundStyle(DS.accent)
         }
@@ -72,7 +74,7 @@ struct ClipboardHistoryView: View {
                 ForEach(service.items) { item in
                     Button {
                         service.copyToClipboard(item)
-                        dismiss()
+                        onClose()
                     } label: {
                         row(item)
                     }
