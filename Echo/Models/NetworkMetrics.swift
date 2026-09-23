@@ -7,12 +7,6 @@ struct NetworkMetrics: Sendable {
     /// Скорость исходящего трафика, KB/s.
     var upload: Double = 0
 
-    var downloadFormatted: String { formatSpeed(download) }
-    var uploadFormatted: String { formatSpeed(upload) }
-
-    private func formatSpeed(_ speed: Double) -> String {
-        speed < 1024
-            ? String(format: "%.1f KB/s", speed)
-            : String(format: "%.2f MB/s", speed / 1024)
-    }
+    var downloadFormatted: String { SpeedFormatter.string(forKBPerSec: download) }
+    var uploadFormatted: String { SpeedFormatter.string(forKBPerSec: upload) }
 }

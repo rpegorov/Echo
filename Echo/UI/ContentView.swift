@@ -143,7 +143,7 @@ struct ContentView: View {
             Image(systemName: icon)
                 .font(.system(size: 9, weight: .bold))
                 .foregroundStyle(color)
-            Text(formatSpeed(value))
+            Text(SpeedFormatter.string(forKBPerSec: value))
                 .font(.system(size: 11, weight: .medium, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(.primary)
@@ -279,12 +279,6 @@ struct ContentView: View {
     }
 
     /// Форматирует скорость (вход в КБ/с) в КБ/с или МБ/с.
-    private func formatSpeed(_ kbPerSec: Double) -> String {
-        if kbPerSec >= 1024 {
-            return String(format: "%.1f MB/s", kbPerSec / 1024)
-        }
-        return String(format: "%.0f KB/s", kbPerSec)
-    }
 }
 
 // MARK: - UtilityToggleRow
