@@ -11,6 +11,7 @@ import SwiftUI
 struct MetricsDetailView: View {
     @ObservedObject var state: DetailState
     @ObservedObject var metrics: MetricsService
+    @EnvironmentObject private var loc: Localizer
 
     @State private var searchText: String = ""
 
@@ -56,7 +57,7 @@ struct MetricsDetailView: View {
                         HStack(spacing: 6) {
                             Image(systemName: tab.icon)
                                 .font(.system(size: 12, weight: .medium))
-                            Text(tab.rawValue)
+                            Text(loc.t(tab.titleKey))
                                 .font(.system(size: 13, weight: .medium))
                         }
                         .foregroundStyle(state.tab == tab ? DS.accent : .secondary)
@@ -84,7 +85,7 @@ struct MetricsDetailView: View {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
                 .font(.system(size: 13))
-            TextField("Search process", text: $searchText)
+            TextField(loc.t(CommonKey.searchProcess), text: $searchText)
                 .textFieldStyle(.plain)
                 .font(.system(size: 13))
         }

@@ -9,6 +9,7 @@ struct NetworkChartView: View {
     let history: [(download: Double, upload: Double)]
     let timestamps: [Date]
     @State private var hoverIndex: Int?
+    @EnvironmentObject private var loc: Localizer
     private var maxValue: Double {
         let maxDl = history.map(\.download).max() ?? 1
         let maxUl = history.map(\.upload).max() ?? 1
@@ -31,7 +32,10 @@ struct NetworkChartView: View {
                     yAxisLabels(size: geometry.size, maxValue: maxValue)
                     legend
                     if let hoverIndex, timestamps.indices.contains(hoverIndex), history.indices.contains(hoverIndex) {
-                        ChartTooltip(timestamp: timestamps[hoverIndex], title: "Network", details: [String(format: "↓ %.1f KB/s", history[hoverIndex].download), String(format: "↑ %.1f KB/s", history[hoverIndex].upload)])
+                        ChartTooltip(timestamp: timestamps[hoverIndex], title: loc.t(MetricsKey.networkTooltipTitle), details: [
+                            loc.t(MetricsKey.networkDownloadValue, SpeedFormatter.format(kbPerSec: history[hoverIndex].download, using: loc)),
+                            loc.t(MetricsKey.networkUploadValue, SpeedFormatter.format(kbPerSec: history[hoverIndex].upload, using: loc))
+                        ])
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                             .padding(8)
                     }
@@ -87,7 +91,7 @@ struct NetworkChartView: View {
         let step = maxValue / 4
         let items = (0..<5).map { i in
             let value = maxValue - step * Double(i)
-            return String(format: "%.0f KB/s", value)
+            return SpeedFormatter.format(kbPerSec: value, using: loc)
         }
         return VStack(alignment: .leading, spacing: 0) {
             ForEach(items.indices, id: \.self) { i in
@@ -116,8 +120,8 @@ struct NetworkChartView: View {
 
     private var legend: some View {
         VStack(alignment: .leading, spacing: 4) {
-            legendRow(color: .blue,  label: "↓ Download")
-            legendRow(color: .green, label: "↑ Upload")
+            legendRow(color: .blue,  label: loc.t(MetricsKey.networkLegendDownload))
+            legendRow(color: .green, label: loc.t(MetricsKey.networkLegendUpload))
         }
         .padding(8)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: DS.cornerSM))

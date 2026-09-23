@@ -14,23 +14,8 @@ enum MoleCommand: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var title: String {
-        switch self {
-        case .clean:     return "Deep Clean"
-        case .purge:     return "Dev Artifacts"
-        case .analyze:   return "Analyze Disk"
-        case .uninstall: return "Uninstall Apps"
-        }
-    }
-
-    var subtitle: String {
-        switch self {
-        case .clean:     return "Кэши, логи, временные файлы, хвосты удалённых приложений"
-        case .purge:     return "node_modules, DerivedData, target, build, dist"
-        case .analyze:   return "Визуальный обзор, что занимает место"
-        case .uninstall: return "Удаление приложений вместе с их данными"
-        }
-    }
+    /// Localized title/subtitle live in `MetricsKey` (`titleKey`/`subtitleKey`)
+    /// next to the rest of the Metrics table's keys.
 
     var icon: String {
         switch self {

@@ -15,6 +15,7 @@ struct DiskDetailView: View {
     @State private var isLoading = true
     @State private var processMonitor = ProcessMonitor()
     @State private var showCleanup = false
+    @EnvironmentObject private var loc: Localizer
 
     var diskUsagePercent: Double {
         guard diskTotal > 0 else { return 0 }
@@ -29,20 +30,20 @@ struct DiskDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             // Компактная сводка одной строкой — процент уже виден в баре сверху.
             HStack(spacing: 10) {
-                summaryStat("Used",  ByteCountFormatter.string(fromByteCount: diskUsed,  countStyle: .file))
-                summaryStat("Free",  ByteCountFormatter.string(fromByteCount: diskFree,  countStyle: .file))
-                summaryStat("Total", ByteCountFormatter.string(fromByteCount: diskTotal, countStyle: .file))
+                summaryStat(loc.t(MetricsKey.diskStatUsed),  ByteCountFormatter.string(fromByteCount: diskUsed,  countStyle: .file))
+                summaryStat(loc.t(MetricsKey.diskStatFree),  ByteCountFormatter.string(fromByteCount: diskFree,  countStyle: .file))
+                summaryStat(loc.t(MetricsKey.diskStatTotal), ByteCountFormatter.string(fromByteCount: diskTotal, countStyle: .file))
             }
 
             HStack {
-                Text("Top 10 Largest Files")
+                Text(loc.t(MetricsKey.diskTopLargestFiles))
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.secondary)
                 Spacer()
                 Button {
                     showCleanup = true
                 } label: {
-                    Label("Clean system…", systemImage: "sparkles")
+                    Label(loc.t(MetricsKey.diskCleanSystemButton), systemImage: "sparkles")
                         .font(.system(size: 12, weight: .medium))
                 }
                 .buttonStyle(.borderedProminent)
@@ -52,11 +53,11 @@ struct DiskDetailView: View {
             // Список заполняет всё оставшееся пространство.
             Group {
                 if isLoading {
-                    Text("Loading...")
+                    Text(loc.t(CommonKey.loading))
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 } else if topFiles.isEmpty {
-                    Text("No large files found")
+                    Text(loc.t(MetricsKey.diskNoLargeFiles))
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 } else {
@@ -126,6 +127,7 @@ struct FileRowView: View {
     let file: FileInfo
     let onReveal: () -> Void
     let onTrash: () -> Void
+    @EnvironmentObject private var loc: Localizer
 
     var body: some View {
         Button(action: onReveal) {
@@ -169,10 +171,10 @@ struct FileRowView: View {
         }
         .buttonStyle(.plain)
         .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: DS.cornerSM))
-        .help("Открыть в Finder")
+        .help(loc.t(MetricsKey.diskRevealHelp))
         .contextMenu {
-            Button { onReveal() } label: { Label("Show in Finder", systemImage: "folder") }
-            Button(role: .destructive) { onTrash() } label: { Label("Move to Trash", systemImage: "trash") }
+            Button { onReveal() } label: { Label(loc.t(MetricsKey.diskShowInFinder), systemImage: "folder") }
+            Button(role: .destructive) { onTrash() } label: { Label(loc.t(MetricsKey.diskMoveToTrash), systemImage: "trash") }
         }
     }
 

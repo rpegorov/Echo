@@ -8,6 +8,7 @@ import SwiftUI
 struct DiskUsageBarView: View {
     let used: Int64
     let total: Int64
+    @EnvironmentObject private var loc: Localizer
 
     private var fraction: Double {
         guard total > 0 else { return 0 }
@@ -24,7 +25,7 @@ struct DiskUsageBarView: View {
                     .frame(width: geometry.size.width * fraction)
                 HStack {
                     Spacer()
-                    Text(String(format: "%.1f%% used", fraction * 100))
+                    Text(loc.t(MetricsKey.diskUsedPercent, fraction * 100))
                         .font(.system(size: 14, weight: .semibold))
                     Spacer()
                 }

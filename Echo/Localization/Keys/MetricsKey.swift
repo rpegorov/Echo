@@ -12,6 +12,60 @@ enum MetricsKey: String, LocalizedKey {
     case tabNetwork
     case tabDisk
 
+    case speedUnitKB
+    case speedUnitMB
+
+    case cpuTooltipValue
+    case ramTooltipValue
+    case ramAxisGB
+    case networkTooltipTitle
+    case networkDownloadValue
+    case networkUploadValue
+    case networkLegendDownload
+    case networkLegendUpload
+
+    case networkStatDownload
+    case networkStatUpload
+    case networkStatPeakDown
+    case networkStatPeakUp
+    case networkStatAvgDown
+    case networkStatAvgUp
+
+    case diskUsedPercent
+    case diskStatUsed
+    case diskStatFree
+    case diskStatTotal
+    case diskTopLargestFiles
+    case diskCleanSystemButton
+    case diskNoLargeFiles
+    case diskShowInFinder
+    case diskMoveToTrash
+    case diskRevealHelp
+
+    case moleTitle
+    case moleDone
+    case moleSearching
+    case moleNotInstalledTitle
+    case moleNotInstalledDescription
+    case moleCopyCommandHelp
+    case moleOpenOnGitHub
+    case moleCheckAgain
+    case molePreviewDryRun
+    case moleRunInTerminal
+    case moleDryRunExplanation
+    case moleInteractiveExplanation
+
+    case moleCleanTitle
+    case moleCleanSubtitle
+    case molePurgeTitle
+    case molePurgeSubtitle
+    case moleAnalyzeTitle
+    case moleAnalyzeSubtitle
+    case moleUninstallTitle
+    case moleUninstallSubtitle
+
+    case terminateProcessHelp
+
     static var table: String { "Metrics" }
 }
 
@@ -23,6 +77,27 @@ extension MetricTab {
         case .memory:  return .tabMemory
         case .network: return .tabNetwork
         case .disk:    return .tabDisk
+        }
+    }
+}
+
+extension MoleCommand {
+    /// Localized display name; `rawValue` stays the `mole` CLI subcommand identifier.
+    var titleKey: MetricsKey {
+        switch self {
+        case .clean:     return .moleCleanTitle
+        case .purge:     return .molePurgeTitle
+        case .analyze:   return .moleAnalyzeTitle
+        case .uninstall: return .moleUninstallTitle
+        }
+    }
+
+    var subtitleKey: MetricsKey {
+        switch self {
+        case .clean:     return .moleCleanSubtitle
+        case .purge:     return .molePurgeSubtitle
+        case .analyze:   return .moleAnalyzeSubtitle
+        case .uninstall: return .moleUninstallSubtitle
         }
     }
 }

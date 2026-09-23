@@ -10,6 +10,7 @@ struct MemoryChartView: View {
     let timestamps: [Date]
     let samples: [ResourceSnapshot]
     @State private var hoverIndex: Int?
+    @EnvironmentObject private var loc: Localizer
     private var maxTotal: Double {
         let t = history.map(\.total).max() ?? 1
         return max(t, 1)
@@ -27,7 +28,7 @@ struct MemoryChartView: View {
                         .stroke(Color.blue, style: StrokeStyle(lineWidth: 1.5, lineJoin: .round))
                     yAxisLabels(size: geometry.size, maxTotal: mt)
                     if let hoverIndex, samples.indices.contains(hoverIndex), timestamps.indices.contains(hoverIndex) {
-                        ChartTooltip(timestamp: timestamps[hoverIndex], title: samples[hoverIndex].ramProcessName, details: [String(format: "RAM %.0f MB", samples[hoverIndex].ramMB)])
+                        ChartTooltip(timestamp: timestamps[hoverIndex], title: samples[hoverIndex].ramProcessName, details: [loc.t(MetricsKey.ramTooltipValue, samples[hoverIndex].ramMB)])
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                             .padding(8)
                     }
@@ -99,7 +100,7 @@ struct MemoryChartView: View {
         let step = gbTotal / 4
         let items: [(label: String, fraction: CGFloat)] = (0..<4).map { i in
             let gb = gbTotal - step * Double(i)
-            let label = String(format: "%.0f GB", gb)
+            let label = loc.t(MetricsKey.ramAxisGB, gb)
             let fraction = CGFloat(i + 1) * 0.25
             return (label, fraction)
         }
