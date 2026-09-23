@@ -6,6 +6,7 @@ import Testing
 /// persistence tested against injected UserDefaults, never `.standard`, so
 /// runs never leak state into the developer's real defaults domain.
 @Suite("AppEnvironment and settings wiring")
+@MainActor
 struct AppEnvironmentTests {
 
     private func ephemeralDefaults(_ suffix: String) -> UserDefaults {
@@ -18,7 +19,6 @@ struct AppEnvironmentTests {
     // MARK: Positive
 
     @Test("wiring: changing AppSettings.language reaches AppEnvironment's Localizer")
-    @MainActor
     func settingsLanguageChangeReachesLocalizer() {
         let defaults = ephemeralDefaults("environment")
         let environment = AppEnvironment(defaults: defaults, system: SystemLanguages(preferred: { [] }))
@@ -41,11 +41,9 @@ struct AppEnvironmentTests {
     }
 
     @Test("SpeedFormatter switches from KB/s to MB/s at the 1024 KB/s boundary")
-    @MainActor
     func speedFormatterSwitchesUnitAt1024() {
-        let localizer = Localizer(preference: .fixed(.en))
-        let below = SpeedFormatter.format(kbPerSec: 1023, using: localizer)
-        let atBoundary = SpeedFormatter.format(kbPerSec: 1024, using: localizer)
+        let below = SpeedFormatter.string(forKBPerSec: 1023)
+        let atBoundary = SpeedFormatter.string(forKBPerSec: 1024)
 
         #expect(below.contains("KB"))
         #expect(!below.contains("MB"))
@@ -57,7 +55,9 @@ struct AppEnvironmentTests {
     @Test("AppSettings falls back to System when the stored language value is unknown")
     func appSettingsFallsBackToSystemForUnknownStoredValue() {
         let defaults = ephemeralDefaults("unknown-language")
-        defaults.set("xx-not-a-language", forKey: AppSettings.Keys.language)
+        // AppSettings.Keys is private; "general.language" is its documented
+        // rawValue from the plan's contract.
+        defaults.set("xx-not-a-language", forKey: "general.language")
 
         let settings = AppSettings(defaults: defaults)
         #expect(settings.language == .system)

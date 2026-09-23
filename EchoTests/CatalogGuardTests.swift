@@ -2,32 +2,33 @@ import Foundation
 import Testing
 @testable import Echo
 
-/// Wave-end regression guards from the plan. During Phase A the key tables
-/// are only partially filled (only CommonKey by T2) and UnwiredCapabilities
-/// still lists the picker/AppKit-refresh gaps, so these are expected to fail
-/// until the W integration task lands — `withKnownIssue` keeps that failure
-/// visible without reddening the suite before the wave is done. Once W lands,
-/// remove the `withKnownIssue` wrapper; an unexpected pass is itself reported
-/// as an issue by Swift Testing, which is the signal to do so.
+/// Wave-end regression guards from the plan. Completeness and the orphan
+/// check are enforced as hard failures already: whatever key types are
+/// populated so far (CommonKey, MetricsKey as of this commit) must be fully
+/// and correctly translated the moment they exist — an enum with zero cases
+/// vacuously satisfies both, so a not-yet-started key type (Popover,
+/// Preferences, Input, System) does not fail them prematurely.
+///
+/// The hard-coded-string scan and the unwired-capabilities check are still
+/// genuinely red at this point in the wave — those two stay wrapped in
+/// `withKnownIssue` until the remaining S-tasks and the W integration task
+/// land. Swift Testing itself flags an unexpected pass inside
+/// `withKnownIssue`, which is the signal to drop that wrapper too.
 @Suite("Wave-end localization guards")
 struct CatalogGuardTests {
 
     @Test("every registered key has a non-empty, specifier-matching translation in en and ru")
     func everyKeyIsTranslatedInBothLanguages() {
-        withKnownIssue("Phase A only — key tables are filled by later S-tasks in this wave") {
-            for keyType in LocalizationRegistry.allKeyTypes {
-                checkAllCasesTranslated(of: keyType)
-            }
+        for keyType in LocalizationRegistry.allKeyTypes {
+            checkAllCasesTranslated(of: keyType)
         }
     }
 
     @Test("catalog keys match the registry with no orphans, all entries translated")
     func catalogHasNoOrphansAndAllTranslated() {
-        withKnownIssue("Phase A only — tables are filled by later S-tasks in this wave") {
-            let tablesDir = RepoLocator.echoSourceRoot.appendingPathComponent("Localization/Tables")
-            for keyType in LocalizationRegistry.allKeyTypes {
-                checkCatalog(for: keyType, in: tablesDir)
-            }
+        let tablesDir = RepoLocator.echoSourceRoot.appendingPathComponent("Localization/Tables")
+        for keyType in LocalizationRegistry.allKeyTypes {
+            checkCatalog(for: keyType, in: tablesDir)
         }
     }
 
