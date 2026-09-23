@@ -9,11 +9,12 @@ import SwiftUI
 struct UltraSwitchPrefsView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var ultraSwitch: UltraSwitchService
+    @EnvironmentObject private var loc: Localizer
     let hasBothLayouts: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            PrefTitle("Ultra Switch")
+            PrefTitle(loc.t(InputKey.ultraSwitchTitle))
 
             statusCard
             if !hasBothLayouts { singleLayoutCard }
@@ -21,9 +22,9 @@ struct UltraSwitchPrefsView: View {
             PrefCard {
                 Toggle(isOn: $settings.ultraSwitchEnabled) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Enable Ultra Switch")
+                        Text(loc.t(InputKey.ultraSwitchEnableTitle))
                             .font(.system(size: 13, weight: .medium))
-                        PrefCaption("Мгновенная смена раскладки по хоткею вместо клавиши 🌐 и конвертация последнего слова.")
+                        PrefCaption(loc.t(InputKey.ultraSwitchEnableCaption))
                     }
                 }
                 .toggleStyle(.switch)
@@ -33,9 +34,9 @@ struct UltraSwitchPrefsView: View {
             PrefCard {
                 Toggle(isOn: $settings.autoConvertEnabled) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Автоисправление раскладки")
+                        Text(loc.t(InputKey.autoConvertTitle))
                             .font(.system(size: 13, weight: .medium))
-                        PrefCaption("После пробела слово вроде «ghbdtn» само станет «привет», а раскладка переключится. Решение принимают системные словари ru и en.")
+                        PrefCaption(loc.t(InputKey.autoConvertCaption))
                     }
                 }
                 .toggleStyle(.switch)
@@ -46,7 +47,7 @@ struct UltraSwitchPrefsView: View {
                 HStack(alignment: .top, spacing: 10) {
                     Image(systemName: "hand.raised.fill")
                         .foregroundStyle(DS.accent)
-                    PrefCaption("Нажатия клавиш не записываются: приложение видит только код клавиши-разделителя, а слово читает из поля ввода в момент проверки. История набора нигде не хранится, поля паролей игнорируются.")
+                    PrefCaption(loc.t(InputKey.privacyNoteCaption))
                     Spacer()
                 }
             }
@@ -61,8 +62,8 @@ struct UltraSwitchPrefsView: View {
                 }
             }
 
-            PrefCaption("Повторная конвертация того же слова возвращает его обратно — это и есть отмена автоисправления.")
-            PrefCaption("Перевод работает на устройстве средствами macOS: выделенный текст заменяется переводом на другой язык из пары ru/en. В сеть ничего не уходит, буфер обмена возвращается на место.")
+            PrefCaption(loc.t(InputKey.conversionUndoCaption))
+            PrefCaption(loc.t(InputKey.translationCaption))
         }
     }
 
@@ -81,18 +82,13 @@ struct UltraSwitchPrefsView: View {
                 }
                 Spacer()
                 if ultraSwitch.status.isBlocked {
-                    Button("Разрешить", action: ultraSwitch.requestAccess)
+                    Button(loc.t(InputKey.allowButton), action: ultraSwitch.requestAccess)
                         .buttonStyle(.borderedProminent)
                         .tint(DS.accent)
                 }
             }
         }
     }
-
-    /// Обновление меняет подпись сборки, и macOS считает её другим приложением:
-    /// старая запись в списке остаётся, но уже ничего не разрешает.
-    private static let afterUpdateHint =
-        "Если Echo уже есть в списке после обновления — удалите его кнопкой «−» и добавьте заново. Статус здесь обновится сам."
 
     private var statusIcon: String {
         switch ultraSwitch.status {
@@ -112,23 +108,25 @@ struct UltraSwitchPrefsView: View {
 
     private var statusTitle: String {
         switch ultraSwitch.status {
-        case .running:              return "Автозамена активна"
-        case .disabled:             return "Автозамена выключена"
-        case .needsAccessibility:   return "Нужен доступ Accessibility"
-        case .needsInputMonitoring: return "Нужен доступ Input Monitoring"
+        case .running:              return loc.t(InputKey.statusRunningTitle)
+        case .disabled:             return loc.t(InputKey.statusDisabledTitle)
+        case .needsAccessibility:   return loc.t(InputKey.accessibilityMissingTitle)
+        case .needsInputMonitoring: return loc.t(InputKey.statusNeedsInputMonitoringTitle)
         }
     }
 
+    /// Обновление меняет подпись сборки, и macOS считает её другим приложением:
+    /// старая запись в списке остаётся, но уже ничего не разрешает.
     private var statusDetail: String {
         switch ultraSwitch.status {
         case .running:
-            return "Слово, набранное не в той раскладке, исправляется после пробела."
+            return loc.t(InputKey.statusRunningDetail)
         case .disabled:
-            return "Включите оба тумблера ниже."
+            return loc.t(InputKey.statusDisabledDetail)
         case .needsAccessibility:
-            return "Без него исправление не дойдёт до чужого приложения. \(Self.afterUpdateHint)"
+            return "\(loc.t(InputKey.statusNeedsAccessibilityDetail)) \(loc.t(InputKey.afterUpdateHint))"
         case .needsInputMonitoring:
-            return "Без него не видно, что вы набираете, и слово не с чем сравнивать. \(Self.afterUpdateHint)"
+            return "\(loc.t(InputKey.statusNeedsInputMonitoringDetail)) \(loc.t(InputKey.afterUpdateHint))"
         }
     }
 
@@ -137,7 +135,7 @@ struct UltraSwitchPrefsView: View {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange)
-                PrefCaption("В системе включена только одна раскладка — переключать нечего. Добавьте вторую в System Settings → Keyboard → Input Sources.")
+                PrefCaption(loc.t(InputKey.singleLayoutWarning))
                 Spacer()
             }
         }
@@ -145,7 +143,7 @@ struct UltraSwitchPrefsView: View {
 
     private func shortcutRow(_ command: WMCommand) -> some View {
         HStack {
-            Text(command.title)
+            Text(loc.t(command.titleKey))
                 .font(.system(size: 13))
             Spacer()
             ShortcutRecorderView(command: command, settings: settings)
