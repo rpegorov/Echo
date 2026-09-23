@@ -5,13 +5,24 @@
 
 import Foundation
 
-/// Strings for the metrics detail window (S1b owns cases and the Metrics table).
-enum MetricsKey: LocalizedKey {
-    static var table: String { "Metrics" }
+/// Strings for the metrics detail window (S1b owns further cases and the Metrics table).
+enum MetricsKey: String, LocalizedKey {
+    case tabCPU
+    case tabMemory
+    case tabNetwork
+    case tabDisk
 
-    var rawValue: String {
-        switch self {}
+    static var table: String { "Metrics" }
+}
+
+extension MetricTab {
+    /// Localized display name; `rawValue` stays a persisted identifier.
+    var titleKey: MetricsKey {
+        switch self {
+        case .cpu:     return .tabCPU
+        case .memory:  return .tabMemory
+        case .network: return .tabNetwork
+        case .disk:    return .tabDisk
+        }
     }
-    init?(rawValue: String) { nil }
-    static var allCases: [MetricsKey] { [] }
 }
