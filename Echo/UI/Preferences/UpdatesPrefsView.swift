@@ -7,12 +7,13 @@ import SwiftUI
 
 /// Раздел Preferences: автообновление.
 struct UpdatesPrefsView: View {
+    @EnvironmentObject private var loc: Localizer
     @ObservedObject var updater: UpdaterService
     let version: String
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            PrefTitle("Updates")
+            PrefTitle(loc.t(PreferencesKey.sectionUpdates))
 
             PrefCard {
                 HStack(spacing: 12) {
@@ -20,12 +21,12 @@ struct UpdatesPrefsView: View {
                         .font(.system(size: 22))
                         .foregroundStyle(DS.accent)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Установлена версия \(version)")
+                        Text(loc.t(PreferencesKey.updatesInstalledVersion, version))
                             .font(.system(size: 13, weight: .semibold))
                         PrefCaption(lastCheckLabel)
                     }
                     Spacer()
-                    Button("Проверить сейчас") { updater.checkForUpdates() }
+                    Button(loc.t(PreferencesKey.updatesCheckNowButton)) { updater.checkForUpdates() }
                         .buttonStyle(.borderedProminent)
                         .tint(DS.accent)
                         .disabled(!updater.canCheck)
@@ -35,9 +36,9 @@ struct UpdatesPrefsView: View {
             PrefCard {
                 Toggle(isOn: $updater.automaticallyChecks) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Проверять обновления автоматически")
+                        Text(loc.t(PreferencesKey.updatesAutoCheckTitle))
                             .font(.system(size: 13, weight: .medium))
-                        PrefCaption("Раз в сутки в фоне. Приложение спросит перед установкой.")
+                        PrefCaption(loc.t(PreferencesKey.updatesAutoCheckCaption))
                     }
                 }
                 .toggleStyle(.switch)
@@ -47,9 +48,9 @@ struct UpdatesPrefsView: View {
             PrefCard {
                 Toggle(isOn: $updater.automaticallyDownloads) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Скачивать обновления заранее")
+                        Text(loc.t(PreferencesKey.updatesAutoDownloadTitle))
                             .font(.system(size: 13, weight: .medium))
-                        PrefCaption("Новая версия скачается в фоне, установка — по вашему подтверждению.")
+                        PrefCaption(loc.t(PreferencesKey.updatesAutoDownloadCaption))
                     }
                 }
                 .toggleStyle(.switch)
@@ -59,20 +60,21 @@ struct UpdatesPrefsView: View {
 
             PrefCard {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Источник обновлений")
+                    Text(loc.t(PreferencesKey.updatesFeedTitle))
                         .font(.system(size: 13, weight: .medium))
                     PrefCaption(updater.feedURL)
-                    PrefCaption("Каждая сборка подписана ключом EdDSA — обновление с чужого адреса приложение не примет.")
+                    PrefCaption(loc.t(PreferencesKey.updatesFeedCaption))
                 }
             }
         }
     }
 
     private var lastCheckLabel: String {
-        guard let date = updater.lastCheckDate else { return "Обновления ещё не проверялись" }
+        guard let date = updater.lastCheckDate else { return loc.t(PreferencesKey.updatesNeverChecked) }
         let formatter = DateFormatter()
+        formatter.locale = loc.locale
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
-        return "Последняя проверка: \(formatter.string(from: date))"
+        return loc.t(PreferencesKey.updatesLastCheck, formatter.string(from: date))
     }
 }

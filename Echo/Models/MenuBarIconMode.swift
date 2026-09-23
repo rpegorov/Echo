@@ -10,12 +10,4 @@ enum MenuBarIconMode: String, CaseIterable, Identifiable, Codable, Sendable {
     case custom
 
     var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .appIcon: return "Иконка"
-        case .metrics: return "Метрики"
-        case .custom:  return "Своя картинка"
-        }
-    }
 }

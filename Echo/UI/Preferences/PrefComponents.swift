@@ -58,10 +58,12 @@ enum AppInfo {
         return "\(short) (\(build))"
     }
 
-    /// Подпись интервала опроса — общая для мониторинга и энергосбережения.
-    static func intervalLabel(_ seconds: Double) -> String {
-        seconds < 1
-            ? String(format: "every %.1fs", seconds)
-            : String(format: "every %gs", seconds)
+    /// Подпись интервала опроса — общая для мониторинга, энергосбережения и строки меню.
+    @MainActor
+    static func intervalLabel(_ seconds: Double, loc: Localizer) -> String {
+        let number = seconds < 1
+            ? String(format: "%.1f", seconds)
+            : String(format: "%g", seconds)
+        return loc.t(PreferencesKey.intervalSeconds, number)
     }
 }
