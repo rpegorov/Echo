@@ -12,6 +12,7 @@
 
 /* Begin PBXFileReference section */
 		E127768E2EE708D00033CB07 /* Echo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Echo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B79B7DF60161F21A70BA06CA /* EchoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = EchoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -34,6 +35,13 @@
 			path = Echo;
 			sourceTree = "<group>";
 		};
+		D4839A1845EE2D6787C5272E /* EchoTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			path = EchoTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -45,6 +53,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		948A94A7F9F29C459C91B122 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -52,6 +67,7 @@
 			isa = PBXGroup;
 			children = (
 				E12776902EE708D00033CB07 /* Echo */,
+				D4839A1845EE2D6787C5272E /* EchoTests */,
 				E127768F2EE708D00033CB07 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -60,6 +76,7 @@
 			isa = PBXGroup;
 			children = (
 				E127768E2EE708D00033CB07 /* Echo.app */,
+				B79B7DF60161F21A70BA06CA /* EchoTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -101,6 +118,27 @@
 			productReference = E127768E2EE708D00033CB07 /* Echo.app */;
 			productType = "com.apple.product-type.application";
 		};
+		185E86FB1B32CB344D10B93D /* EchoTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A5CF984C2ED338BCBA077D3E /* Build configuration list for PBXNativeTarget "EchoTests" */;
+			buildPhases = (
+				DDCA3720DAA074279283FAF0 /* Sources */,
+				948A94A7F9F29C459C91B122 /* Frameworks */,
+				DCB8E08CA865EDB546ED2C5D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				177F7813F164769B17B2A789 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				D4839A1845EE2D6787C5272E /* EchoTests */,
+			);
+			name = EchoTests;
+			productName = EchoTests;
+			productReference = B79B7DF60161F21A70BA06CA /* EchoTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -114,6 +152,10 @@
 						CreatedOnToolsVersion = 26.1.1;
 						LastSwiftMigration = 2610;
 					};
+					185E86FB1B32CB344D10B93D = {
+						CreatedOnToolsVersion = 26.1.1;
+						TestTargetID = E127768D2EE708D00033CB07;
+					};
 				};
 			};
 			buildConfigurationList = E12776882EE708D00033CB07 /* Build configuration list for PBXProject "Echo" */;
@@ -121,6 +163,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				ru,
 				Base,
 			);
 			mainGroup = E12776842EE708D00033CB07;
@@ -134,12 +177,20 @@
 			projectRoot = "";
 			targets = (
 				E127768D2EE708D00033CB07 /* Echo */,
+				185E86FB1B32CB344D10B93D /* EchoTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		E127768C2EE708D00033CB07 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DCB8E08CA865EDB546ED2C5D /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -156,7 +207,32 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DDCA3720DAA074279283FAF0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXContainerItemProxy section */
+		20EF73A5A3D6D02C06769943 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E12776852EE708D00033CB07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E127768D2EE708D00033CB07;
+			remoteInfo = Echo;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		177F7813F164769B17B2A789 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E127768D2EE708D00033CB07 /* Echo */;
+			targetProxy = 20EF73A5A3D6D02C06769943 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCRemoteSwiftPackageReference section */
 		E1AA00012EE708D00033CB07 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
@@ -201,7 +277,7 @@
 				PRODUCT_NAME = Echo;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "Echo/Echo-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -234,7 +310,7 @@
 				PRODUCT_NAME = Echo;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				PROVISIONING_PROFILE_SPECIFIER = "";
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "Echo/Echo-Bridging-Header.h";
 				SWIFT_STRICT_CONCURRENCY = complete;
@@ -363,6 +439,48 @@
 			};
 			name = Release;
 		};
+		6F8692B395D1D7E6A297B652 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = DL4RXZL3D2;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = rostislav.egorov.EchoTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Echo.app/Contents/MacOS/Echo";
+			};
+			name = Debug;
+		};
+		4E32F20D8DFB663DD1029E5C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=macosx*]" = DL4RXZL3D2;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = rostislav.egorov.EchoTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_VERSION = 6.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Echo.app/Contents/MacOS/Echo";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -380,6 +498,15 @@
 			buildConfigurations = (
 				E127769D2EE708D00033CB07 /* Debug */,
 				E127769E2EE708D00033CB07 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A5CF984C2ED338BCBA077D3E /* Build configuration list for PBXNativeTarget "EchoTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6F8692B395D1D7E6A297B652 /* Debug */,
+				4E32F20D8DFB663DD1029E5C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
