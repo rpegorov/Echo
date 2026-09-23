@@ -30,8 +30,8 @@ final class AppEnvironment {
     init(defaults: UserDefaults = .standard, system: SystemLanguages = .live) {
         settings = AppSettings(defaults: defaults)
         metrics = MetricsService()
-        utilities = SystemUtilitiesService()
-        clipboard = ClipboardService()
+        utilities = SystemUtilitiesService(defaults: defaults)
+        clipboard = ClipboardService(defaults: defaults)
         windowManager = WindowManagerService()
         ultraSwitch = UltraSwitchService()
         translator = SelectionTranslator()

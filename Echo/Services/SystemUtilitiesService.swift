@@ -54,18 +54,21 @@ final class SystemUtilitiesService: ObservableObject {
     /// Значение `com.apple.keyboard.fnState` до включения очистки.
     private var previousFnState: Bool?
 
-    init() {
+    private let defaults: UserDefaults
+
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
         // Приложение могли убить во время очистки — возвращаем настройку,
         // иначе верхний ряд клавиатуры останется в режиме F1–F12.
-        if let stored = UserDefaults.standard.object(forKey: Self.fnStateRecoveryKey) as? Bool {
-            UserDefaults.standard.removeObject(forKey: Self.fnStateRecoveryKey)
+        if let stored = defaults.object(forKey: Self.fnStateRecoveryKey) as? Bool {
+            defaults.removeObject(forKey: Self.fnStateRecoveryKey)
             Self.setFnState(stored)
             Self.log.info("Keyboard cleaning: fn row restored after abnormal exit")
         }
         // Prevent Sleep переживает перезапуск; очистка клавиатуры — намеренно нет,
         // иначе приложение стартовало бы с заблокированной клавиатурой.
         // `didSet` в init не срабатывает, поэтому assertion создаётся явно.
-        preventSleepEnabled = UserDefaults.standard.bool(forKey: Self.preventSleepKey)
+        preventSleepEnabled = defaults.bool(forKey: Self.preventSleepKey)
         if preventSleepEnabled { enablePreventSleep() }
     }
 
@@ -74,7 +77,7 @@ final class SystemUtilitiesService: ObservableObject {
     @Published var preventSleepEnabled: Bool = false {
         didSet {
             guard oldValue != preventSleepEnabled else { return }
-            UserDefaults.standard.set(preventSleepEnabled, forKey: Self.preventSleepKey)
+            defaults.set(preventSleepEnabled, forKey: Self.preventSleepKey)
             preventSleepEnabled ? enablePreventSleep() : disablePreventSleep()
         }
     }
@@ -193,7 +196,7 @@ final class SystemUtilitiesService: ObservableObject {
             return
         }
         previousFnState = current
-        UserDefaults.standard.set(current, forKey: Self.fnStateRecoveryKey)
+        defaults.set(current, forKey: Self.fnStateRecoveryKey)
         Self.setFnState(true)
         Self.log.info("Keyboard cleaning: fn row switched to standard function keys")
     }
@@ -201,9 +204,9 @@ final class SystemUtilitiesService: ObservableObject {
     private func restoreFnRow() {
         let previous =
             previousFnState
-            ?? UserDefaults.standard.object(forKey: Self.fnStateRecoveryKey) as? Bool
+            ?? defaults.object(forKey: Self.fnStateRecoveryKey) as? Bool
         previousFnState = nil
-        UserDefaults.standard.removeObject(forKey: Self.fnStateRecoveryKey)
+        defaults.removeObject(forKey: Self.fnStateRecoveryKey)
         guard let previous else { return }
         Self.setFnState(previous)
         Self.log.info("Keyboard cleaning: fn row restored")
