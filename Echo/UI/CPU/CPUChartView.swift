@@ -10,6 +10,7 @@ struct CPUChartView: View {
     let timestamps: [Date]
     let samples: [ResourceSnapshot]
     @State private var hoverIndex: Int?
+    @EnvironmentObject private var loc: Localizer
     var body: some View {
         VStack(spacing: 2) {
             GeometryReader { geometry in
@@ -21,7 +22,7 @@ struct CPUChartView: View {
                         .stroke(Color.blue, style: StrokeStyle(lineWidth: 1.5, lineJoin: .round))
                     yAxisLabels(size: geometry.size)
                     if let hoverIndex, samples.indices.contains(hoverIndex), timestamps.indices.contains(hoverIndex) {
-                        ChartTooltip(timestamp: timestamps[hoverIndex], title: samples[hoverIndex].cpuProcessName, details: [String(format: "CPU %.1f%%", samples[hoverIndex].cpuPercent)])
+                        ChartTooltip(timestamp: timestamps[hoverIndex], title: samples[hoverIndex].cpuProcessName, details: [loc.t(MetricsKey.cpuTooltipValue, samples[hoverIndex].cpuPercent)])
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
                             .padding(8)
                     }
@@ -109,12 +110,14 @@ struct CPUChartView: View {
 
 struct ChartTimeAxis: View {
     let timestamps: [Date]
+    @Environment(\.locale) private var locale
 
-    private static let formatter: DateFormatter = {
+    private var formatter: DateFormatter {
         let formatter = DateFormatter()
+        formatter.locale = locale
         formatter.dateFormat = "HH:mm:ss"
         return formatter
-    }()
+    }
 
     var body: some View {
         let indices = tickIndices
@@ -136,7 +139,7 @@ struct ChartTimeAxis: View {
 
     private func label(at index: Int) -> String {
         guard timestamps.indices.contains(index) else { return "--:--:--" }
-        return Self.formatter.string(from: timestamps[index])
+        return formatter.string(from: timestamps[index])
     }
 }
 

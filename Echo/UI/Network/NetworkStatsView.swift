@@ -9,6 +9,7 @@ import SwiftUI
 struct NetworkStatsView: View {
     let current: NetworkMetrics
     let history: [(download: Double, upload: Double)]
+    @EnvironmentObject private var loc: Localizer
 
     private var peakDown: Double { history.map(\.download).max() ?? 0 }
     private var peakUp:   Double { history.map(\.upload).max() ?? 0 }
@@ -18,15 +19,15 @@ struct NetworkStatsView: View {
     var body: some View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
-                statCard(title: "Download", value: current.download, icon: "arrow.down", tint: .blue)
-                statCard(title: "Upload",   value: current.upload,   icon: "arrow.up",   tint: .green)
+                statCard(title: loc.t(MetricsKey.networkStatDownload), value: current.download, icon: "arrow.down", tint: .blue)
+                statCard(title: loc.t(MetricsKey.networkStatUpload),   value: current.upload,   icon: "arrow.up",   tint: .green)
             }
 
             HStack(spacing: 12) {
-                miniCard(title: "Peak ↓",  value: peakDown)
-                miniCard(title: "Peak ↑",  value: peakUp)
-                miniCard(title: "Avg ↓",   value: avgDown)
-                miniCard(title: "Avg ↑",   value: avgUp)
+                miniCard(title: loc.t(MetricsKey.networkStatPeakDown),  value: peakDown)
+                miniCard(title: loc.t(MetricsKey.networkStatPeakUp),  value: peakUp)
+                miniCard(title: loc.t(MetricsKey.networkStatAvgDown),   value: avgDown)
+                miniCard(title: loc.t(MetricsKey.networkStatAvgUp),   value: avgUp)
             }
 
             Spacer(minLength: 0)
@@ -46,7 +47,7 @@ struct NetworkStatsView: View {
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.secondary)
             }
-            Text(Self.format(value))
+            Text(SpeedFormatter.format(kbPerSec: value, using: loc))
                 .font(.system(size: 22, weight: .semibold, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(.primary)
@@ -61,7 +62,7 @@ struct NetworkStatsView: View {
             Text(title)
                 .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(.tertiary)
-            Text(Self.format(value))
+            Text(SpeedFormatter.format(kbPerSec: value, using: loc))
                 .font(.system(size: 13, weight: .medium, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(.primary)
@@ -69,13 +70,5 @@ struct NetworkStatsView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: DS.cornerSM))
-    }
-
-    /// Форматирует скорость (вход в КБ/с) в КБ/с или МБ/с.
-    private static func format(_ kbPerSec: Double) -> String {
-        if kbPerSec >= 1024 {
-            return String(format: "%.2f MB/s", kbPerSec / 1024)
-        }
-        return String(format: "%.0f KB/s", kbPerSec)
     }
 }

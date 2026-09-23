@@ -4,69 +4,358 @@
     "tabCPU": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CPU"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ЦП"
-          }
-        }
+        "en": { "stringUnit": { "state": "translated", "value": "CPU" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "ЦП" } }
       }
     },
     "tabMemory": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Memory"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Память"
-          }
-        }
+        "en": { "stringUnit": { "state": "translated", "value": "Memory" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Память" } }
       }
     },
     "tabNetwork": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Network"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Сеть"
-          }
-        }
+        "en": { "stringUnit": { "state": "translated", "value": "Network" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Сеть" } }
       }
     },
     "tabDisk": {
       "extractionState": "manual",
       "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Disk"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Диск"
-          }
-        }
+        "en": { "stringUnit": { "state": "translated", "value": "Disk" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Диск" } }
+      }
+    },
+    "speedUnitKB": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "KB/s" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "КБ/с" } }
+      }
+    },
+    "speedUnitMB": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "MB/s" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "МБ/с" } }
+      }
+    },
+    "cpuTooltipValue": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "CPU %1$.1f%%" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "ЦП %1$.1f%%" } }
+      }
+    },
+    "ramTooltipValue": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "RAM %1$.0f MB" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "ОЗУ %1$.0f МБ" } }
+      }
+    },
+    "ramAxisGB": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "%1$.0f GB" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "%1$.0f ГБ" } }
+      }
+    },
+    "networkTooltipTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Network" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Сеть" } }
+      }
+    },
+    "networkDownloadValue": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "↓ %1$@" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "↓ %1$@" } }
+      }
+    },
+    "networkUploadValue": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "↑ %1$@" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "↑ %1$@" } }
+      }
+    },
+    "networkLegendDownload": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "↓ Download" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "↓ Загрузка" } }
+      }
+    },
+    "networkLegendUpload": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "↑ Upload" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "↑ Отправка" } }
+      }
+    },
+    "networkStatDownload": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Download" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Загрузка" } }
+      }
+    },
+    "networkStatUpload": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Upload" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Отправка" } }
+      }
+    },
+    "networkStatPeakDown": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Peak ↓" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Пик ↓" } }
+      }
+    },
+    "networkStatPeakUp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Peak ↑" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Пик ↑" } }
+      }
+    },
+    "networkStatAvgDown": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Avg ↓" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Средн. ↓" } }
+      }
+    },
+    "networkStatAvgUp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Avg ↑" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Средн. ↑" } }
+      }
+    },
+    "diskUsedPercent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "%1$.1f%% used" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Занято %1$.1f%%" } }
+      }
+    },
+    "diskStatUsed": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Used" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Занято" } }
+      }
+    },
+    "diskStatFree": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Free" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Свободно" } }
+      }
+    },
+    "diskStatTotal": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Total" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Всего" } }
+      }
+    },
+    "diskTopLargestFiles": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Top 10 Largest Files" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "10 самых больших файлов" } }
+      }
+    },
+    "diskCleanSystemButton": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Clean system…" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Очистить систему…" } }
+      }
+    },
+    "diskNoLargeFiles": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "No large files found" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Крупные файлы не найдены" } }
+      }
+    },
+    "diskShowInFinder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Show in Finder" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Показать в Finder" } }
+      }
+    },
+    "diskMoveToTrash": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Move to Trash" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Переместить в корзину" } }
+      }
+    },
+    "diskRevealHelp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Reveal in Finder" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Открыть в Finder" } }
+      }
+    },
+    "moleTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "System Cleanup" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Очистка системы" } }
+      }
+    },
+    "moleDone": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Done" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Готово" } }
+      }
+    },
+    "moleSearching": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Searching for Mole…" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Ищу Mole…" } }
+      }
+    },
+    "moleNotInstalledTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Mole is not installed" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Mole не установлен" } }
+      }
+    },
+    "moleNotInstalledDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Mole is a free macOS cleanup utility (MIT). Install it to use cleanup from the app." } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Mole — бесплатная утилита очистки macOS (MIT). Установите её, чтобы пользоваться очисткой из приложения." } }
+      }
+    },
+    "moleCopyCommandHelp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Copy command" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Скопировать команду" } }
+      }
+    },
+    "moleOpenOnGitHub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Open on GitHub" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Открыть на GitHub" } }
+      }
+    },
+    "moleCheckAgain": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Check again" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Проверить снова" } }
+      }
+    },
+    "molePreviewDryRun": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Preview (dry-run)" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Предпросмотр (dry-run)" } }
+      }
+    },
+    "moleRunInTerminal": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Run in Terminal" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Запустить в Terminal" } }
+      }
+    },
+    "moleDryRunExplanation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "“Preview” runs the command with --dry-run: Mole only shows what would be removed, without changing anything. “Run” executes it for real. Both open in Terminal — you confirm there and enter sudo/Touch ID if needed." } },
+        "ru": { "stringUnit": { "state": "translated", "value": "«Preview» запустит команду с --dry-run: Mole только покажет, что будет удалено, ничего не меняя. «Run» выполнит реально. Обе откроются в Terminal — там вы подтвердите действия и при необходимости введёте sudo/Touch ID." } }
+      }
+    },
+    "moleInteractiveExplanation": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Opens in Terminal — Mole shows an interactive overview." } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Откроется в Terminal — Mole покажет интерактивный обзор." } }
+      }
+    },
+    "moleCleanTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Deep Clean" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Глубокая очистка" } }
+      }
+    },
+    "moleCleanSubtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Caches, logs, temporary files, leftovers of removed apps" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Кэши, логи, временные файлы, хвосты удалённых приложений" } }
+      }
+    },
+    "molePurgeTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Dev Artifacts" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Артефакты разработки" } }
+      }
+    },
+    "molePurgeSubtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "node_modules, DerivedData, target, build, dist" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "node_modules, DerivedData, target, build, dist" } }
+      }
+    },
+    "moleAnalyzeTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Analyze Disk" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Анализ диска" } }
+      }
+    },
+    "moleAnalyzeSubtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Visual overview of what takes up space" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Визуальный обзор, что занимает место" } }
+      }
+    },
+    "moleUninstallTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Uninstall Apps" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Удаление приложений" } }
+      }
+    },
+    "moleUninstallSubtitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Remove apps together with their data" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Удаление приложений вместе с их данными" } }
+      }
+    },
+    "terminateProcessHelp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Terminate process" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Завершить процесс" } }
       }
     }
   },

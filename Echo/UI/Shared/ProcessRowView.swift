@@ -12,6 +12,7 @@ struct ProcessRowView: View {
     let showCPU: Bool
     let onKill: () -> Void
     @State private var showingKillConfirmation = false
+    @EnvironmentObject private var loc: Localizer
 
     var body: some View {
         HStack(spacing: 12) {
@@ -44,16 +45,16 @@ struct ProcessRowView: View {
                     .foregroundStyle(.red)
             }
             .buttonStyle(.plain)
-            .help("Terminate process")
+            .help(loc.t(MetricsKey.terminateProcessHelp))
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 8)
         .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: DS.cornerSM))
-        .confirmationDialog("Terminate \(name)?", isPresented: $showingKillConfirmation, titleVisibility: .visible) {
-            Button("Terminate", role: .destructive, action: onKill)
-            Button("Cancel", role: .cancel) {}
+        .confirmationDialog(loc.t(CommonKey.terminateProcessTitle, name), isPresented: $showingKillConfirmation, titleVisibility: .visible) {
+            Button(loc.t(CommonKey.terminate), role: .destructive, action: onKill)
+            Button(loc.t(CommonKey.cancel), role: .cancel) {}
         } message: {
-            Text("The process will receive SIGTERM and may close unsaved work.")
+            Text(loc.t(CommonKey.terminateProcessMessage))
         }
     }
 }

@@ -9,6 +9,7 @@ struct MemoryProcessListView: View {
     let searchText: String
     @State private var topProcesses: [MonitoredProcess] = []
     @State private var monitor = ProcessMonitor()
+    @EnvironmentObject private var loc: Localizer
 
     private var filtered: [MonitoredProcess] {
         searchText.isEmpty ? topProcesses : topProcesses.filter {
@@ -19,7 +20,7 @@ struct MemoryProcessListView: View {
     var body: some View {
         Group {
             if filtered.isEmpty {
-                Text(searchText.isEmpty ? "Loading..." : "No matching processes")
+                Text(searchText.isEmpty ? loc.t(CommonKey.loading) : loc.t(CommonKey.noMatches))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             } else {

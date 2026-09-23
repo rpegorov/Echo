@@ -12,6 +12,7 @@ struct MoleCleanupView: View {
     @StateObject private var mole = MoleService()
     @Environment(\.dismiss) private var dismiss
     @State private var selected: MoleCommand = .clean
+    @EnvironmentObject private var loc: Localizer
 
     var body: some View {
         VStack(spacing: 0) {
@@ -30,10 +31,10 @@ struct MoleCleanupView: View {
         HStack(spacing: 8) {
             Image(systemName: "sparkles")
                 .foregroundStyle(DS.accent)
-            Text("System Cleanup")
+            Text(loc.t(MetricsKey.moleTitle))
                 .font(.system(size: 14, weight: .semibold))
             Spacer()
-            Button("Done") { dismiss() }
+            Button(loc.t(MetricsKey.moleDone)) { dismiss() }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
         }
@@ -47,7 +48,7 @@ struct MoleCleanupView: View {
     private var content: some View {
         switch mole.status {
         case .checking:
-            ProgressView("Ищу Mole…")
+            ProgressView(loc.t(MetricsKey.moleSearching))
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case .notInstalled:
             notInstalled
@@ -63,9 +64,9 @@ struct MoleCleanupView: View {
             Image(systemName: "shippingbox")
                 .font(.system(size: 34))
                 .foregroundStyle(.secondary)
-            Text("Mole не установлен")
+            Text(loc.t(MetricsKey.moleNotInstalledTitle))
                 .font(.system(size: 15, weight: .semibold))
-            Text("Mole — бесплатная утилита очистки macOS (MIT). Установите её, чтобы пользоваться очисткой из приложения.")
+            Text(loc.t(MetricsKey.moleNotInstalledDescription))
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -83,13 +84,13 @@ struct MoleCleanupView: View {
                     Image(systemName: "doc.on.doc")
                 }
                 .buttonStyle(.plain)
-                .help("Скопировать команду")
+                .help(loc.t(MetricsKey.moleCopyCommandHelp))
             }
 
             HStack(spacing: 10) {
-                Button("Открыть на GitHub") { mole.openRepo() }
+                Button(loc.t(MetricsKey.moleOpenOnGitHub)) { mole.openRepo() }
                     .buttonStyle(.bordered)
-                Button("Проверить снова") { Task { await mole.detect() } }
+                Button(loc.t(MetricsKey.moleCheckAgain)) { Task { await mole.detect() } }
                     .buttonStyle(.borderedProminent)
                     .tint(DS.accent)
             }
@@ -121,7 +122,7 @@ struct MoleCleanupView: View {
                     HStack(spacing: 6) {
                         Image(systemName: command.icon)
                             .font(.system(size: 12, weight: .medium))
-                        Text(command.title)
+                        Text(loc.t(command.titleKey))
                             .font(.system(size: 12, weight: .medium))
                     }
                     .foregroundStyle(selected == command ? DS.accent : .secondary)
@@ -143,15 +144,16 @@ struct MoleCleanupView: View {
 
     private var previewPanel: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(selected.title)
+            Text(loc.t(selected.titleKey))
                 .font(.system(size: 15, weight: .semibold))
-            Text(selected.subtitle)
+            Text(loc.t(selected.subtitleKey))
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
 
             HStack(spacing: 6) {
                 Image(systemName: "terminal")
                     .foregroundStyle(.tertiary)
+                // l10n-exempt: command — the `mole` CLI subcommand name is not translated.
                 Text("mole \(selected.rawValue)")
                     .font(.system(size: 12, design: .monospaced))
                     .textSelection(.enabled)
@@ -161,8 +163,8 @@ struct MoleCleanupView: View {
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: DS.cornerSM))
 
             Text(selected.supportsDryRun
-                 ? "«Preview» запустит команду с --dry-run: Mole только покажет, что будет удалено, ничего не меняя. «Run» выполнит реально. Обе откроются в Terminal — там вы подтвердите действия и при необходимости введёте sudo/Touch ID."
-                 : "Откроется в Terminal — Mole покажет интерактивный обзор.")
+                 ? loc.t(MetricsKey.moleDryRunExplanation)
+                 : loc.t(MetricsKey.moleInteractiveExplanation))
                 .font(.system(size: 11))
                 .foregroundStyle(.tertiary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -178,7 +180,7 @@ struct MoleCleanupView: View {
                 Button {
                     mole.runInTerminal(selected, dryRun: true)
                 } label: {
-                    Label("Preview (dry-run)", systemImage: "eye")
+                    Label(loc.t(MetricsKey.molePreviewDryRun), systemImage: "eye")
                 }
                 .buttonStyle(.bordered)
             }
@@ -188,7 +190,7 @@ struct MoleCleanupView: View {
             Button {
                 mole.runInTerminal(selected)
             } label: {
-                Label("Run in Terminal", systemImage: "terminal")
+                Label(loc.t(MetricsKey.moleRunInTerminal), systemImage: "terminal")
             }
             .buttonStyle(.borderedProminent)
             .tint(DS.accent)
