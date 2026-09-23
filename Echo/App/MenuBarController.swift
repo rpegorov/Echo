@@ -139,7 +139,8 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
             mode: settings.menuBarIconMode,
             metrics: environment.metrics.metrics,
             shownMetrics: settings.menuBarMetrics,
-            customIconPath: settings.customIconPath
+            customIconPath: settings.customIconPath,
+            localizer: environment.localizer
         )
     }
 

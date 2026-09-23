@@ -54,6 +54,7 @@ final class AppWindows: NSObject, NSWindowDelegate {
         window.styleMask = [.titled, .closable, .miniaturizable, .fullSizeContentView]
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
+        window.title = environment.localizer.t(SystemKey.windowTitleDetail)
         window.isMovableByWindowBackground = true
         window.setContentSize(DS.detailSize)
         window.contentMinSize = NSSize(width: 480, height: 420)
@@ -85,7 +86,7 @@ final class AppWindows: NSObject, NSWindowDelegate {
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
         window.isMovableByWindowBackground = true
-        window.title = "Clipboard"
+        window.title = environment.localizer.t(SystemKey.windowTitleClipboard)
         window.setContentSize(NSSize(width: 380, height: 460))
         window.isReleasedWhenClosed = false
         positionNearMouse(window)
@@ -134,7 +135,7 @@ final class AppWindows: NSObject, NSWindowDelegate {
 
         let window = NSWindow(contentViewController: hosting)
         window.styleMask = [.titled, .closable, .fullSizeContentView]
-        window.title = "Preferences"
+        window.title = environment.localizer.t(SystemKey.windowTitlePreferences)
         window.setContentSize(NSSize(width: 720, height: 520))
         window.isReleasedWhenClosed = false
         window.center()
@@ -143,6 +144,15 @@ final class AppWindows: NSObject, NSWindowDelegate {
 
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
+    }
+
+    // MARK: - Language change
+
+    /// Re-titles already open windows after the language changed on the fly.
+    func applyTitles(using localizer: Localizer) {
+        detailWindow?.title = localizer.t(SystemKey.windowTitleDetail)
+        clipboardWindow?.title = localizer.t(SystemKey.windowTitleClipboard)
+        preferencesWindow?.title = localizer.t(SystemKey.windowTitlePreferences)
     }
 
     // MARK: - NSWindowDelegate

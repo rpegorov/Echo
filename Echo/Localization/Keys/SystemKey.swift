@@ -5,14 +5,12 @@
 
 import Foundation
 
-/// Strings for AppKit chrome — window titles, status item accessibility description
-/// (S3 owns cases and the System table).
-enum SystemKey: LocalizedKey {
-    static var table: String { "System" }
+/// Strings for AppKit chrome — window titles, status item accessibility description.
+enum SystemKey: String, LocalizedKey {
+    case windowTitleDetail
+    case windowTitleClipboard
+    case windowTitlePreferences
+    case statusItemAccessibilityDescription
 
-    var rawValue: String {
-        switch self {}
-    }
-    init?(rawValue: String) { nil }
-    static var allCases: [SystemKey] { [] }
+    static var table: String { "System" }
 }
