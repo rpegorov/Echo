@@ -23,6 +23,7 @@ final class AppEnvironment {
     let updater: UpdaterService
     let detailState: DetailState
     let localizer: Localizer
+    let battery: BatteryService
 
     lazy var snapper = WindowSnapper(windowManager: windowManager, settings: settings)
     let monitoring: MonitoringCoordinator
@@ -39,10 +40,31 @@ final class AppEnvironment {
         detailState = DetailState()
         localizer = Localizer(preference: settings.language, system: system)
         monitoring = MonitoringCoordinator(settings: settings, metrics: metrics)
+        battery = Self.makeBatteryService()
 
         settings.onLanguageChange = { [weak self] in
             guard let self else { return }
             self.localizer.apply(self.settings.language)
         }
+    }
+
+    /// Builds `BatteryService` with real dependencies. When the on-disk
+    /// history location can't be determined, the service is still built —
+    /// with a store that reports that error into `lastError` on first use —
+    /// so composition never crashes and never silently drops the failure.
+    private static func makeBatteryService() -> BatteryService {
+        let store: BatteryHistoryStoring
+        do {
+            store = try BatteryHistoryStore(fileURL: BatteryHistoryStore.defaultURL())
+        } catch {
+            store = FailingBatteryHistoryStore(error: (error as? BatteryError) ?? .storage(error.localizedDescription))
+        }
+        return BatteryService(
+            power: PowerSourceMonitor(),
+            observer: PowerSourceChangeObserver(),
+            energy: ProcessEnergySampler(),
+            store: store,
+            sleeper: ContinuousTickSleeper()
+        )
     }
 }

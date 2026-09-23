@@ -10,6 +10,7 @@ import SwiftUI
 
 /// Делегат приложения для управления жизненным циклом и MenuBar
 class AppDelegate: NSObject, NSApplicationDelegate {
+    private var environment: AppEnvironment?
     private var menuBarController: MenuBarController?
 
     /// true только после того, как MenuBarController был создан
@@ -24,7 +25,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     /// Инициализирует контроллер строки меню, кроме случая запуска под тестами
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard !isRunningAsTestHost else { return }
-        menuBarController = MenuBarController(environment: AppEnvironment())
+        let environment = AppEnvironment()
+        self.environment = environment
+        menuBarController = MenuBarController(environment: environment)
         isComposed = true
     }
 
@@ -33,5 +36,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     /// - Returns: false, чтобы приложение продолжало работать в строке меню
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return false
+    }
+
+    /// Останавливает фоновую работу перед завершением приложения.
+    func applicationWillTerminate(_ notification: Notification) {
+        environment?.battery.stop()
+        environment?.monitoring.stop()
     }
 }

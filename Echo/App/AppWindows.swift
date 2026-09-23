@@ -47,7 +47,7 @@ final class AppWindows: NSObject, NSWindowDelegate {
             return
         }
 
-        let root = MetricsDetailView(state: environment.detailState, metrics: environment.metrics)
+        let root = MetricsDetailView(state: environment.detailState, metrics: environment.metrics, battery: environment.battery)
         let hosting = HostingFactory.make(root, localizer: environment.localizer)
 
         let window = NSWindow(contentViewController: hosting)

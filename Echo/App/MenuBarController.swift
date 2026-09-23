@@ -42,6 +42,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         super.init()
 
         environment.updater.start()
+        environment.battery.start()
         setupStatusItem()
         setupPopover()
 
@@ -165,6 +166,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
             clipboard: environment.clipboard,
             settings: environment.settings,
             ultraSwitch: environment.ultraSwitch,
+            battery: environment.battery,
             onSelect: { [weak self] tab in self?.openDetail(tab) },
             onOpenClipboard: { [weak self] in self?.openClipboard() },
             onOpenPreferences: { [weak self] in self?.openPreferences() }

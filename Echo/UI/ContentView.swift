@@ -15,6 +15,7 @@ struct ContentView: View {
     @ObservedObject var clipboard: ClipboardService
     @ObservedObject var settings: AppSettings
     @ObservedObject var ultraSwitch: UltraSwitchService
+    @ObservedObject var battery: BatteryService
     @EnvironmentObject private var loc: Localizer
 
     /// Открыть детальное окно для выбранной метрики (реализуется владельцем поповера).
@@ -76,13 +77,17 @@ struct ContentView: View {
             ?? "Echo"
     }
 
-    // MARK: - Rings row (CPU / MEM / DISK)
+    // MARK: - Rings row (CPU / MEM / DISK / [Battery])
 
     private var ringsRow: some View {
         HStack(spacing: ringSpacing) {
             ringCell(.cpu)
             ringCell(.memory)
             ringCell(.disk)
+            if battery.hasBattery {
+                BatteryRingCell(reading: battery.current, action: { onSelect(.battery) })
+                    .frame(width: ringCellWidth)
+            }
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 4)
@@ -93,8 +98,12 @@ struct ContentView: View {
     /// содержимое, и смена подписи на обновлении двигала все три кольца.
     private var ringSpacing: CGFloat { 4 }
 
+    /// Число ячеек в ряду колец: 3 постоянных плюс Battery, когда есть батарея.
+    private var ringCellCount: Int { battery.hasBattery ? 4 : 3 }
+
     private var ringCellWidth: CGFloat {
-        (DS.popoverWidth - 24 - ringSpacing * 2) / 3
+        let count = CGFloat(ringCellCount)
+        return (DS.popoverWidth - 24 - ringSpacing * (count - 1)) / count
     }
 
     private func ringCell(_ tab: MetricTab) -> some View {
@@ -278,7 +287,7 @@ struct ContentView: View {
             return (0, "", "", "")
 
         case .battery:
-            // Ring cells are built explicitly (.cpu/.memory/.disk) — unreachable until wired.
+            // Battery ring is built explicitly via BatteryRingCell — unreachable.
             return (0, "", "", "")
         }
     }
