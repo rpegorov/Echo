@@ -42,13 +42,13 @@ struct StatusItemPresenter {
 
         case .metrics:
             button.image = nil
-            button.attributedTitle = attributedText(for: metrics, shownMetrics: shownMetrics)
+            button.attributedTitle = attributedText(for: metrics, shownMetrics: shownMetrics, localizer: localizer)
         }
     }
 
     /// Строка метрик с иконками: голые проценты не говорят, к чему они
     /// относятся, а подписи словами не помещаются в строку меню.
-    static func attributedText(for metrics: SystemMetrics, shownMetrics: [MetricTab]) -> NSAttributedString {
+    static func attributedText(for metrics: SystemMetrics, shownMetrics: [MetricTab], localizer: Localizer) -> NSAttributedString {
         let selected = shownMetrics.isEmpty ? [.cpu] : shownMetrics
         let result = NSMutableAttributedString()
 
@@ -61,7 +61,7 @@ struct StatusItemPresenter {
                 result.append(NSAttributedString(string: " ", attributes: [.font: font]))
             }
             result.append(NSAttributedString(
-                string: value(of: tab, in: metrics),
+                string: value(of: tab, in: metrics, localizer: localizer),
                 attributes: [.font: font]
             ))
         }
@@ -86,19 +86,12 @@ struct StatusItemPresenter {
         return attachment
     }
 
-    /// Строка метрик для строки меню. Пустой выбор — показываем загрузку CPU,
-    /// иначе кнопка схлопнется в невидимую точку.
-    static func text(for metrics: SystemMetrics, shownMetrics: [MetricTab]) -> String {
-        let selected = shownMetrics.isEmpty ? [.cpu] : shownMetrics
-        return selected.map { value(of: $0, in: metrics) }.joined(separator: " · ")
-    }
-
     /// Значения дополняются пробелами до постоянной ширины.
     ///
     /// Иначе «9%» и «16%» дают разную ширину иконки, строка меню
     /// переразмеряется, а привязанный к ней поповер прыгает вбок вместе с
     /// содержимым — именно это выглядело как «кольца наползают слева».
-    private static func value(of tab: MetricTab, in metrics: SystemMetrics) -> String {
+    private static func value(of tab: MetricTab, in metrics: SystemMetrics, localizer: Localizer) -> String {
         switch tab {
         case .cpu:
             return percent(metrics.cpu.usage)
@@ -107,7 +100,7 @@ struct StatusItemPresenter {
         case .disk:
             return percent(metrics.disk.usagePercent)
         case .network:
-            return "↓" + pad(metrics.network.downloadFormatted, to: 9)
+            return "↓" + pad(SpeedFormatter.format(kbPerSec: metrics.network.download, using: localizer), to: 9)
         }
     }
 
@@ -121,7 +114,7 @@ struct StatusItemPresenter {
 
     /// Ширина иконки при самых длинных возможных значениях. Задаётся один раз,
     /// чтобы строка меню не меняла размер вообще никогда.
-    static func widestWidth(shownMetrics: [MetricTab]) -> CGFloat {
+    static func widestWidth(shownMetrics: [MetricTab], localizer: Localizer) -> CGFloat {
         var sample = SystemMetrics()
         sample.cpu.usage = 100
         sample.ram.used = 100
@@ -130,14 +123,14 @@ struct StatusItemPresenter {
         sample.disk.total = 100
         sample.network.download = 999 * 1024
 
-        return attributedText(for: sample, shownMetrics: shownMetrics).size().width + 10
+        return attributedText(for: sample, shownMetrics: shownMetrics, localizer: localizer).size().width + 10
     }
 
     // MARK: - Картинки
 
     private static func defaultIcon() -> NSImage? {
         guard let icon = NSImage(named: "MenuBarIcon") else { return nil }
-        icon.isTemplate = false   // цветная non-template иконка (кольца в тонах воды)
+        icon.isTemplate = false   // l10n-exempt: comment, not user-facing — цветная non-template иконка (кольца в тонах воды)
         return icon
     }
 

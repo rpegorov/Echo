@@ -49,14 +49,14 @@ final class SelectionTranslator {
         guard pasteboard.changeCount != changeCountBefore,
               let selected = pasteboard.string(forType: .string),
               !selected.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            Self.log.notice("Переводить нечего: выделение пустое или не скопировалось")
+            Self.log.notice("Переводить нечего: выделение пустое или не скопировалось") // l10n-exempt: log, not user-facing
             restore(saved, to: pasteboard)
             return
         }
 
         Self.log.debug("Выделено \(selected.count, privacy: .public) символов, перевожу")
         guard let translated = await translator.translate(selected) else {
-            Self.log.notice("Перевод не выполнен")
+            Self.log.notice("Перевод не выполнен") // l10n-exempt: log, not user-facing
             restore(saved, to: pasteboard)
             return
         }

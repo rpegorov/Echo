@@ -34,6 +34,9 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
     /// Подписка на метрики — только ради строки меню в режиме «Метрики».
     private var metricsObserver: AnyCancellable?
 
+    /// Подписка на смену языка — переприменяет заголовки окон и строку меню без перезапуска.
+    private var languageObserver: AnyCancellable?
+
     init(environment: AppEnvironment) {
         self.environment = environment
         super.init()
@@ -45,6 +48,12 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         windows.onWindowClosed = { [weak self] in self?.environment.monitoring.updateMonitoringState() }
         environment.monitoring.isUIVisible = { [weak self] in self?.isDetailUIVisible ?? false }
         environment.monitoring.menuBarShowsMetrics = { [weak self] in self?.environment.settings.menuBarIconMode == .metrics }
+
+        languageObserver = environment.localizer.$language.dropFirst().sink { [weak self] _ in
+            guard let self else { return }
+            self.windows.applyTitles(using: self.environment.localizer)
+            self.applyStatusItemAppearance()
+        }
 
         let settings = environment.settings
         settings.onChange = { [weak self] in
@@ -132,7 +141,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         // Ширина иконки фиксируется по самым длинным значениям: меняющаяся
         // ширина двигала бы поповер, привязанный к этой кнопке.
         statusItem.length = settings.menuBarIconMode == .metrics
-            ? StatusItemPresenter.widestWidth(shownMetrics: settings.menuBarMetrics)
+            ? StatusItemPresenter.widestWidth(shownMetrics: settings.menuBarMetrics, localizer: environment.localizer)
             : NSStatusItem.variableLength
         StatusItemPresenter.apply(
             to: button,

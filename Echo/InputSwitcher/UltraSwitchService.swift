@@ -109,7 +109,7 @@ final class UltraSwitchService: ObservableObject {
         guard let candidate = buffer.wordForManualConversion(),
               let script = LayoutTranslit.script(of: candidate.word),
               let converted = LayoutTranslit.convert(candidate.word, from: script) else {
-            Self.log.notice("Ручная конвертация: нечего исправлять")
+            Self.log.notice("Ручная конвертация: нечего исправлять") // l10n-exempt: log, not user-facing
             return
         }
         replace(candidate.word, with: converted, tail: candidate.tail,
@@ -152,7 +152,7 @@ final class UltraSwitchService: ObservableObject {
 
         if newStatus != status {
             status = newStatus
-            Self.log.notice("Статус автозамены: \(String(describing: newStatus), privacy: .public)")
+            Self.log.notice("Статус автозамены: \(String(describing: newStatus), privacy: .public)") // l10n-exempt: log, not user-facing
         }
         newStatus.isBlocked ? startPermissionPoll() : stopPermissionPoll()
     }
@@ -241,7 +241,7 @@ final class UltraSwitchService: ObservableObject {
                 guard let self else { return }
                 self.isInjecting = false
                 guard success else {
-                    Self.log.notice("Отправить исправление не удалось — раскладку не трогаю")
+                    Self.log.notice("Отправить исправление не удалось — раскладку не трогаю") // l10n-exempt: log, not user-facing
                     self.buffer.clear()
                     return
                 }

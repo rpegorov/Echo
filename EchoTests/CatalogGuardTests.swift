@@ -2,18 +2,11 @@ import Foundation
 import Testing
 @testable import Echo
 
-/// Wave-end regression guards from the plan. Completeness and the orphan
-/// check are enforced as hard failures already: whatever key types are
-/// populated so far (CommonKey, MetricsKey as of this commit) must be fully
-/// and correctly translated the moment they exist — an enum with zero cases
-/// vacuously satisfies both, so a not-yet-started key type (Popover,
-/// Preferences, Input, System) does not fail them prematurely.
-///
-/// The hard-coded-string scan and the unwired-capabilities check are still
-/// genuinely red at this point in the wave — those two stay wrapped in
-/// `withKnownIssue` until the remaining S-tasks and the W integration task
-/// land. Swift Testing itself flags an unexpected pass inside
-/// `withKnownIssue`, which is the signal to drop that wrapper too.
+/// Wave-end regression guards from the plan. All four are enforced as hard
+/// failures: completeness and the orphan check for whatever key types are
+/// populated so far, the hard-coded-string scan across all production code,
+/// and the unwired-capabilities check now that the W integration task has
+/// wired every Phase-A capability.
 @Suite("Wave-end localization guards")
 struct CatalogGuardTests {
 
@@ -34,17 +27,13 @@ struct CatalogGuardTests {
 
     @Test("no hard-coded user-facing string literals outside Localization/")
     func noHardCodedUserFacingStrings() {
-        withKnownIssue("Phase A only — S-tasks migrate literals to Localizer calls later in this wave") {
-            let violations = scanForHardCodedStrings()
-            #expect(violations.isEmpty, "Hard-coded strings found:\n\(violations.joined(separator: "\n"))")
-        }
+        let violations = scanForHardCodedStrings()
+        #expect(violations.isEmpty, "Hard-coded strings found:\n\(violations.joined(separator: "\n"))")
     }
 
     @Test("no unwired capabilities remain by the end of the wave")
     func unwiredCapabilitiesIsEmpty() {
-        withKnownIssue("Phase A only — cleared by the W integration task at the end of this wave") {
-            #expect(UnwiredCapabilities.items.isEmpty)
-        }
+        #expect(UnwiredCapabilities.items.isEmpty)
     }
 }
 

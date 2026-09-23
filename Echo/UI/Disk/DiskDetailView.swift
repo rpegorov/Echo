@@ -133,7 +133,7 @@ struct FileRowView: View {
         Button(action: onReveal) {
             HStack(spacing: 12) {
                 // Номер в топе
-                Text("\(rank)")
+                Text("\(rank)") // l10n-exempt: numeric interpolation only, no literal text
                     .font(.system(.caption, design: .monospaced))
                     .foregroundStyle(.secondary)
                     .frame(width: 20, alignment: .trailing)

@@ -9,10 +9,10 @@ import SwiftUI
 /// Цвета порогов и дорожки берутся из `DS`, чтобы работать в обеих темах.
 struct CircularProgressView: View {
     let progress: Double      // 0–100
-    let valueText: String     // текст внутри кольца (напр. "34")
-    let unitText: String      // подпись под значением (напр. "%")
-    let name: String          // подпись под кольцом (напр. "CPU")
-    let subLabel: String      // детали (напр. "8 cores")
+    let valueText: String     // l10n-exempt: comment, not user-facing — текст внутри кольца (напр. "34")
+    let unitText: String      // l10n-exempt: comment, not user-facing — подпись под значением (напр. "%")
+    let name: String          // l10n-exempt: comment, not user-facing — подпись под кольцом (напр. "CPU")
+    let subLabel: String      // l10n-exempt: comment, not user-facing — детали (напр. "8 cores")
     var ringSize: CGFloat = 58
     var action: (() -> Void)? = nil
 

@@ -16,7 +16,7 @@ struct ProcessRowView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Text("\(rank)")
+            Text("\(rank)") // l10n-exempt: numeric interpolation only, no literal text
                 .font(.system(.caption, design: .monospaced))
                 .foregroundStyle(.secondary)
                 .frame(width: 20, alignment: .trailing)

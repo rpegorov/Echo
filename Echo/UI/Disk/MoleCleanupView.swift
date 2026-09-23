@@ -153,8 +153,7 @@ struct MoleCleanupView: View {
             HStack(spacing: 6) {
                 Image(systemName: "terminal")
                     .foregroundStyle(.tertiary)
-                // l10n-exempt: command — the `mole` CLI subcommand name is not translated.
-                Text("mole \(selected.rawValue)")
+                Text("mole \(selected.rawValue)") // l10n-exempt: command — the `mole` CLI subcommand name is not translated
                     .font(.system(size: 12, design: .monospaced))
                     .textSelection(.enabled)
             }

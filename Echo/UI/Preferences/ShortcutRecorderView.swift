@@ -58,14 +58,14 @@ struct ShortcutRecorderView: View {
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             // Локальный монитор срабатывает на главном потоке.
             MainActor.assumeIsolated {
-                if event.keyCode != 53 { // 53 = Esc (отмена)
+                if event.keyCode != 53 { // l10n-exempt: comment, not user-facing — 53 = Esc (отмена)
                     let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
                     let shortcut = KeyboardShortcut(keyCode: UInt32(event.keyCode), flags: flags)
                     settings.setShortcut(shortcut, for: command)
                 }
                 stopRecording()
             }
-            return nil // поглощаем событие
+            return nil // l10n-exempt: comment, not user-facing — поглощаем событие
         }
     }
 

@@ -20,7 +20,7 @@ struct MenuBarPrefsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(loc.t(PreferencesKey.menuBarModeTitle))
                         .font(.system(size: 13, weight: .medium))
-                    Picker("", selection: $settings.menuBarIconMode) {
+                    Picker("", selection: $settings.menuBarIconMode) { // l10n-exempt: empty label, hidden via .labelsHidden()
                         ForEach(MenuBarIconMode.allCases) { mode in
                             Text(loc.t(mode.titleKey)).tag(mode)
                         }
@@ -51,7 +51,8 @@ struct MenuBarPrefsView: View {
                     Spacer()
                     Text(AttributedString(StatusItemPresenter.attributedText(
                         for: metrics.metrics,
-                        shownMetrics: settings.menuBarMetrics
+                        shownMetrics: settings.menuBarMetrics,
+                        localizer: loc
                     )))
                     .foregroundStyle(.secondary)
                 }

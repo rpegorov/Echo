@@ -76,7 +76,7 @@ final class HotKeyManager {
         )
         if status == noErr {
             hotKeyRefs.append(ref)
-            Self.log.notice("Хоткей \(label, privacy: .public) — \(shortcut.displayString, privacy: .public): зарегистрирован")
+            Self.log.notice("Хоткей \(label, privacy: .public) — \(shortcut.displayString, privacy: .public): зарегистрирован") // l10n-exempt: log, not user-facing
         } else {
             Self.log.error("Хоткей \(label, privacy: .public) — \(shortcut.displayString, privacy: .public): ошибка \(status, privacy: .public)")
         }

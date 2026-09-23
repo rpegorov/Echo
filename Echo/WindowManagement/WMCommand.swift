@@ -71,8 +71,8 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
         case .topRight:      return KeyboardShortcut(keyCode: 34,  flags: wm) // I
         case .bottomLeft:    return KeyboardShortcut(keyCode: 45,  flags: wm) // N
         case .bottomRight:   return KeyboardShortcut(keyCode: 46,  flags: wm) // M
-        case .center:        return KeyboardShortcut(keyCode: 40,  flags: wm) // K — сжать и по центру
-        case .maximize:      return KeyboardShortcut(keyCode: 38,  flags: wm) // J — максимизация
+        case .center:        return KeyboardShortcut(keyCode: 40,  flags: wm) // l10n-exempt: comment, not user-facing — K, сжать и по центру
+        case .maximize:      return KeyboardShortcut(keyCode: 38,  flags: wm) // l10n-exempt: comment, not user-facing — J, максимизация
         case .openClipboard: return KeyboardShortcut(keyCode: 9, flags: [.command, .shift]) // ⌘⇧V
         case .switchLayout:  return KeyboardShortcut(keyCode: 49, flags: [.option]) // ⌥Space
         case .convertWord:   return KeyboardShortcut(keyCode: 49, flags: [.option, .shift]) // ⌥⇧Space

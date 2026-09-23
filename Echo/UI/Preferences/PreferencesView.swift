@@ -36,7 +36,7 @@ struct PreferencesView: View {
         case menuBar = "Menu Bar"
         case windowManager = "Window Manager"
         case ultraSwitch = "Ultra Switch"
-        case snippets = "Сниппеты"
+        case snippets = "Snippets"
         case keyboard = "Keyboard Shortcuts"
         case updates = "Updates"
         case clipboard = "Clipboard History"

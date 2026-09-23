@@ -42,8 +42,9 @@ struct AppEnvironmentTests {
 
     @Test("SpeedFormatter switches from KB/s to MB/s at the 1024 KB/s boundary")
     func speedFormatterSwitchesUnitAt1024() {
-        let below = SpeedFormatter.string(forKBPerSec: 1023)
-        let atBoundary = SpeedFormatter.string(forKBPerSec: 1024)
+        let localizer = Localizer(preference: .fixed(.en), system: SystemLanguages(preferred: { [] }))
+        let below = SpeedFormatter.format(kbPerSec: 1023, using: localizer)
+        let atBoundary = SpeedFormatter.format(kbPerSec: 1024, using: localizer)
 
         #expect(below.contains("KB"))
         #expect(!below.contains("MB"))
