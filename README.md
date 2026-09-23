@@ -36,6 +36,13 @@ management, clipboard history and quick system utilities.
   (drag a window to a screen edge/corner to tile it; hold Shift to cancel).
 - **Clipboard history** — recent text, images and files, with secret/transient
   entries skipped. Everything stays in memory.
+- **Battery** — 24-hour charge chart with charging periods marked, and the top 10
+  apps by energy for any moment you click on (per-process energy counters, sampled
+  every 5 minutes on battery, history kept locally for 24 hours).
+- **Keyboard layout** — Ultra Switch hotkeys (switch layout, convert last word,
+  translate selection) and automatic RU/EN layout correction, each on its own toggle.
+- **English and Russian** — follows the macOS language or a language chosen in
+  Preferences; switches instantly.
 - **Quick utilities** — Keyboard Cleaning, Prevent Sleep, and disk cleanup via the
   [`mole`](https://github.com/tw93/mole) CLI.
 - **Energy-aware** — pauses monitoring when no window is open, during system sleep,
@@ -125,7 +132,7 @@ Defaults (editable in Preferences → Keyboard Shortcuts):
 
 ## Preferences
 
-- **General** — launch at login.
+- **General** — launch at login, language (System / English / Русский).
 - **System Monitoring** — update interval (0.5–5 s).
 - **Power Management** — pause when no window is open, pause during system sleep,
   throttle in Low Power Mode.
