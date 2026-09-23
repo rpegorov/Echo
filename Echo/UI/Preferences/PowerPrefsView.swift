@@ -7,18 +7,19 @@ import SwiftUI
 
 /// Раздел Preferences: когда мониторинг можно приостановить.
 struct PowerPrefsView: View {
+    @EnvironmentObject private var loc: Localizer
     @ObservedObject var settings: AppSettings
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            PrefTitle("Power Management")
+            PrefTitle(loc.t(PreferencesKey.sectionPower))
 
             PrefCard {
                 Toggle(isOn: $settings.pauseWhenHidden) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Pause when no window is open")
+                        Text(loc.t(PreferencesKey.pauseWhenHiddenTitle))
                             .font(.system(size: 13, weight: .medium))
-                        PrefCaption("Останавливать опрос метрик, когда поповер и все окна закрыты. Главная экономия батареи.")
+                        PrefCaption(loc.t(PreferencesKey.pauseWhenHiddenCaption))
                     }
                 }
                 .toggleStyle(.switch)
@@ -28,9 +29,9 @@ struct PowerPrefsView: View {
             PrefCard {
                 Toggle(isOn: $settings.pauseOnSleep) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Pause during system sleep")
+                        Text(loc.t(PreferencesKey.pauseOnSleepTitle))
                             .font(.system(size: 13, weight: .medium))
-                        PrefCaption("Полностью останавливать мониторинг на время сна Mac и возобновлять при пробуждении.")
+                        PrefCaption(loc.t(PreferencesKey.pauseOnSleepCaption))
                     }
                 }
                 .toggleStyle(.switch)
@@ -41,9 +42,9 @@ struct PowerPrefsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Toggle(isOn: $settings.lowPowerThrottle) {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Throttle in Low Power Mode")
+                            Text(loc.t(PreferencesKey.lowPowerThrottleTitle))
                                 .font(.system(size: 13, weight: .medium))
-                            PrefCaption("Реже опрашивать метрики, когда включён режим энергосбережения macOS.")
+                            PrefCaption(loc.t(PreferencesKey.lowPowerThrottleCaption))
                         }
                     }
                     .toggleStyle(.switch)
@@ -52,10 +53,10 @@ struct PowerPrefsView: View {
                     if settings.lowPowerThrottle {
                         Divider().opacity(0.12)
                         HStack {
-                            Text("Low Power interval")
+                            Text(loc.t(PreferencesKey.lowPowerIntervalTitle))
                                 .font(.system(size: 12))
                             Spacer()
-                            Text(AppInfo.intervalLabel(settings.lowPowerInterval))
+                            Text(AppInfo.intervalLabel(settings.lowPowerInterval, loc: loc))
                                 .font(.system(size: 12, design: .rounded))
                                 .foregroundStyle(.secondary)
                         }

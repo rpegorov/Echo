@@ -7,18 +7,19 @@ import SwiftUI
 
 /// Раздел Preferences: история буфера обмена.
 struct ClipboardPrefsView: View {
+    @EnvironmentObject private var loc: Localizer
     @ObservedObject var clipboard: ClipboardService
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            PrefTitle("Clipboard History")
+            PrefTitle(loc.t(PreferencesKey.sectionClipboard))
 
             PrefCard {
                 Toggle(isOn: $clipboard.isEnabled) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Enable Clipboard History")
+                        Text(loc.t(PreferencesKey.clipboardEnableTitle))
                             .font(.system(size: 13, weight: .medium))
-                        PrefCaption("Хранит последние скопированные тексты, файлы и изображения (в памяти).")
+                        PrefCaption(loc.t(PreferencesKey.clipboardEnableCaption))
                     }
                 }
                 .toggleStyle(.switch)

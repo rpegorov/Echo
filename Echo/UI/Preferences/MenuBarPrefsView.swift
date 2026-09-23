@@ -8,20 +8,21 @@ import SwiftUI
 
 /// Раздел Preferences: что показывать в строке меню.
 struct MenuBarPrefsView: View {
+    @EnvironmentObject private var loc: Localizer
     @ObservedObject var settings: AppSettings
     @ObservedObject var metrics: MetricsService
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            PrefTitle("Menu Bar")
+            PrefTitle(loc.t(PreferencesKey.sectionMenuBar))
 
             PrefCard {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Что показывать")
+                    Text(loc.t(PreferencesKey.menuBarModeTitle))
                         .font(.system(size: 13, weight: .medium))
                     Picker("", selection: $settings.menuBarIconMode) {
                         ForEach(MenuBarIconMode.allCases) { mode in
-                            Text(mode.title).tag(mode)
+                            Text(loc.t(mode.titleKey)).tag(mode)
                         }
                     }
                     .pickerStyle(.segmented)
@@ -45,7 +46,7 @@ struct MenuBarPrefsView: View {
         PrefCard {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
-                    Text("Метрики в строке меню")
+                    Text(loc.t(PreferencesKey.menuBarMetricsTitle))
                         .font(.system(size: 13, weight: .medium))
                     Spacer()
                     Text(AttributedString(StatusItemPresenter.attributedText(
@@ -54,11 +55,11 @@ struct MenuBarPrefsView: View {
                     )))
                     .foregroundStyle(.secondary)
                 }
-                PrefCaption("Обновляются с тем же интервалом, что и остальной мониторинг.")
+                PrefCaption(loc.t(PreferencesKey.menuBarMetricsCaption))
 
                 ForEach(MetricTab.allCases, id: \.self) { tab in
                     Toggle(isOn: binding(for: tab)) {
-                        Label(tab.rawValue, systemImage: tab.icon)
+                        Label(loc.t(tab.titleKey), systemImage: tab.icon)
                             .font(.system(size: 12))
                     }
                     .toggleStyle(.checkbox)
@@ -71,16 +72,16 @@ struct MenuBarPrefsView: View {
         PrefCard {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("Как часто обновлять в строке меню")
+                    Text(loc.t(PreferencesKey.menuBarIntervalTitle))
                         .font(.system(size: 13, weight: .medium))
                     Spacer()
-                    Text(String(format: "раз в %g с", settings.menuBarInterval))
+                    Text(AppInfo.intervalLabel(settings.menuBarInterval, loc: loc))
                         .font(.system(size: 12, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
                 Slider(value: $settings.menuBarInterval, in: 1...30, step: 1)
                     .tint(DS.accent)
-                PrefCaption("Пока открыт поповер или окно, опрос идёт с обычным интервалом из раздела System Monitoring. Этот — для случая, когда виден только трей: реже опрос, меньше расход батареи.")
+                PrefCaption(loc.t(PreferencesKey.menuBarIntervalCaption))
             }
         }
     }
@@ -112,18 +113,18 @@ struct MenuBarPrefsView: View {
                     preview(of: settings.customIconPath)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(settings.customIconPath.map(URL.init(fileURLWithPath:))?.lastPathComponent
-                             ?? "Картинка не выбрана")
+                             ?? loc.t(PreferencesKey.customIconNoneTitle))
                             .font(.system(size: 13, weight: .medium))
-                        PrefCaption("PNG или SVG. Изображение масштабируется по высоте строки меню и красится в цвет системы.")
+                        PrefCaption(loc.t(PreferencesKey.customIconCaption))
                     }
                     Spacer()
                 }
                 HStack(spacing: 10) {
-                    Button("Выбрать…", action: chooseIcon)
+                    Button(loc.t(PreferencesKey.customIconChooseButton), action: chooseIcon)
                         .buttonStyle(.borderedProminent)
                         .tint(DS.accent)
                     if settings.customIconPath != nil {
-                        Button("Убрать") { settings.customIconPath = nil }
+                        Button(loc.t(PreferencesKey.customIconRemoveButton)) { settings.customIconPath = nil }
                             .buttonStyle(.bordered)
                     }
                 }

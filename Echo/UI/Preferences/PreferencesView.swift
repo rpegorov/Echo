@@ -12,6 +12,7 @@ import SwiftUI
 /// состояние, которое нужно нескольким разделам сразу (статусы доступа,
 /// опрашиваемые по таймеру).
 struct PreferencesView: View {
+    @EnvironmentObject private var loc: Localizer
     @ObservedObject var settings: AppSettings
     @ObservedObject var clipboard: ClipboardService
     @ObservedObject var windowManager: WindowManagerService
@@ -62,7 +63,7 @@ struct PreferencesView: View {
     var body: some View {
         NavigationSplitView {
             List(PrefSection.allCases, selection: $section) { item in
-                Label(item.rawValue, systemImage: item.icon).tag(item)
+                Label(loc.t(item.titleKey), systemImage: item.icon).tag(item)
             }
             .navigationSplitViewColumnWidth(210)
         } detail: {

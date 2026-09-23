@@ -11,14 +11,6 @@ enum AppearanceMode: String, CaseIterable, Identifiable, Codable {
 
     var id: String { rawValue }
 
-    var title: String {
-        switch self {
-        case .system: return "System"
-        case .light:  return "Light"
-        case .dark:   return "Dark"
-        }
-    }
-
     /// Соответствующий `NSAppearance` (nil — следовать системе).
     var nsAppearance: NSAppearance? {
         switch self {
