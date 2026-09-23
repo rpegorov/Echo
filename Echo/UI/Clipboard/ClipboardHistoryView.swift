@@ -9,6 +9,7 @@ import SwiftUI
 struct ClipboardHistoryView: View {
     @ObservedObject var service: ClipboardService
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var loc: Localizer
 
     var body: some View {
         VStack(spacing: 0) {
@@ -29,14 +30,14 @@ struct ClipboardHistoryView: View {
         HStack(spacing: 8) {
             Image(systemName: "doc.on.clipboard")
                 .foregroundStyle(DS.accent)
-            Text("Clipboard History")
+            Text(loc.t(PopoverKey.clipboardHistoryTitle))
                 .font(.system(size: 14, weight: .semibold))
             Spacer()
-            Button("Clear") { service.clear() }
+            Button(loc.t(PopoverKey.clear)) { service.clear() }
                 .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
                 .disabled(service.items.isEmpty)
-            Button("Done") { dismiss() }
+            Button(loc.t(PopoverKey.done)) { dismiss() }
                 .buttonStyle(.plain)
                 .foregroundStyle(DS.accent)
         }
@@ -51,10 +52,10 @@ struct ClipboardHistoryView: View {
             Image(systemName: "clipboard")
                 .font(.system(size: 30))
                 .foregroundStyle(.tertiary)
-            Text("История пуста")
+            Text(loc.t(PopoverKey.clipboardEmptyTitle))
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(.secondary)
-            Text("Скопируйте текст или изображение — они появятся здесь.")
+            Text(loc.t(PopoverKey.clipboardEmptyHint))
                 .font(.system(size: 11))
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)
@@ -106,7 +107,7 @@ struct ClipboardHistoryView: View {
                     Image(systemName: "photo")
                         .frame(width: 28)
                 }
-                Text("Изображение")
+                Text(loc.t(PopoverKey.clipboardImageLabel))
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
             case .file:
@@ -121,7 +122,7 @@ struct ClipboardHistoryView: View {
                         .lineLimit(1)
                         .truncationMode(.middle)
                     if paths.count > 1 {
-                        Text("+ ещё \(paths.count - 1)")
+                        Text(loc.t(PopoverKey.clipboardMoreFiles, Int64(paths.count - 1)))
                             .font(.system(size: 10))
                             .foregroundStyle(.tertiary)
                     }
