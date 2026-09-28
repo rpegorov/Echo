@@ -50,12 +50,21 @@ final class KeystrokeBuffer {
         currentWord.append(character)
     }
 
+    /// Стирает символ перед кареткой. Хвост после завершённого слова известен
+    /// так же точно, как само слово: стёртый до конца, он возвращает слово
+    /// в набираемое — каретка снова стоит сразу за ним.
     func backspace() {
-        if currentWord.isEmpty {
-            // Стёрли за пределы своего слова — где каретка, мы больше не знаем.
-            clear()
-        } else {
+        if !currentWord.isEmpty {
             currentWord.removeLast()
+        } else if !completedTail.isEmpty {
+            completedTail.removeLast()
+            if completedTail.isEmpty {
+                currentWord = completedWord
+                completedWord = ""
+            }
+        } else {
+            // Стёрли за пределы известного текста — где каретка, мы больше не знаем.
+            clear()
         }
     }
 

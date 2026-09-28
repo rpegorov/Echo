@@ -39,6 +39,8 @@ final class HotKeyRegistrar {
     /// команды раскладки — только если включён Ultra Switch; clipboard — всегда.
     func registerAll() {
         hotKeys.unregisterAll()
+        var layoutShortcuts: [KeyboardShortcut] = []
+        defer { ultraSwitch.reserveShortcuts(layoutShortcuts) }
         for command in WMCommand.allCases {
             guard let shortcut = settings.shortcut(for: command) else { continue }
             if command.isWindowCommand && !settings.windowManagerEnabled { continue }
@@ -56,10 +58,12 @@ final class HotKeyRegistrar {
 
             switch command {
             case .switchLayout:
+                layoutShortcuts.append(shortcut)
                 hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
                     MainActor.assumeIsolated { self?.ultraSwitch.switchLayout() }
                 }
             case .convertWord:
+                layoutShortcuts.append(shortcut)
                 hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
                     MainActor.assumeIsolated { self?.ultraSwitch.convertLastWord() }
                 }

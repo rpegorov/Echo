@@ -74,6 +74,11 @@ final class UltraSwitchService: ObservableObject {
     /// и следующая замена стёрла бы не то. Такой буфер обнуляем.
     private var keystrokesDuringInjection = 0
 
+    /// Хоткей конвертации нажали, пока шла вставка. Буфер в этот момент ещё
+    /// описывает текст до вставки, и конвертация по нему повторила бы ту же
+    /// замену вместо отмены — поэтому она ждёт конца вставки.
+    private var pendingManualConversion = false
+
     init() {
         tap.onCharacter = { [weak self] character in self?.handle(character) }
         tap.onBackspace = { [weak self] in self?.handleBackspace() }
@@ -103,9 +108,18 @@ final class UltraSwitchService: ObservableObject {
         inputSource.toggle()
     }
 
+    /// Хоткеи раскладки, которые перехват не должен принимать за набор.
+    func reserveShortcuts(_ shortcuts: [KeyboardShortcut]) {
+        tap.reservedShortcuts = shortcuts
+    }
+
     /// Безусловно переносит последнее слово в другую раскладку.
     /// Повторный вызов возвращает его обратно — это и есть отмена автозамены.
     func convertLastWord() {
+        guard !isInjecting else {
+            pendingManualConversion = true
+            return
+        }
         guard let candidate = buffer.wordForManualConversion(),
               let script = LayoutTranslit.script(of: candidate.word),
               let converted = LayoutTranslit.convert(candidate.word, from: script) else {
@@ -113,7 +127,8 @@ final class UltraSwitchService: ObservableObject {
             return
         }
         replace(candidate.word, with: converted, tail: candidate.tail,
-                deleteCount: candidate.deleteCount, target: script.other)
+                deleteCount: candidate.deleteCount, target: script.other,
+                awaitModifierRelease: true)
     }
 
     /// Открывает вкладку с недостающим разрешением. Системные запросы доступа
@@ -222,8 +237,8 @@ final class UltraSwitchService: ObservableObject {
 
         TextInjector.replaceBeforeCaret(deleteCount: deleteCount, with: expansion + tail) { _ in
             Task { @MainActor [weak self] in
-                self?.isInjecting = false
                 self?.buffer.clear()
+                self?.finishInjection()
             }
         }
     }
@@ -231,15 +246,19 @@ final class UltraSwitchService: ObservableObject {
     /// Стирает набранное и печатает исправленный вариант.
     /// Раскладка переключается только после подтверждённой отправки.
     private func replace(_ word: String, with converted: String, tail: String,
-                         deleteCount: Int, target: KeyScript) {
+                         deleteCount: Int, target: KeyScript, awaitModifierRelease: Bool = false) {
         Self.log.debug("Исправляю слово из \(word.count, privacy: .public) букв")
         isInjecting = true
         keystrokesDuringInjection = 0
 
-        TextInjector.replaceBeforeCaret(deleteCount: deleteCount, with: converted + tail) { success in
+        TextInjector.replaceBeforeCaret(
+            deleteCount: deleteCount,
+            with: converted + tail,
+            awaitModifierRelease: awaitModifierRelease
+        ) { success in
             Task { @MainActor [weak self] in
                 guard let self else { return }
-                self.isInjecting = false
+                defer { self.finishInjection() }
                 guard success else {
                     Self.log.notice("Отправить исправление не удалось — раскладку не трогаю") // l10n-exempt: log, not user-facing
                     self.buffer.clear()
@@ -254,6 +273,15 @@ final class UltraSwitchService: ObservableObject {
                 self.inputSource.select(target)
             }
         }
+    }
+
+    /// Вставка закончилась: буфер снова описывает текст, и отложенная
+    /// конвертация может его прочитать.
+    private func finishInjection() {
+        isInjecting = false
+        guard pendingManualConversion else { return }
+        pendingManualConversion = false
+        convertLastWord()
     }
 
     private func isExcludedApp() -> Bool {

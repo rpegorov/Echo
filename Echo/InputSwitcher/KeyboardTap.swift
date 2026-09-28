@@ -21,6 +21,13 @@ final class KeyboardTap {
     /// Позиция каретки стала неизвестной — буфер пора сбросить.
     var onContextLost: (() -> Void)?
 
+    /// Хоткеи раскладки. Carbon забирает их себе, и в поле ввода они ничего
+    /// не печатают, но перехват всё равно их видит. Без этого списка ⌥Space
+    /// попадал бы в буфер неразрывным пробелом (и следующая замена стёрла бы
+    /// лишний символ), а хоткей с ⌃ или ⌘ обнулял бы буфер раньше, чем
+    /// успевает сработать сам.
+    var reservedShortcuts: [KeyboardShortcut] = []
+
     private var tap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
 
@@ -39,6 +46,7 @@ final class KeyboardTap {
         let mask = (1 << CGEventType.keyDown.rawValue)
             | (1 << CGEventType.leftMouseDown.rawValue)
             | (1 << CGEventType.rightMouseDown.rawValue)
+            | (1 << CGEventType.otherMouseDown.rawValue)
 
         let context = Unmanaged.passUnretained(self).toOpaque()
         guard let created = CGEvent.tapCreate(
@@ -78,19 +86,38 @@ final class KeyboardTap {
     /// Что удалось вынуть из события. Через границу изоляции передаются только
     /// такие значения: сам `CGEvent` не Sendable.
     private enum Signal: Sendable {
-        case character(Character)
-        case backspace
+        case key(KeyPress)
         case contextLost
         case tapDisabled
     }
 
+    private struct KeyPress: Sendable {
+        let keyCode: Int64
+        let flags: NSEvent.ModifierFlags
+        let character: Character?
+    }
+
     private func handle(_ signal: Signal) {
         switch signal {
-        case .character(let character): onCharacter?(character)
-        case .backspace:                onBackspace?()
-        case .contextLost:              onContextLost?()
-        case .tapDisabled:              reenable()
+        case .key(let press):  handle(press)
+        case .contextLost:     onContextLost?()
+        case .tapDisabled:     reenable()
         }
+    }
+
+    private func handle(_ press: KeyPress) {
+        let isReserved = reservedShortcuts.contains {
+            $0.matches(keyCode: UInt32(press.keyCode), flags: press.flags)
+        }
+        if isReserved { return }
+        if press.keyCode == Self.backspaceKeyCode { onBackspace?(); return }
+        if Self.navigationKeyCodes.contains(press.keyCode) { onContextLost?(); return }
+        // Сочетания с командой или контролом — команды, а не набор текста.
+        if press.flags.contains(.command) || press.flags.contains(.control) {
+            onContextLost?()
+            return
+        }
+        if let character = press.character { onCharacter?(character) }
     }
 
     /// Разбор события синхронно в колбэке — до перехода на актор.
@@ -99,7 +126,7 @@ final class KeyboardTap {
         case .tapDisabledByTimeout, .tapDisabledByUserInput:
             return .tapDisabled
 
-        case .leftMouseDown, .rightMouseDown:
+        case .leftMouseDown, .rightMouseDown, .otherMouseDown:
             return .contextLost
 
         case .keyDown:
@@ -107,33 +134,24 @@ final class KeyboardTap {
             if event.getIntegerValueField(.eventSourceUserData) == TextInjector.eventMarker {
                 return nil
             }
-            let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-            if keyCode == backspaceKeyCode { return .backspace }
-            if navigationKeyCodes.contains(keyCode) { return .contextLost }
-            // ⌥⇧Space — горячая клавиша ручной конвертации. Carbon поглощает
-            // её для поля ввода, но CGEventTap всё равно видит пробельный символ.
-            // Нельзя добавлять этот несуществующий в поле пробел в completedTail:
-            // иначе повторная конвертация сотрёт пробел перед словом.
-            if keyCode == 49,
-               event.flags.contains(.maskAlternate),
-               event.flags.contains(.maskShift) {
-                return nil
-            }
-            // Сочетания с командой или контролом — команды, а не набор текста.
-            if event.flags.contains(.maskCommand) || event.flags.contains(.maskControl) {
-                return .contextLost
-            }
-
-            var length = 0
-            var buffer = [UniChar](repeating: 0, count: 4)
-            event.keyboardGetUnicodeString(maxStringLength: 4, actualStringLength: &length, unicodeString: &buffer)
-            guard length > 0,
-                  let character = String(utf16CodeUnits: buffer, count: length).first else { return nil }
-            return .character(character)
+            // Биты модификаторов CGEventFlags и NSEvent.ModifierFlags совпадают.
+            return .key(KeyPress(
+                keyCode: event.getIntegerValueField(.keyboardEventKeycode),
+                flags: NSEvent.ModifierFlags(rawValue: UInt(event.flags.rawValue)),
+                character: character(of: event)
+            ))
 
         default:
             return nil
         }
+    }
+
+    private static func character(of event: CGEvent) -> Character? {
+        var length = 0
+        var buffer = [UniChar](repeating: 0, count: 4)
+        event.keyboardGetUnicodeString(maxStringLength: 4, actualStringLength: &length, unicodeString: &buffer)
+        guard length > 0 else { return nil }
+        return String(utf16CodeUnits: buffer, count: length).first
     }
 
     /// Колбэк перехвата: приходит на главный run loop, поэтому изоляция

@@ -50,6 +50,14 @@ struct KeyboardShortcut: Codable, Equatable {
         return result
     }
 
+    /// Совпадает ли нажатие с сочетанием: та же клавиша и ровно те же
+    /// модификаторы — лишний зажатый модификатор даёт уже другое сочетание.
+    func matches(keyCode: UInt32, flags: NSEvent.ModifierFlags) -> Bool {
+        let relevant: NSEvent.ModifierFlags = [.command, .control, .option, .shift]
+        let own = NSEvent.ModifierFlags(rawValue: UInt(modifiers)).intersection(relevant)
+        return self.keyCode == keyCode && own == flags.intersection(relevant)
+    }
+
     /// Символ клавиши по виртуальному keyCode (ANSI-раскладка). `spaceName` overrides the
     /// spelled-out name for the Space key when rendering for UI; omit it for logs.
     static func keySymbol(_ code: UInt32, spaceName: String? = nil) -> String {
