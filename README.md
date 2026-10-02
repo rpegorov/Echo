@@ -28,7 +28,8 @@ management, clipboard history and quick system utilities.
 ## Features
 
 - **System monitoring** — CPU, memory, disk and network in a compact popover with
-  CPU / MEM / DISK rings and live network throughput.
+  CPU / MEM / DISK as rings or bars (chosen in Preferences) and live network
+  throughput.
 - **Drill-down detail windows** — per-metric charts plus top-10 lists: heaviest
   CPU processes, largest memory consumers, and biggest files on disk (jump straight
   to a file in Finder).

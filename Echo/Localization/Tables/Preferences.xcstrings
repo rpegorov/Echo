@@ -494,6 +494,74 @@
         }
       }
     },
+    "popoverMetricsBars" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bars"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Полосы"
+          }
+        }
+      }
+    },
+    "popoverMetricsCaption" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "How CPU, memory and disk load is shown in the menu bar popover."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Как показывать загрузку процессора, памяти и диска во всплывающем окне строки меню."
+          }
+        }
+      }
+    },
+    "popoverMetricsRings" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rings"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Кольца"
+          }
+        }
+      }
+    },
+    "popoverMetricsTitle" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Popover metrics"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Метрики во всплывающем окне"
+          }
+        }
+      }
+    },
     "sectionAppearance" : {
       "extractionState" : "manual",
       "localizations" : {

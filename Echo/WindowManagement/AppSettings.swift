@@ -104,6 +104,11 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(appearanceMode.rawValue, forKey: Keys.appearance); onAppearanceChange?() }
     }
 
+    /// How CPU, memory and disk load is drawn in the popover.
+    @Published var popoverMetricsStyle: PopoverMetricsStyle {
+        didSet { defaults.set(popoverMetricsStyle.rawValue, forKey: Keys.popoverMetricsStyle) }
+    }
+
     // MARK: - Language
 
     /// Выбор языка интерфейса: следовать системе или зафиксированный язык.
@@ -138,6 +143,7 @@ final class AppSettings: ObservableObject {
         static let lowPowerThrottle = "power.lowPowerThrottle"
         static let lowPowerInterval = "power.lowPowerInterval"
         static let appearance = "appearance.mode"
+        static let popoverMetricsStyle = "appearance.popoverMetricsStyle"
         static let ultraSwitch = "ultraSwitch.enabled"
         static let autoConvert = "ultraSwitch.autoConvert"
         static let shortcutsVersion = "wm.shortcuts.version"
@@ -176,6 +182,8 @@ final class AppSettings: ObservableObject {
         // Appearance
         appearanceMode = (defaults.string(forKey: Keys.appearance)
             .flatMap(AppearanceMode.init(rawValue:))) ?? .system
+        popoverMetricsStyle = (defaults.string(forKey: Keys.popoverMetricsStyle)
+            .flatMap(PopoverMetricsStyle.init(rawValue:))) ?? .rings
 
         // Language
         language = (defaults.string(forKey: Keys.language)

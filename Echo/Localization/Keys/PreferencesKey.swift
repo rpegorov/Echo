@@ -49,6 +49,10 @@ enum PreferencesKey: String, LocalizedKey {
     case appearanceSystem
     case appearanceLight
     case appearanceDark
+    case popoverMetricsTitle
+    case popoverMetricsCaption
+    case popoverMetricsRings
+    case popoverMetricsBars
 
     // Menu Bar
     case menuBarModeTitle
@@ -109,6 +113,16 @@ extension AppearanceMode {
         case .system: return .appearanceSystem
         case .light:  return .appearanceLight
         case .dark:   return .appearanceDark
+        }
+    }
+}
+
+extension PopoverMetricsStyle {
+    /// Localized display name; `rawValue` stays a persisted identifier.
+    var titleKey: PreferencesKey {
+        switch self {
+        case .rings: return .popoverMetricsRings
+        case .bars:  return .popoverMetricsBars
         }
     }
 }

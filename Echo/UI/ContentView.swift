@@ -30,7 +30,7 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 header
 
-                ringsRow
+                loadMetrics
                     .padding(.horizontal, 12)
                     .padding(.top, 4)
 
@@ -83,7 +83,35 @@ struct ContentView: View {
             ?? "Echo"
     }
 
-    // MARK: - Rings row (CPU / MEM / DISK)
+    // MARK: - Load metrics (CPU / MEM / DISK)
+
+    @ViewBuilder
+    private var loadMetrics: some View {
+        switch settings.popoverMetricsStyle {
+        case .rings: ringsRow
+        case .bars:  barsColumn
+        }
+    }
+
+    private var barsColumn: some View {
+        VStack(spacing: 8) {
+            barRow(.cpu)
+            barRow(.memory)
+            barRow(.disk)
+        }
+    }
+
+    private func barRow(_ tab: MetricTab) -> some View {
+        let d = metricData(for: tab)
+        return MetricBarRow(
+            progress:  d.progress,
+            icon:      tab.icon,
+            name:      loc.t(tab.titleKey),
+            valueText: "\(d.value)\(d.unit)", // l10n-exempt: numeric value with a universal % glyph
+            subLabel:  d.sub,
+            action:    { onSelect(tab) }
+        )
+    }
 
     private var ringsRow: some View {
         HStack(spacing: ringSpacing) {
