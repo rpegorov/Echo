@@ -24,11 +24,22 @@ final class ClipboardService: ObservableObject {
     private static let enabledKey = "clipboard.enabled"
 
     private let defaults: UserDefaults
+    private let pasteboard: NSPasteboard
+    /// The app a pasteboard change is attributed to: polling cannot see the
+    /// writer, so the frontmost app at that moment stands in for it.
+    private let sourceApp: () -> URL?
 
     /// Восстанавливает сохранённое состояние: `didSet` в init не срабатывает,
     /// поэтому опрос буфера запускается явно.
-    init(defaults: UserDefaults = .standard) {
+    init(
+        defaults: UserDefaults = .standard,
+        pasteboard: NSPasteboard = .general,
+        sourceApp: @escaping () -> URL? = { NSWorkspace.shared.frontmostApplication?.bundleURL }
+    ) {
         self.defaults = defaults
+        self.pasteboard = pasteboard
+        self.sourceApp = sourceApp
+        lastChangeCount = pasteboard.changeCount
         isEnabled = defaults.bool(forKey: Self.enabledKey)
         if isEnabled { start() }
     }
@@ -36,7 +47,7 @@ final class ClipboardService: ObservableObject {
     @Published private(set) var items: [ClipboardItem] = []
 
     private var timer: Timer?
-    private var lastChangeCount = NSPasteboard.general.changeCount
+    private var lastChangeCount: Int
     private let maxItems = 50
 
     private static let concealed = NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType")
@@ -45,7 +56,7 @@ final class ClipboardService: ObservableObject {
     // MARK: - Lifecycle
 
     private func start() {
-        lastChangeCount = NSPasteboard.general.changeCount
+        lastChangeCount = pasteboard.changeCount
         timer = Timer.scheduledTimer(withTimeInterval: 0.6, repeats: true) { [weak self] _ in
             Task { @MainActor in self?.poll() }
         }
@@ -58,8 +69,8 @@ final class ClipboardService: ObservableObject {
 
     // MARK: - Polling
 
-    private func poll() {
-        let pb = NSPasteboard.general
+    func poll() {
+        let pb = pasteboard
         guard pb.changeCount != lastChangeCount else { return }
         lastChangeCount = pb.changeCount
 
@@ -90,19 +101,19 @@ final class ClipboardService: ObservableObject {
 
     private func addText(_ text: String) {
         if let first = items.first, first.kind == .text, first.text == text { return }
-        items.insert(ClipboardItem(kind: .text, text: text, imageData: nil, filePaths: nil, date: .now), at: 0)
+        items.insert(ClipboardItem(kind: .text, text: text, imageData: nil, filePaths: nil, date: .now, sourceAppURL: sourceApp()), at: 0)
         trim()
     }
 
     private func addImage(_ data: Data) {
         if let first = items.first, first.kind == .image, first.imageData == data { return }
-        items.insert(ClipboardItem(kind: .image, text: nil, imageData: data, filePaths: nil, date: .now), at: 0)
+        items.insert(ClipboardItem(kind: .image, text: nil, imageData: data, filePaths: nil, date: .now, sourceAppURL: sourceApp()), at: 0)
         trim()
     }
 
     private func addFiles(_ paths: [String]) {
         if let first = items.first, first.kind == .file, first.filePaths == paths { return }
-        items.insert(ClipboardItem(kind: .file, text: nil, imageData: nil, filePaths: paths, date: .now), at: 0)
+        items.insert(ClipboardItem(kind: .file, text: nil, imageData: nil, filePaths: paths, date: .now, sourceAppURL: sourceApp()), at: 0)
         trim()
     }
 
@@ -114,7 +125,7 @@ final class ClipboardService: ObservableObject {
 
     /// Возвращает элемент в системный буфер обмена.
     func copyToClipboard(_ item: ClipboardItem) {
-        let pb = NSPasteboard.general
+        let pb = pasteboard
         pb.clearContents()
         switch item.kind {
         case .text:

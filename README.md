@@ -34,8 +34,10 @@ management, clipboard history and quick system utilities.
   to a file in Finder).
 - **Window manager** — tiling via Accessibility, global hotkeys, and drag-to-snap
   (drag a window to a screen edge/corner to tile it; hold Shift to cancel).
-- **Clipboard history** — recent text, images and files, with secret/transient
-  entries skipped. Everything stays in memory.
+- **Clipboard history** — recent text, images and files in a Spotlight-style glass
+  panel, each marked with the app it was copied from. Picking an entry or pressing
+  Esc returns focus to the app you were in, ready for ⌘V. Secret/transient entries
+  are skipped; everything stays in memory.
 - **Battery** — 24-hour charge chart with charging periods marked, and the top 10
   apps by energy for any moment you click on (per-process energy counters, sampled
   every 5 minutes on battery, history kept locally for 24 hours).

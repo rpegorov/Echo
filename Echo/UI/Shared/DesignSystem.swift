@@ -16,9 +16,12 @@ enum DS {
     static let popoverWidth: CGFloat = 264
     /// Размер детального окна по умолчанию.
     static let detailSize = CGSize(width: 560, height: 500)
+    /// Clipboard history panel size.
+    static let clipboardSize = CGSize(width: 460, height: 440)
 
     // MARK: - Corners
 
+    static let cornerXL: CGFloat = 26
     static let cornerLG: CGFloat = 20
     static let cornerMD: CGFloat = 14
     static let cornerSM: CGFloat = 10

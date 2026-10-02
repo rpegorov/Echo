@@ -5,6 +5,7 @@
 
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ClipboardHistoryView: View {
     @ObservedObject var service: ClipboardService
@@ -12,39 +13,47 @@ struct ClipboardHistoryView: View {
     /// с NSHostingController, поэтому владелец окна передаёт закрытие явно.
     let onClose: () -> Void
     @EnvironmentObject private var loc: Localizer
+    @State private var hoveredID: ClipboardItem.ID?
 
     var body: some View {
         VStack(spacing: 0) {
             header
-            Divider().opacity(0.15)
+            Divider().padding(.horizontal, 20)
             if service.items.isEmpty {
                 emptyState
             } else {
                 list
             }
         }
-        .frame(width: 380, height: 460)
+        .frame(width: DS.clipboardSize.width, height: DS.clipboardSize.height)
+        .glassEffect(.regular, in: .rect(cornerRadius: DS.cornerXL))
     }
 
     // MARK: - Header
 
     private var header: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "doc.on.clipboard")
-                .foregroundStyle(DS.accent)
-            Text(loc.t(PopoverKey.clipboardHistoryTitle))
-                .font(.system(size: 14, weight: .semibold))
+        HStack(spacing: 12) {
+            Image(systemName: "doc.on.doc")
+                .font(.system(size: 20))
+            Text(loc.t(SystemKey.windowTitleClipboard))
+                .font(.system(size: 20, weight: .medium))
             Spacer()
-            Button(loc.t(PopoverKey.clear)) { service.clear() }
-                .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
-                .disabled(service.items.isEmpty)
-            Button(loc.t(PopoverKey.done)) { onClose() }
-                .buttonStyle(.plain)
-                .foregroundStyle(DS.accent)
+            Menu {
+                Button(loc.t(PopoverKey.clear)) { service.clear() }
+                    .disabled(service.items.isEmpty)
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 14, weight: .semibold))
+            }
+            .menuStyle(.button)
+            .buttonStyle(.plain)
+            .menuIndicator(.hidden)
+            .fixedSize()
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 20)
+        .padding(.top, 18)
+        .padding(.bottom, 14)
     }
 
     // MARK: - Empty
@@ -70,77 +79,108 @@ struct ClipboardHistoryView: View {
 
     private var list: some View {
         ScrollView {
-            LazyVStack(spacing: 6) {
+            LazyVStack(spacing: 2) {
                 ForEach(service.items) { item in
                     Button {
                         service.copyToClipboard(item)
                         onClose()
                     } label: {
-                        row(item)
+                        row(item, isHovered: hoveredID == item.id)
                     }
                     .buttonStyle(.plain)
+                    .onHover { inside in
+                        if inside {
+                            hoveredID = item.id
+                        } else if hoveredID == item.id {
+                            hoveredID = nil
+                        }
+                    }
                 }
             }
-            .padding(12)
+            .padding(10)
         }
     }
 
-    @ViewBuilder
-    private func row(_ item: ClipboardItem) -> some View {
-        HStack(spacing: 10) {
-            switch item.kind {
-            case .text:
-                Image(systemName: "text.alignleft")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
-                    .frame(width: 28)
-                Text(item.text ?? "")
-                    .font(.system(size: 12))
-                    .lineLimit(2)
+    private func row(_ item: ClipboardItem, isHovered: Bool) -> some View {
+        HStack(spacing: 14) {
+            ClipboardItemIcon(item: item)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(ClipboardItemPresentation.title(of: item, using: loc))
+                    .font(.system(size: 15, weight: .medium))
+                    .lineLimit(1)
                     .truncationMode(.tail)
-            case .image:
-                if let data = item.imageData, let image = NSImage(data: data) {
-                    Image(nsImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 28, height: 28)
-                        .clipShape(RoundedRectangle(cornerRadius: 4))
-                } else {
-                    Image(systemName: "photo")
-                        .frame(width: 28)
-                }
-                Text(loc.t(PopoverKey.clipboardImageLabel))
+                Text(ClipboardItemPresentation.subtitle(of: item, using: loc))
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
-            case .file:
-                let paths = item.filePaths ?? []
-                Image(nsImage: NSWorkspace.shared.icon(forFile: paths.first ?? ""))
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 28, height: 28)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(((paths.first ?? "") as NSString).lastPathComponent)
-                        .font(.system(size: 12))
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                    if paths.count > 1 {
-                        Text(loc.t(PopoverKey.clipboardMoreFiles, Int64(paths.count - 1)))
-                            .font(.system(size: 10))
-                            .foregroundStyle(.tertiary)
-                    }
-                }
+                    .lineLimit(1)
             }
-
-            Spacer()
-
-            Text(item.date, style: .time)
-                .font(.system(size: 10))
-                .foregroundStyle(.tertiary)
+            Spacer(minLength: 8)
+            Image(systemName: "doc.on.doc.fill")
+                .font(.system(size: 12))
+                .foregroundStyle(.secondary)
+                .frame(width: 30, height: 30)
+                .background(Color.primary.opacity(0.1), in: Circle())
+                .opacity(isHovered ? 1 : 0)
+                .accessibilityHidden(true)
         }
-        .padding(.vertical, 8)
         .padding(.horizontal, 10)
+        .padding(.vertical, 7)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
-        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: DS.cornerSM))
+        .background(
+            isHovered ? DS.pressHighlight : Color.clear,
+            in: RoundedRectangle(cornerRadius: DS.cornerMD)
+        )
+    }
+}
+
+// MARK: - Icon
+
+/// Content preview with the source app's icon as a corner badge.
+private struct ClipboardItemIcon: View {
+    let item: ClipboardItem
+
+    private static let size: CGFloat = 40
+    private static let badgeSize: CGFloat = 20
+
+    var body: some View {
+        preview
+            .frame(width: Self.size, height: Self.size)
+            .overlay(alignment: .bottomTrailing) {
+                if let app = item.sourceAppURL {
+                    Image(nsImage: NSWorkspace.shared.icon(forFile: app.path))
+                        .resizable()
+                        .frame(width: Self.badgeSize, height: Self.badgeSize)
+                        .offset(x: Self.badgeSize / 4, y: Self.badgeSize / 4)
+                }
+            }
+    }
+
+    @ViewBuilder
+    private var preview: some View {
+        switch item.kind {
+        case .text:
+            typeIcon(.plainText)
+        case .image:
+            if let data = item.imageData, let image = NSImage(data: data) {
+                Image(nsImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: Self.size, height: Self.size)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+            } else {
+                typeIcon(.image)
+            }
+        case .file:
+            Image(nsImage: NSWorkspace.shared.icon(forFile: item.filePaths?.first ?? ""))
+                .resizable()
+                .scaledToFit()
+        }
+    }
+
+    private func typeIcon(_ type: UTType) -> some View {
+        Image(nsImage: NSWorkspace.shared.icon(for: type))
+            .resizable()
+            .scaledToFit()
     }
 }

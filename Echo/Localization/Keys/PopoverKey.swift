@@ -17,11 +17,13 @@ enum PopoverKey: String, LocalizedKey {
     case clipboardHistoryTitle
     case openHistory
     case clear
-    case done
     case clipboardEmptyTitle
     case clipboardEmptyHint
     case clipboardImageLabel
     case clipboardMoreFiles
+    case clipboardKindText
+    case clipboardKindFile
+    case clipboardCopiedAt
 
     static var table: String { "Popover" }
 }

@@ -15,6 +15,7 @@ import SwiftUI
 final class AppWindows: NSObject, NSWindowDelegate {
 
     private let environment: AppEnvironment
+    private let externalApps = ExternalAppTracker()
 
     private(set) var detailWindow: NSWindow?
     private(set) var clipboardWindow: NSWindow?
@@ -70,34 +71,36 @@ final class AppWindows: NSObject, NSWindowDelegate {
     // MARK: - Clipboard window
 
     /// Открывает (или выводит вперёд) окно истории буфера обмена.
+    /// Echo is not activated here: the panel takes focus on its own, and the
+    /// app the user was typing in must stay active to receive the paste.
     func openClipboard() {
-        if let window = clipboardWindow {
-            NSApp.activate(ignoringOtherApps: true)
-            positionNearMouse(window)
-            window.makeKeyAndOrderFront(nil)
-            return
-        }
+        let panel = clipboardWindow ?? makeClipboardPanel()
+        positionNearMouse(panel)
+        panel.makeKeyAndOrderFront(nil)
+    }
 
+    private func makeClipboardPanel() -> NSWindow {
         let root = ClipboardHistoryView(
             service: environment.clipboard,
-            onClose: { [weak self] in self?.clipboardWindow?.close() }
+            onClose: { [weak self] in self?.closeClipboard() }
         )
         let hosting = HostingFactory.make(root, localizer: environment.localizer)
 
-        let window = NSWindow(contentViewController: hosting)
-        window.styleMask = [.titled, .closable, .fullSizeContentView]
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
-        window.isMovableByWindowBackground = true
-        window.title = environment.localizer.t(SystemKey.windowTitleClipboard)
-        window.setContentSize(NSSize(width: 380, height: 460))
-        window.isReleasedWhenClosed = false
-        positionNearMouse(window)
-        window.delegate = self
-        clipboardWindow = window
+        let panel = ClipboardPanel(contentViewController: hosting)
+        panel.title = environment.localizer.t(SystemKey.windowTitleClipboard)
+        panel.onCancel = { [weak self] in self?.closeClipboard() }
+        panel.delegate = self
+        clipboardWindow = panel
+        return panel
+    }
 
-        NSApp.activate(ignoringOtherApps: true)
-        window.makeKeyAndOrderFront(nil)
+    /// Echo is active only when the history was opened from the popover; then
+    /// focus goes back explicitly to the app the user came from.
+    private func closeClipboard() {
+        clipboardWindow?.close()
+        if NSApp.isActive {
+            _ = externalApps.lastApp?.activate(options: [])
+        }
     }
 
     /// Ставит окно под курсор мыши, а не в центр экрана: историю буфера
@@ -159,6 +162,12 @@ final class AppWindows: NSObject, NSWindowDelegate {
     }
 
     // MARK: - NSWindowDelegate
+
+    /// The panel is transient like Spotlight: a click anywhere else dismisses it.
+    func windowDidResignKey(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow, window == clipboardWindow else { return }
+        window.close()
+    }
 
     func windowWillClose(_ notification: Notification) {
         guard let closed = notification.object as? NSWindow else { return }
