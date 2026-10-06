@@ -5,6 +5,23 @@
     <description>Обновления Echo</description>
     <language>ru</language>
     <item>
+      <title>2.1.1</title>
+      <pubDate>Tue, 06 Oct 2026 20:32:32 +0300</pubDate>
+      <sparkle:version>2.1.1</sparkle:version>
+      <sparkle:shortVersionString>2.1.1</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.1</sparkle:minimumSystemVersion>
+      <description>### Исправлено
+
+- Хоткей отмены конвертации слова (⌥⇧Space по умолчанию) снова работает при
+  включённом автоисправлении — раньше вместо отмены в текст вставлялся
+  неразрывный пробел.
+- Удержание хоткея конвертации больше не переворачивает слово туда-обратно:
+  автоповтор зажатой клавиши игнорируется, одно нажатие — один переворот.
+- Конвертация по хоткею срабатывает мгновенно при нажатии, не дожидаясь
+  отпускания клавиш.</description>
+      <enclosure url="https://github.com/rpegorov/Echo/releases/download/v2.1.1/Echo-2.1.1.dmg" type="application/octet-stream" length="3856776" sparkle:edSignature="kS13LQEZ9OqA3S35zirWBNzphv0dnEsS7nGGC5UdfBU1NC+qlKaUDYgTYHeynDhiejZGFRVMAuZVXUKyyCUYBQ==" />
+    </item>
+    <item>
       <title>2.1</title>
       <pubDate>Fri, 02 Oct 2026 22:19:48 +0300</pubDate>
       <sparkle:version>2.1</sparkle:version>
