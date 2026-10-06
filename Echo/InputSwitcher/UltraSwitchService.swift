@@ -127,8 +127,7 @@ final class UltraSwitchService: ObservableObject {
             return
         }
         replace(candidate.word, with: converted, tail: candidate.tail,
-                deleteCount: candidate.deleteCount, target: script.other,
-                awaitModifierRelease: true)
+                deleteCount: candidate.deleteCount, target: script.other)
     }
 
     /// Открывает вкладку с недостающим разрешением. Системные запросы доступа
@@ -246,15 +245,14 @@ final class UltraSwitchService: ObservableObject {
     /// Стирает набранное и печатает исправленный вариант.
     /// Раскладка переключается только после подтверждённой отправки.
     private func replace(_ word: String, with converted: String, tail: String,
-                         deleteCount: Int, target: KeyScript, awaitModifierRelease: Bool = false) {
+                         deleteCount: Int, target: KeyScript) {
         Self.log.debug("Исправляю слово из \(word.count, privacy: .public) букв")
         isInjecting = true
         keystrokesDuringInjection = 0
 
         TextInjector.replaceBeforeCaret(
             deleteCount: deleteCount,
-            with: converted + tail,
-            awaitModifierRelease: awaitModifierRelease
+            with: converted + tail
         ) { success in
             Task { @MainActor [weak self] in
                 guard let self else { return }
