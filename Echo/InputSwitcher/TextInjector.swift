@@ -28,13 +28,6 @@ enum TextInjector {
     /// Поля не всегда успевают обработать поток событий вплотную.
     private static let settleMicroseconds: useconds_t = 1800
 
-    /// Сколько ждать, пока пользователь отпустит модификаторы хоткея, и как
-    /// часто проверять. Дольше ждать нельзя: зажатый навсегда ⇧ заморозил бы
-    /// вставку.
-    private static let modifierReleaseTimeout: TimeInterval = 1
-    private static let modifierPollMicroseconds: useconds_t = 5000
-    private static let heldModifiers: CGEventFlags = [.maskCommand, .maskAlternate, .maskShift, .maskControl]
-
     /// Синтетика идёт отдельной последовательной очередью, а не на главном
     /// потоке: там живёт перехват клавиатуры, и синхронные паузы в нём
     /// затормозили бы доставку ввода во всей системе.
@@ -51,14 +44,12 @@ enum TextInjector {
     /// Стирает `deleteCount` символов перед кареткой и печатает `text`.
     /// Вызывающий получает управление сразу — работа идёт в фоне.
     ///
-    /// `awaitModifierRelease` — для вызова из хоткея: пока его модификаторы
-    /// зажаты физически, часть приложений (Electron, Java, Office) читает их
-    /// из системного состояния, а не из события, и Backspace превращается в
-    /// ⌥Backspace — стирается целое слово.
+    /// Вставка стартует немедленно, без ожидания отпускания модификаторов
+    /// хоткея: замена занимает миллисекунды, и ждать освобождения клавиш —
+    /// значит откладывать видимый результат до отпускания.
     static func replaceBeforeCaret(
         deleteCount: Int,
         with text: String,
-        awaitModifierRelease: Bool = false,
         completion: (@Sendable (Bool) -> Void)? = nil
     ) {
         guard deleteCount > 0, !text.isEmpty else {
@@ -71,7 +62,6 @@ enum TextInjector {
                 completion?(false)
                 return
             }
-            if awaitModifierRelease { waitForModifierRelease() }
 
             for _ in 0..<deleteCount {
                 post(key: backspaceKey, source: source, down: true)
@@ -109,14 +99,6 @@ enum TextInjector {
     }
 
     // MARK: - Private
-
-    private static func waitForModifierRelease() {
-        let deadline = Date().addingTimeInterval(modifierReleaseTimeout)
-        while Date() < deadline,
-              !CGEventSource.flagsState(.hidSystemState).intersection(heldModifiers).isEmpty {
-            usleep(modifierPollMicroseconds)
-        }
-    }
 
     private static func post(key: CGKeyCode, source: CGEventSource, down: Bool) {
         guard let event = CGEvent(keyboardEventSource: source, virtualKey: key, keyDown: down) else { return }
