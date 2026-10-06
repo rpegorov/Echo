@@ -7,6 +7,31 @@ import AppKit
 import Carbon.HIToolbox
 import os
 
+/// Один физический пропуск клавиши — одно срабатывание хоткея.
+///
+/// Carbon доставляет kEventHotKeyPressed и на автоповторе зажатого сочетания,
+/// а команды вроде конвертации слова — тумблеры: повтор внутри одного
+/// удержания перевернул бы результат обратно. Удержание, для которого
+/// потерялся kEventHotKeyReleased, освобождается по таймауту — иначе один
+/// сбой навсегда заглушил бы хоткей.
+struct HotKeyFireGate {
+    private var holds: [UInt32: TimeInterval] = [:]
+
+    /// Отмечает нажатие и отвечает, должно ли оно сработать.
+    mutating func shouldFire(id: UInt32, now: TimeInterval) -> Bool {
+        holds = holds.filter { now - $0.value < Self.stuckHoldTimeout }
+        guard holds[id] == nil else { return false }
+        holds[id] = now
+        return true
+    }
+
+    mutating func released(id: UInt32) {
+        holds[id] = nil
+    }
+
+    private static let stuckHoldTimeout: TimeInterval = 2
+}
+
 /// Регистрирует глобальные горячие клавиши через Carbon (RegisterEventHotKey).
 /// Глобальные хоткеи не требуют Accessibility; права нужны только для действий
 /// над окнами (см. WindowManagerService).
@@ -16,6 +41,7 @@ final class HotKeyManager {
     private var actions: [UInt32: () -> Void] = [:]
     private var handlerRef: EventHandlerRef?
     private var nextID: UInt32 = 1
+    private var gate = HotKeyFireGate()
     private let signature: OSType = 0x4D4F4E49 // 'MONI'
 
     private static let log = Logger(
@@ -24,10 +50,10 @@ final class HotKeyManager {
     )
 
     init() {
-        var spec = EventTypeSpec(
-            eventClass: OSType(kEventClassKeyboard),
-            eventKind: UInt32(kEventHotKeyPressed)
-        )
+        let specs = [
+            EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed)),
+            EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyReleased))
+        ]
         let selfPtr = Unmanaged.passUnretained(self).toOpaque()
         InstallEventHandler(
             GetApplicationEventTarget(),
@@ -45,10 +71,20 @@ final class HotKeyManager {
                 )
                 guard status == noErr else { return noErr }
                 let manager = Unmanaged<HotKeyManager>.fromOpaque(userData).takeUnretainedValue()
-                manager.fire(id: hotKeyID.id)
+                switch GetEventKind(event) {
+                case UInt32(kEventHotKeyPressed):
+                    let now = Date().timeIntervalSinceReferenceDate
+                    if manager.gate.shouldFire(id: hotKeyID.id, now: now) {
+                        manager.fire(id: hotKeyID.id)
+                    }
+                case UInt32(kEventHotKeyReleased):
+                    manager.gate.released(id: hotKeyID.id)
+                default:
+                    break
+                }
                 return noErr
             },
-            1, &spec, selfPtr, &handlerRef
+            specs.count, specs, selfPtr, &handlerRef
         )
     }
 
