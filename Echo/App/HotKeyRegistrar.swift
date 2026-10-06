@@ -43,8 +43,12 @@ final class HotKeyRegistrar {
         defer { ultraSwitch.reserveShortcuts(layoutShortcuts) }
         for command in WMCommand.allCases {
             guard let shortcut = settings.shortcut(for: command) else { continue }
-            if command.isWindowCommand && !settings.windowManagerEnabled { continue }
-            if command.isUltraSwitchCommand && !settings.ultraSwitchEnabled { continue }
+            guard Self.shouldRegister(
+                command,
+                windowManagerEnabled: settings.windowManagerEnabled,
+                ultraSwitchEnabled: settings.ultraSwitchEnabled,
+                autoConvertEnabled: settings.autoConvertEnabled
+            ) else { continue }
 
             if let layout = command.layout {
                 hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
@@ -77,5 +81,21 @@ final class HotKeyRegistrar {
                 }
             }
         }
+    }
+
+    /// Владелец хоткея команды. Оконным нужен Window Manager, хоткеям раскладки
+    /// и переводу — Ultra Switch. Конвертация слова читает буфер набранного,
+    /// который наполняет только перехват автоисправления: без неё хоткей всегда
+    /// отвечал бы «нечего исправлять», с ней — работает и как отмена автозамены.
+    static func shouldRegister(
+        _ command: WMCommand,
+        windowManagerEnabled: Bool,
+        ultraSwitchEnabled: Bool,
+        autoConvertEnabled: Bool
+    ) -> Bool {
+        if command.isWindowCommand { return windowManagerEnabled }
+        if command == .convertWord { return autoConvertEnabled }
+        if command.isUltraSwitchCommand { return ultraSwitchEnabled }
+        return true
     }
 }
