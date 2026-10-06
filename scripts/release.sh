@@ -36,9 +36,24 @@ bash scripts/make-dmg.sh
 [[ -f "$DMG" ]] || { echo "✗ DMG не собрался: $DMG"; exit 1; }
 
 # --- Фид обновлений ---
+# Заметки релиза берутся из CHANGELOG.md: секция версии целиком уходит в
+# <description> аппкаста — её показывает окно обновления Sparkle. Без секции
+# релиз не собирается: окно обновления без заметок выглядит как чёрный ящик.
+NOTES_FILE="$(mktemp)"
+awk -v ver="$VERSION" '
+  $0 == "## [" ver "]" || index($0, "## [" ver "]") == 1 { found = 1; next }
+  found && /^## \[/ { exit }
+  found { print }
+' CHANGELOG.md > "$NOTES_FILE"
+if [[ ! -s "$NOTES_FILE" ]]; then
+  rm -f "$NOTES_FILE"
+  echo "✗ В CHANGELOG.md нет секции «## [$VERSION]» — допиши заметки релиза"
+  exit 1
+fi
+
 # Подпись EdDSA и запись в docs/appcast.xml должны попасть в main ДО публикации
 # релиза: приложение читает фид именно из ветки main.
-bash scripts/appcast.sh "$VERSION" "$DMG"
+bash scripts/appcast.sh "$VERSION" "$DMG" "$NOTES_FILE"
 git add Echo/Info.plist Echo.xcodeproj/project.pbxproj docs/appcast.xml
 if ! git diff --cached --quiet; then
   git commit -m "release: Echo $VERSION"
@@ -54,9 +69,15 @@ else
 fi
 
 # --- Заметки релиза ---
-NOTES_FILE="$(mktemp)"
-trap 'rm -f "$NOTES_FILE"' EXIT
-cat > "$NOTES_FILE" <<EOF
+# Секция версии из CHANGELOG.md наверху, под ней — установочная памятка.
+GH_NOTES_FILE="$(mktemp)"
+trap 'rm -f "$NOTES_FILE" "$GH_NOTES_FILE"' EXIT
+{
+  cat "$NOTES_FILE"
+  cat <<EOF
+
+---
+
 **Echo $VERSION** — menu-bar системный монитор для macOS (CPU / RAM / Disk / Network) с утилитами.
 
 ### Установка
@@ -65,13 +86,14 @@ cat > "$NOTES_FILE" <<EOF
 3. Первый запуск: правый клик по Echo.app → **Open** → **Open** (сборка не нотаризована).
 4. Для функций управления окнами выдайте доступ в System Settings → Privacy & Security → Accessibility.
 EOF
+} > "$GH_NOTES_FILE"
 
 # --- Релиз ---
 if gh release view "$TAG" >/dev/null 2>&1; then
   echo "▶ Релиз $TAG уже есть — догружаю ассет"
   gh release upload "$TAG" "$DMG" --clobber
 else
-  gh release create "$TAG" "$DMG" --title "Echo $VERSION" --notes-file "$NOTES_FILE"
+  gh release create "$TAG" "$DMG" --title "Echo $VERSION" --notes-file "$GH_NOTES_FILE"
 fi
 
 echo ""
