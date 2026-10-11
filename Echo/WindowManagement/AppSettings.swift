@@ -27,10 +27,17 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(layoutCyclingEnabled, forKey: Keys.cycleLayouts) }
     }
 
-    /// The command whose shortcut a recorder is capturing; Echo's hotkeys stay unregistered meanwhile. Not persisted.
-    @Published private(set) var recordingCommand: WMCommand?
+    @Published private(set) var arrangementShortcuts: [UUID: KeyboardShortcut]
 
-    var isRecordingShortcut: Bool { recordingCommand != nil }
+    /// The owner whose shortcut a recorder is capturing; Echo's hotkeys stay unregistered meanwhile. Not persisted.
+    @Published private(set) var recordingOwner: ShortcutOwner?
+
+    var isRecordingShortcut: Bool { recordingOwner != nil }
+
+    /// New windows of apps with a rule go to their zone.
+    @Published var autoRulesEnabled: Bool {
+        didSet { defaults.set(autoRulesEnabled, forKey: Keys.autoRules); onChange?() }
+    }
 
     // MARK: - General
 
@@ -171,13 +178,14 @@ final class AppSettings: ObservableObject {
         static let menuBarInterval = "menuBar.interval"
         static let language = "general.language"
         static let gridModifier = "wm.gridModifier"
+        static let autoRules = "wm.autoRules.enabled"
     }
 
     /// Version of the stored shortcut set. When it grows, defaults of newer commands are added
     /// to a stored set by `ShortcutBackfill`.
     private static let shortcutsVersion = 4
 
-    /// Stored entries whose key is not a `WMCommand` raw value; written back unchanged.
+    /// Stored entries whose key is neither a `WMCommand` raw value nor an arrangement key; written back unchanged.
     private var unrecognizedShortcutEntries: [String: KeyboardShortcut] = [:]
 
     init(defaults: UserDefaults = .standard) {
@@ -189,6 +197,7 @@ final class AppSettings: ObservableObject {
         windowManagerEnabled = defaults.object(forKey: Keys.enabled) as? Bool ?? true
         windowGap = defaults.object(forKey: Keys.gap) as? Double ?? 8
         layoutCyclingEnabled = defaults.object(forKey: Keys.cycleLayouts) as? Bool ?? true
+        autoRulesEnabled = defaults.object(forKey: Keys.autoRules) as? Bool ?? true
 
         // General: фактический статус берём у системы, а не из defaults.
         launchAtLogin = (SMAppService.mainApp.status == .enabled)
@@ -240,15 +249,17 @@ final class AppSettings: ObservableObject {
                 needsShortcutPersist = true
             }
             var result: [WMCommand: KeyboardShortcut] = [:]
+            var arrangementEntries: [UUID: KeyboardShortcut] = [:]
             var unrecognized: [String: KeyboardShortcut] = [:]
             for (key, value) in migrated {
-                if let command = WMCommand(rawValue: key) {
-                    result[command] = value
-                } else {
-                    unrecognized[key] = value
+                switch ShortcutOwner(storageKey: key) {
+                case .command(let command)?:      result[command] = value
+                case .arrangement(let id)?:       arrangementEntries[id] = value
+                case nil:                         unrecognized[key] = value
                 }
             }
             unrecognizedShortcutEntries = unrecognized
+            arrangementShortcuts = arrangementEntries
             shortcuts = result
         } else {
             var defaultsMap: [WMCommand: KeyboardShortcut] = [:]
@@ -256,50 +267,78 @@ final class AppSettings: ObservableObject {
                 if let shortcut = command.defaultShortcut { defaultsMap[command] = shortcut }
             }
             shortcuts = defaultsMap
+            arrangementShortcuts = [:]
         }
 
         if needsShortcutPersist { persistShortcuts() }
         defaults.set(max(storedVersion, Self.shortcutsVersion), forKey: Keys.shortcutsVersion)
     }
 
-    func shortcut(for command: WMCommand) -> KeyboardShortcut? {
-        shortcuts[command]
+    func shortcut(for owner: ShortcutOwner) -> KeyboardShortcut? {
+        switch owner {
+        case .command(let command):   return shortcuts[command]
+        case .arrangement(let id):    return arrangementShortcuts[id]
+        }
     }
 
-    /// Starts capturing for `command`, which cancels any other recorder; nil stops capturing.
-    func setRecordingCommand(_ command: WMCommand?) {
-        guard command != recordingCommand else { return }
-        recordingCommand = command
+    func shortcut(for command: WMCommand) -> KeyboardShortcut? {
+        shortcut(for: .command(command))
+    }
+
+    /// Starts capturing for `owner`, which cancels any other recorder; nil stops capturing.
+    func setRecordingOwner(_ owner: ShortcutOwner?) {
+        guard owner != recordingOwner else { return }
+        recordingOwner = owner
         onChange?()
     }
 
-    /// The first command, in declaration order, bound to a combination that collides with `shortcut`.
-    func command(using shortcut: KeyboardShortcut) -> WMCommand? {
-        WMCommand.allCases.first { shortcuts[$0]?.collides(with: shortcut) == true }
+    /// The first owner, commands in declaration order and then arrangements by `uuidString`,
+    /// bound to a combination that collides with `shortcut`.
+    func owner(using shortcut: KeyboardShortcut) -> ShortcutOwner? {
+        orderedOwners.first { self.shortcut(for: $0)?.collides(with: shortcut) == true }
     }
 
-    /// Binds `shortcut` to `command`. Every other command holding a colliding combination loses it;
-    /// the first of them, in declaration order, is returned.
+    /// Binds `shortcut` to `owner`. Every other owner holding a colliding combination loses it;
+    /// the first of them, in `owner(using:)` order, is returned.
     @discardableResult
-    func setShortcut(_ shortcut: KeyboardShortcut?, for command: WMCommand) -> WMCommand? {
+    func setShortcut(_ shortcut: KeyboardShortcut?, for owner: ShortcutOwner) -> ShortcutOwner? {
         guard let shortcut else {
-            shortcuts.removeValue(forKey: command)
+            store(nil, for: owner)
             persistShortcuts()
             onChange?()
             return nil
         }
-        let displacedCommands = WMCommand.allCases.filter {
-            $0 != command && shortcuts[$0]?.collides(with: shortcut) == true
+        let displaced = orderedOwners.filter {
+            $0 != owner && self.shortcut(for: $0)?.collides(with: shortcut) == true
         }
-        displacedCommands.forEach { shortcuts.removeValue(forKey: $0) }
-        shortcuts[command] = shortcut
+        displaced.forEach { store(nil, for: $0) }
+        store(shortcut, for: owner)
         persistShortcuts()
         onChange?()
-        return displacedCommands.first
+        return displaced.first
+    }
+
+    @discardableResult
+    func setShortcut(_ shortcut: KeyboardShortcut?, for command: WMCommand) -> ShortcutOwner? {
+        setShortcut(shortcut, for: .command(command))
+    }
+
+    private var orderedOwners: [ShortcutOwner] {
+        WMCommand.allCases.map(ShortcutOwner.command)
+            + arrangementShortcuts.keys.sorted { $0.uuidString < $1.uuidString }.map(ShortcutOwner.arrangement)
+    }
+
+    private func store(_ shortcut: KeyboardShortcut?, for owner: ShortcutOwner) {
+        switch owner {
+        case .command(let command):   shortcuts[command] = shortcut
+        case .arrangement(let id):    arrangementShortcuts[id] = shortcut
+        }
     }
 
     private func persistShortcuts() {
-        let recognized = Dictionary(uniqueKeysWithValues: shortcuts.map { ($0.key.rawValue, $0.value) })
+        let commandEntries = shortcuts.map { (ShortcutOwner.command($0.key).storageKey, $0.value) }
+        let arrangementEntries = arrangementShortcuts.map { (ShortcutOwner.arrangement($0.key).storageKey, $0.value) }
+        let recognized = Dictionary(uniqueKeysWithValues: commandEntries + arrangementEntries)
         let stringKeyed = recognized.merging(unrecognizedShortcutEntries, uniquingKeysWith: { current, _ in current })
         if let data = try? JSONEncoder().encode(stringKeyed) {
             defaults.set(data, forKey: Keys.shortcuts)

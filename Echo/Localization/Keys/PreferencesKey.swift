@@ -15,6 +15,7 @@ enum PreferencesKey: String, LocalizedKey {
     case sectionAppearance
     case sectionMenuBar
     case sectionWindowManager
+    case sectionArrangements
     case sectionUltraSwitch
     case sectionSnippets
     case sectionKeyboard

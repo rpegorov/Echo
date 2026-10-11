@@ -27,9 +27,27 @@ struct SnapPreview: Equatable, Sendable {
     let shortcut: KeyboardShortcut?
 }
 
+/// A grid shown on its display for a moment, not a drop target.
+struct GridFlash: Equatable, Sendable {
+    enum Title: Equatable, Sendable {
+        case template(GridTemplate)
+        /// A saved grid's name: data, not a localization key.
+        case named(String)
+    }
+
+    let title: Title
+    let screenFrame: CGRect
+    /// Every zone as a window frame (global Cocoa coordinates, gap applied), in zone-number order.
+    let zoneFrames: [CGRect]
+    /// Index-aligned with `zoneFrames`; nil past zone 9 or when unassigned.
+    let zoneShortcuts: [KeyboardShortcut?]
+}
+
 @MainActor
 protocol SnapOverlayPresenting: AnyObject {
     /// Shows the preview, or animates from the current one. Equal consecutive previews are a no-op.
     func show(_ preview: SnapPreview)
     func hide()
+    /// Shows `grid` for `DS.SnapOverlay.flashDuration`, then hides it; `show` and `hide` cancel a pending hide.
+    func flash(_ grid: GridFlash)
 }

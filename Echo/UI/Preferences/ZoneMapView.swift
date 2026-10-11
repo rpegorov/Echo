@@ -131,7 +131,7 @@ struct ZoneMapView: View {
     private func schematic(_ layouts: [WindowLayout], bounds: CGSize) -> some View {
         ZoneSchematic(settings: settings, display: display, layouts: layouts, bounds: bounds) { command in
             activeCommand = command
-            settings.setRecordingCommand(command)
+            settings.setRecordingOwner(.command(command))
         }
     }
 
@@ -186,7 +186,7 @@ private struct ZoneCell: View {
     @State private var isHovering = false
     @FocusState private var isFocused: Bool
 
-    private var isRecording: Bool { settings.recordingCommand == layout.command }
+    private var isRecording: Bool { settings.recordingOwner == .command(layout.command) }
 
     private var title: String { loc.t(layout.command.titleKey) }
 
