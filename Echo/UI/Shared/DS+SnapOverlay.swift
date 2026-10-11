@@ -25,12 +25,12 @@ extension DS {
 
         // MARK: - Caption
 
-        static let captionFontSize: CGFloat = 15
+        static let captionFontSize: CGFloat = 20
         static let captionLineLimit = 1
         static let captionMinimumScaleFactor: CGFloat = 0.5
         static let capsuleFillOpacity: Double = 0.9
-        static let capsuleHorizontalPadding: CGFloat = 12
-        static let capsuleVerticalPadding: CGFloat = 6
+        static let capsuleHorizontalPadding: CGFloat = 16
+        static let capsuleVerticalPadding: CGFloat = 8
         /// Keeps the caption inside the zone even for a quarter tile on a small display.
         static let captionInset: CGFloat = 12
         static let captionForeground = Color.white
