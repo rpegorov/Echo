@@ -30,7 +30,7 @@ struct GridDocument: Codable, Equatable, Sendable {
         case .template(kind: let kind)?:
             return kind.zones
         case .saved(id: let id)?:
-            if let grid = grids.first(where: { $0.id == id }) { return grid.zones }
+            if let grid = grids.first(where: { $0.id == id }), !grid.zones.isEmpty { return grid.zones }
         case nil:
             break
         }
