@@ -6,7 +6,7 @@
 import SwiftUI
 
 extension DS {
-    /// Tokens for the drag-to-snap overlay: zone fill, caption and motion.
+    /// Tokens for the drag-to-snap overlay and the grid flash: zone fill, caption and motion.
     enum SnapOverlay {
 
         // MARK: - Zone
@@ -44,5 +44,28 @@ extension DS {
         /// Keeps the caption inside the zone even for a quarter tile on a small display.
         static let captionInset: CGFloat = 12
         static let captionForeground = Color.white
+
+        // MARK: - Grid flash
+
+        /// How long the grid stays on screen before it hides itself.
+        static let flashDuration: Duration = .milliseconds(1400)
+        static let flashFillOpacity: Double = 0.16
+        static let flashStrokeOpacity: Double = 0.7
+        static let flashStrokeWidth: CGFloat = 2
+        static let flashBadgeFillOpacity: Double = 0.9
+        static let flashNumberFontSize: CGFloat = 36
+        static let flashShortcutFontSize: CGFloat = 16
+        static let flashBadgeHorizontalPadding: CGFloat = 14
+        static let flashBadgeVerticalPadding: CGFloat = 6
+        static let flashContentSpacing: CGFloat = 8
+        static let flashRaisedContentShare: CGFloat = 0.3
+        static let flashRaisedContentMinHeight: CGFloat = 400
+        /// Keeps the badges inside the narrowest zones of a ten-zone grid.
+        static let flashBadgeMinimumScaleFactor: CGFloat = 0.4
+        static let flashTitleFontSize: CGFloat = 28
+        static let flashTitleHorizontalPadding: CGFloat = 28
+        static let flashTitleVerticalPadding: CGFloat = 14
+        /// Share of the display width the title may take before it shrinks.
+        static let flashTitleMaxWidthShare: CGFloat = 0.6
     }
 }
