@@ -27,12 +27,12 @@ enum ArrangementCapture {
         return bestIndex
     }
 
-    /// Snapshot of the current windows; the caller names the arrangement afterwards.
+    /// Entries for the current windows and the displays they use; the caller builds the arrangement.
     static func capture(
         windows: [WindowSnapshot],
         displays: [DisplaySnapshot],
         makeID: () -> UUID
-    ) -> Arrangement {
+    ) -> (windows: [ArrangedWindow], displays: [String: SavedDisplay]) {
         var savedDisplays: [String: SavedDisplay] = [:]
         var entries: [ArrangedWindow] = []
         for window in windows {
@@ -44,13 +44,13 @@ enum ArrangementCapture {
                       zones: displays[displayIndex].zones
                   )
             else { continue }
-            let trimmedTitle = window.title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let isBlank = window.title?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true
             entries.append(
                 ArrangedWindow(
                     id: makeID(),
                     bundleID: window.bundleID,
                     appName: window.appName,
-                    titleHint: trimmedTitle.isEmpty ? nil : trimmedTitle,
+                    titleHint: isBlank ? nil : window.title,
                     slot: ZoneSlot(display: key.rawValue, rect: displays[displayIndex].zones[zone])
                 )
             )
@@ -59,6 +59,6 @@ enum ArrangementCapture {
                 aspect: displays[displayIndex].aspect
             )
         }
-        return Arrangement(id: makeID(), name: "", windows: entries, displays: savedDisplays)
+        return (entries, savedDisplays)
     }
 }
