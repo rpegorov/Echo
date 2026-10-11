@@ -2983,6 +2983,91 @@
           }
         }
       }
+    },
+    "arrangementSaveFailedMessage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Couldn't save the arrangement: %@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось сохранить расстановку: %@"
+          }
+        }
+      }
+    },
+    "arrangementSaveNotFoundReason": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "it was deleted"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "она была удалена"
+          }
+        }
+      }
+    },
+    "arrangementSaveInvalidSlotReason": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a window is placed outside its display"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "окно размещено за пределами своего экрана"
+          }
+        }
+      }
+    },
+    "arrangementEditorEmpty": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This arrangement has no windows"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В этой расстановке нет окон"
+          }
+        }
+      }
+    },
+    "arrangementUnknownOwnerName": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "another arrangement"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "другая расстановка"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

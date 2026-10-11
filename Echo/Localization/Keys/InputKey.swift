@@ -196,4 +196,9 @@ enum InputKey: String, LocalizedKey {
     case arrangementWindowCount
     case arrangementDisplayMissingCount
     case arrangementNoWindowCount
+    case arrangementSaveFailedMessage
+    case arrangementSaveNotFoundReason
+    case arrangementSaveInvalidSlotReason
+    case arrangementEditorEmpty
+    case arrangementUnknownOwnerName
 }
