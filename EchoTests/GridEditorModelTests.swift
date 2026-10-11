@@ -68,6 +68,21 @@ struct GridEditorModelTests {
         #expect(!model.isDirty)
     }
 
+    @Test("dragging a border away and back to the press point restores the grid")
+    func dragBackToStartRestoresZones() throws {
+        let model = makeModel(source: .template(.threeColumns))
+        let original = model.draft.zones
+        let edge = try verticalEdge(of: model, near: 1.0 / 3)
+
+        model.beginDrag(of: edge, pointerPosition: edge.position)
+        model.drag(toPointerPosition: edge.position + 0.1)
+        model.drag(toPointerPosition: edge.position)
+        model.endDrag()
+
+        expectZones(model.draft.zones, original)
+        #expect(!model.isDirty)
+    }
+
     @Test("pressing a border off its centre and not moving does not shift it")
     func pressOffCentreDoesNotJump() throws {
         let model = makeModel(source: .template(.threeColumns))
