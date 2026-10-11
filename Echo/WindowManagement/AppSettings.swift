@@ -263,12 +263,13 @@ final class AppSettings: ObservableObject {
         onChange?()
     }
 
-    /// The command currently bound to a combination that collides with `shortcut`.
+    /// The first command, in declaration order, bound to a combination that collides with `shortcut`.
     func command(using shortcut: KeyboardShortcut) -> WMCommand? {
-        shortcuts.first { $0.value.collides(with: shortcut) }?.key
+        WMCommand.allCases.first { shortcuts[$0]?.collides(with: shortcut) == true }
     }
 
-    /// Binds `shortcut` to `command`. A command that held a colliding combination loses it and is returned.
+    /// Binds `shortcut` to `command`. Every other command holding a colliding combination loses it;
+    /// the first of them, in declaration order, is returned.
     @discardableResult
     func setShortcut(_ shortcut: KeyboardShortcut?, for command: WMCommand) -> WMCommand? {
         guard let shortcut else {
@@ -277,12 +278,14 @@ final class AppSettings: ObservableObject {
             onChange?()
             return nil
         }
-        let displaced = self.command(using: shortcut).flatMap { $0 == command ? nil : $0 }
-        if let displaced { shortcuts.removeValue(forKey: displaced) }
+        let displacedCommands = WMCommand.allCases.filter {
+            $0 != command && shortcuts[$0]?.collides(with: shortcut) == true
+        }
+        displacedCommands.forEach { shortcuts.removeValue(forKey: $0) }
         shortcuts[command] = shortcut
         persistShortcuts()
         onChange?()
-        return displaced
+        return displacedCommands.first
     }
 
     private func persistShortcuts() {
