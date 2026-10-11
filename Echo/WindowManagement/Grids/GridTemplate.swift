@@ -6,6 +6,7 @@
 import Foundation
 
 /// Starting points for grids; zones are listed in reading order.
+/// Persisted: any change to the stored shape bumps `GridFileStorage.schemaVersion`.
 enum GridTemplate: String, Codable, CaseIterable, Sendable {
     case twoColumns, threeColumns, twoByTwo, mainAndSide, mainAndTwoSides
 

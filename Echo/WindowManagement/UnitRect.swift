@@ -6,6 +6,7 @@
 import CoreGraphics
 
 /// A rectangle in fractions of a screen's visible area, origin bottom-left like Cocoa.
+/// Persisted: any change to the stored shape bumps `GridFileStorage.schemaVersion`.
 struct UnitRect: Equatable, Hashable, Sendable, Codable {
     var x: Double
     var y: Double
