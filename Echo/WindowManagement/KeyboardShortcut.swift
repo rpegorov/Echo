@@ -7,6 +7,7 @@ import AppKit
 import Carbon.HIToolbox
 
 /// Сочетание клавиш: виртуальный keyCode + модификаторы (Cocoa-маска).
+/// Persisted in user defaults: a new stored field must be Optional, or decoding drops every saved shortcut.
 struct KeyboardShortcut: Codable, Equatable {
     var keyCode: UInt32
     /// NSEvent.ModifierFlags.rawValue (device-independent подмножество).

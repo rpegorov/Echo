@@ -27,8 +27,10 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(layoutCyclingEnabled, forKey: Keys.cycleLayouts) }
     }
 
-    /// True while a shortcut recorder waits for keys; Echo's hotkeys stay unregistered meanwhile. Not persisted.
-    @Published private(set) var isRecordingShortcut = false
+    /// The command whose shortcut a recorder is capturing; Echo's hotkeys stay unregistered meanwhile. Not persisted.
+    @Published private(set) var recordingCommand: WMCommand?
+
+    var isRecordingShortcut: Bool { recordingCommand != nil }
 
     // MARK: - General
 
@@ -246,9 +248,10 @@ final class AppSettings: ObservableObject {
         shortcuts[command]
     }
 
-    func setRecordingShortcut(_ recording: Bool) {
-        guard recording != isRecordingShortcut else { return }
-        isRecordingShortcut = recording
+    /// Starts capturing for `command`, which cancels any other recorder; nil stops capturing.
+    func setRecordingCommand(_ command: WMCommand?) {
+        guard command != recordingCommand else { return }
+        recordingCommand = command
         onChange?()
     }
 

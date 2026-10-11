@@ -5,9 +5,14 @@
 
 import CoreGraphics
 
+/// What a drop would snap the window into.
+enum SnapTarget: Equatable, Sendable {
+    case layout(WindowLayout)
+}
+
 /// `frame` is exactly the window frame on drop (global Cocoa coordinates, gap applied); `screenFrame` picks the display.
 struct SnapPreview: Equatable, Sendable {
-    let layout: WindowLayout
+    let target: SnapTarget
     let frame: CGRect
     let screenFrame: CGRect
     let shortcut: KeyboardShortcut?

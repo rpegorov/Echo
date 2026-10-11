@@ -585,13 +585,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS system tiling also snaps windows to the edges and while ⌥ is held. Turn it off to avoid a conflict."
+            "value": "macOS system tiling also snaps windows to the edges. Turn it off to avoid a conflict."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Системный тайлинг macOS тоже магнитит окна к краям и при зажатой ⌥. Отключите его, чтобы не было конфликта."
+            "value": "Системный тайлинг macOS тоже магнитит окна к краям. Отключите его, чтобы не было конфликта."
           }
         }
       }

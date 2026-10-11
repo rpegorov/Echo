@@ -93,7 +93,7 @@ final class WindowSnapper {
         if let zone = zone(for: location, on: screen) {
             activeZone = zone
             overlay.show(SnapPreview(
-                layout: zone,
+                target: .layout(zone),
                 frame: zone.frame(in: screen.visibleFrame, gap: CGFloat(settings.windowGap)),
                 screenFrame: screen.frame,
                 shortcut: settings.shortcut(for: zone.command)

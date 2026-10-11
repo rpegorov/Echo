@@ -12,7 +12,7 @@ enum UnwiredCapabilities {
         "layout cycles",
         "move to next/previous display",
         "robust window placement",
-        "option-drag tiling detection",
+        "system tiling switches",
         "hotkeys paused while recording",
         "shortcut backfill v3",
         "edge snap previews on zone change",
