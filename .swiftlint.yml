@@ -1,0 +1,82 @@
+# SwiftLint — merge-blockers of the Swift stack. `swiftlint lint --strict` in CI and gate.sh.
+included:
+  - Echo
+  - EchoTests
+excluded:
+  - build
+  - .agents
+  - Echo.xcodeproj
+  - "**/.build"
+  - "**/DerivedData"
+  - "**/Generated"
+
+# Rules with findings on the baseline stay off until their debt wave fixes them;
+# each comment is the finding count at the time the config was added.
+disabled_rules:
+  - no_magic_numbers # baseline: 913
+  - line_length # baseline: 128
+  - identifier_name # baseline: 114
+  - comma # baseline: 34
+  - colon # baseline: 30
+  - force_unwrapping # baseline: 20
+  - trailing_comma # baseline: 19
+  - swallowed_try # baseline: 17
+  - hardcoded_frame # baseline: 13
+  - large_tuple # baseline: 11
+  - unchecked_sendable # baseline: 10
+  - unowned_task # baseline: 9
+  - void_function_in_ternary # baseline: 7
+  - opening_brace # baseline: 6
+  - function_parameter_count # baseline: 4
+  - vertical_whitespace # baseline: 3
+  - file_length # baseline: 2
+  - cyclomatic_complexity # baseline: 2
+  - implicit_optional_initialization # baseline: 1
+  - multiple_closures_with_trailing_closure # baseline: 1
+  - legacy_swiftui_aspect_ratio # baseline: 1
+  - type_name # baseline: 1
+  - nesting # baseline: 1
+  - implicitly_unwrapped_optional # baseline: 1
+  - discouraged_optional_boolean # baseline: 1
+  - orphaned_doc_comment # baseline: 1
+  - function_body_length # baseline: 1
+
+opt_in_rules:
+  - fatal_error_message
+  - unowned_variable_capture
+  - weak_delegate
+  - empty_count
+  - first_where
+  - contains_over_first_not_nil
+  - private_swiftui_state
+  - unhandled_throwing_task
+
+force_cast: error
+force_try: error
+type_body_length:
+  warning: 300
+  error: 500
+
+custom_rules:
+  swallowed_try:
+    name: "Swallowed error"
+    regex: '\btry\?'
+    message: "try? swallows the error: handle, log with context, or rethrow"
+    severity: error
+    excluded: ".*Tests?/.*"
+  unowned_task:
+    name: "Unowned Task"
+    regex: '^\s*(_\s*=\s*)?Task(\.detached)?\s*(\([^)]*\))?\s*\{'
+    message: "Store the Task handle and cancel it, or use .task {} tied to the view"
+    severity: error
+    excluded: ".*Tests?/.*"
+  unchecked_sendable:
+    name: "Unchecked Sendable"
+    regex: '@unchecked\s+Sendable|nonisolated\(unsafe\)'
+    message: "Disables the compiler's race check: make the type actually Sendable or isolate it"
+    severity: error
+  hardcoded_frame:
+    name: "Hardcoded frame size"
+    regex: '\.frame\((min|max|ideal)?[wW]idth:\s*\d'
+    message: "Use layout tokens from the design system, not literal sizes"
+    severity: warning
