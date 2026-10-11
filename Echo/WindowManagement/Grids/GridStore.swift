@@ -33,6 +33,16 @@ final class GridStore: ObservableObject, ActiveGridProviding {
         return true
     }
 
+    /// The settings message for `loadError`; nil when grids loaded normally.
+    var loadNotice: GridLoadNotice? {
+        switch loadError {
+        case .unreadable(let fileName)?: return .loadFailed(fileName: fileName)
+        case .newerSchema?:              return .newerVersion
+        case nil:                        return nil
+        default:                         return .unavailable
+        }
+    }
+
     func activeZones(for display: DisplayKey?, aspect: Double) -> [UnitRect] {
         document.activeZones(for: display, aspect: aspect)
     }
