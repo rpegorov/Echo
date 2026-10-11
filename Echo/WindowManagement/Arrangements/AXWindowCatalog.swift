@@ -9,9 +9,6 @@ import ApplicationServices
 /// Enumerates the eligible windows of running regular apps through Accessibility.
 @MainActor
 final class AXWindowCatalog: WindowCataloging {
-    /// Upper bound for one AX request to an app, so a hung app cannot stall the main thread for long.
-    static let messagingTimeout: Float = 1
-
     private let workspace: NSWorkspace
     private let ownBundleID: String?
 
@@ -45,8 +42,7 @@ final class AXWindowCatalog: WindowCataloging {
     }
 
     private func windows(of app: NSRunningApplication, bundleID: String) -> [CatalogWindow] {
-        let element = AXUIElementCreateApplication(app.processIdentifier)
-        AXUIElementSetMessagingTimeout(element, Self.messagingTimeout)
+        let element = AXWindow.applicationElement(pid: app.processIdentifier)
         let appName = app.localizedName ?? bundleID
         return AXWindow.windows(of: element).enumerated().compactMap { ordinal, window in
             guard AXWindow.isEligible(window), let frame = AXWindow.frame(of: window) else { return nil }
