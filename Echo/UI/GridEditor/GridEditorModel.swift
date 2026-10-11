@@ -12,6 +12,12 @@ final class GridEditorModel: ObservableObject {
     @Published private(set) var draft: ZoneGrid
     /// Why the last save failed; nil until a save fails and after one succeeds.
     @Published private(set) var saveError: GridStorageError?
+    /// Borders of the draft that can be dragged; follows every change of `draft.zones`.
+    @Published private(set) var edges: [GridEdge] = []
+    @Published private(set) var hoveredZone: Int?
+    @Published private(set) var hoveredEdge: GridEdge?
+    /// The border being dragged, as it sits in the current draft; nil outside a drag.
+    @Published private(set) var activeEdge: GridEdge?
 
     /// The display the canvas proportions come from; nil when none is connected.
     let display: ConnectedDisplay?
@@ -19,6 +25,15 @@ final class GridEditorModel: ObservableObject {
     private let store: GridStore
     private let templateTitle: (GridTemplate) -> String
     private var baseline: ZoneGrid
+    private var dragSnapshot: DragSnapshot?
+
+    /// The zones and border at the start of a drag; every frame of the drag is computed from these.
+    private struct DragSnapshot {
+        let edge: GridEdge
+        let zones: [UnitRect]
+        /// Edge position minus pointer position at the start, so the border does not jump under the pointer.
+        let grabOffset: Double
+    }
     /// The template `draft.name` was taken from while the user has not typed a name of their own.
     private var namingTemplate: GridTemplate?
 
@@ -38,6 +53,7 @@ final class GridEditorModel: ObservableObject {
         draft = start.grid
         baseline = start.grid
         namingTemplate = start.namingTemplate
+        edges = GridEditing.edges(of: start.grid.zones)
     }
 
     var isDirty: Bool { draft != baseline }
@@ -65,6 +81,77 @@ final class GridEditorModel: ObservableObject {
     /// The single point through which the zones change.
     func replaceZones(_ zones: [UnitRect]) {
         draft.zones = zones
+        edges = GridEditing.edges(of: zones)
+        hoveredEdge = nil
+    }
+
+    // MARK: - Split and merge
+
+    func canSplit(zone index: Int, along axis: SplitAxis) -> Bool {
+        GridEditing.split(draft.zones, at: index, along: axis) != nil
+    }
+
+    /// Does nothing when the zone is too small to halve along `axis`.
+    func split(zone index: Int, along axis: SplitAxis) {
+        guard let zones = GridEditing.split(draft.zones, at: index, along: axis) else { return }
+        replaceZones(zones)
+    }
+
+    /// The zone that `index` can merge into on the `direction` side; nil when the union would not be a rectangle.
+    func mergeTarget(zone index: Int, toward direction: GridDirection) -> Int? {
+        guard let other = GridEditing.mergeCandidate(draft.zones, of: index, toward: direction),
+              GridEditing.merge(draft.zones, index, other) != nil
+        else { return nil }
+        return other
+    }
+
+    func merge(zone index: Int, toward direction: GridDirection) {
+        guard let other = mergeTarget(zone: index, toward: direction),
+              let zones = GridEditing.merge(draft.zones, index, other)
+        else { return }
+        replaceZones(zones)
+    }
+
+    // MARK: - Hover
+
+    func setHover(zone: Int?, edge: GridEdge?) {
+        if hoveredZone != zone { hoveredZone = zone }
+        if hoveredEdge != edge { hoveredEdge = edge }
+    }
+
+    // MARK: - Border drag
+
+    var isDragging: Bool { dragSnapshot != nil }
+
+    /// The axis of the border grabbed at the start of the drag; fixed for the whole gesture.
+    var dragAxis: GridEdge.Axis? { dragSnapshot?.edge.axis }
+
+    /// `pointerPosition` is the pointer's coordinate across the border, in unit space.
+    func beginDrag(of edge: GridEdge, pointerPosition: Double) {
+        dragSnapshot = DragSnapshot(edge: edge, zones: draft.zones, grabOffset: edge.position - pointerPosition)
+        activeEdge = edge
+    }
+
+    func drag(toPointerPosition pointerPosition: Double) {
+        guard let snapshot = dragSnapshot else { return }
+        let target = pointerPosition + snapshot.grabOffset
+        let zones = GridEditing.move(snapshot.edge, to: target, in: snapshot.zones)
+        guard zones != draft.zones else { return }
+        draft.zones = zones
+        edges = GridEditing.edges(of: zones)
+        activeEdge = edges
+            .filter { $0.axis == snapshot.edge.axis && Self.covers($0, snapshot.edge) }
+            .min { abs($0.position - target) < abs($1.position - target) }
+    }
+
+    func endDrag() {
+        dragSnapshot = nil
+        activeEdge = nil
+    }
+
+    /// A border may grow when the move lines it up with another one, so the highlight follows any border that covers the grabbed run.
+    private static func covers(_ edge: GridEdge, _ grabbed: GridEdge) -> Bool {
+        edge.start <= grabbed.start + GridEditing.tolerance && edge.end >= grabbed.end - GridEditing.tolerance
     }
 
     /// Writes the grid and, when asked, makes it active on the display. True when the editor can close.

@@ -17,11 +17,15 @@ struct GridEditorView: View {
         VStack(alignment: .leading, spacing: DS.GridEditor.sectionSpacing) {
             toolbar
             GridCanvasView(
-                zones: model.draft.zones,
+                model: model,
                 displaySize: model.display?.visibleSize ?? DS.GridEditor.fallbackDisplaySize,
                 settings: settings
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            Text(loc.t(InputKey.gridEditorHint))
+                .font(DS.GridEditor.hintFont)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
             messages
             buttons
         }
