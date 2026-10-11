@@ -5,6 +5,7 @@
 
 import AppKit
 import ApplicationServices
+import os
 
 /// Тайлинг активного окна через Accessibility API.
 /// Требует разрешения Accessibility (как и блокировка клавиатуры — см. TCC-нюанс).
@@ -29,26 +30,34 @@ final class WindowManagerService: ObservableObject {
 
     // MARK: - Системный тайлинг macOS
 
-    private let systemWindowManagerDomain = "com.apple.WindowManager"
+    private static let systemWindowManagerDomain = "com.apple.WindowManager"
+
+    private static let log = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "Echo",
+        category: "WindowManager"
+    )
+
+    private var systemTiling: SystemTiling {
+        SystemTiling(defaults: UserDefaults(suiteName: Self.systemWindowManagerDomain))
+    }
 
     /// Включён ли системный тайлинг перетаскиванием к краям (конфликтует с нашим).
-    /// На macOS 15+ по умолчанию включён, поэтому отсутствие ключа = true.
     func isSystemEdgeTilingEnabled() -> Bool {
-        guard let defaults = UserDefaults(suiteName: systemWindowManagerDomain) else { return false }
-        if defaults.object(forKey: "EnableTilingByEdgeDrag") == nil { return true }
-        return defaults.bool(forKey: "EnableTilingByEdgeDrag")
+        systemTiling.isEnabled
     }
 
     /// Отключает системный тайлинг к краям и перезапускает WindowManager,
     /// чтобы изменение вступило в силу.
     func disableSystemEdgeTiling() {
-        guard let defaults = UserDefaults(suiteName: systemWindowManagerDomain) else { return }
-        defaults.set(false, forKey: "EnableTilingByEdgeDrag")
-        defaults.set(false, forKey: "EnableTopTilingByEdgeDrag")
+        systemTiling.disable()
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/killall")
         task.arguments = ["WindowManager"]
-        try? task.run()
+        do {
+            try task.run()
+        } catch {
+            Self.log.error("Failed to restart WindowManager: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     /// Открывает System Settings → Desktop & Dock (там переключатели тайлинга).
@@ -68,29 +77,56 @@ final class WindowManagerService: ObservableObject {
         }
     }
 
-    /// Применяет раскладку к активному окну переднего приложения.
-    func apply(_ layout: WindowLayout, gap: CGFloat) {
-        guard let window = focusedWindow() else { return }
-        apply(layout, to: window, gap: gap)
+    /// Executes a window command on the focused window of the frontmost app.
+    func perform(_ command: WMCommand, gap: CGFloat, cycling: Bool) {
+        guard hasPermission(), let window = focusedWindow(), let current = frame(of: window) else { return }
+        let screens = NSScreen.screens
+        guard let sourceIndex = displayIndex(containing: current) else { return }
+        guard let target = Self.targetFrame(
+            for: command,
+            windowFrame: current,
+            sourceIndex: sourceIndex,
+            screenFrames: screens.map(\.frame),
+            visibleFrames: screens.map(\.visibleFrame),
+            gap: gap,
+            cycling: cycling
+        ) else { return }
+        setFrame(target, for: window)
     }
 
-    /// Применяет раскладку к конкретному окну (для drag-to-snap).
-    func apply(_ layout: WindowLayout, to window: AXUIElement, gap: CGFloat) {
-        guard hasPermission() else { return }
-        let screen = screen(for: window) ?? NSScreen.main
-        guard let visible = screen?.visibleFrame else { return }
-        setFrame(layout.frame(in: visible, gap: gap), for: window)
+    /// The frame `command` moves a window at `windowFrame` to, all in Cocoa coordinates;
+    /// nil when the command does not move it. `sourceIndex` is the window's display.
+    nonisolated static func targetFrame(
+        for command: WMCommand,
+        windowFrame: CGRect,
+        sourceIndex: Int,
+        screenFrames: [CGRect],
+        visibleFrames: [CGRect],
+        gap: CGFloat,
+        cycling: Bool
+    ) -> CGRect? {
+        guard screenFrames.count == visibleFrames.count, visibleFrames.indices.contains(sourceIndex) else { return nil }
+        let visible = visibleFrames[sourceIndex]
+        if let layout = command.layout {
+            let step = cycling
+                ? LayoutCycle.next(for: layout, windowFrame: windowFrame, visible: visible, gap: gap)
+                : layout
+            return step.frame(in: visible, gap: gap)
+        }
+        guard let direction = command.displayDirection else { return nil }
+        let destination = DisplayArrangement.neighbour(of: sourceIndex, direction: direction, in: screenFrames)
+        guard destination != sourceIndex else { return nil }
+        return DisplayArrangement.movedFrame(windowFrame, from: visible, to: visibleFrames[destination], gap: gap)
     }
 
     /// Окно под точкой экрана (Cocoa-координаты, origin снизу-слева).
     func window(at screenPoint: CGPoint) -> AXUIElement? {
-        let primaryHeight = NSScreen.screens.first?.frame.height ?? 0
         let system = AXUIElementCreateSystemWide()
         var element: AXUIElement?
         let result = AXUIElementCopyElementAtPosition(
             system,
             Float(screenPoint.x),
-            Float(primaryHeight - screenPoint.y),
+            Float(primaryScreenHeight - screenPoint.y),
             &element
         )
         guard result == .success, let el = element else { return nil }
@@ -98,21 +134,64 @@ final class WindowManagerService: ObservableObject {
         if role(of: el) == (kAXWindowRole as String) { return el }
         var windowValue: CFTypeRef?
         if AXUIElementCopyAttributeValue(el, kAXWindowAttribute as CFString, &windowValue) == .success,
-           let raw = windowValue {
-            return (raw as! AXUIElement)
+           let window = windowValue.flatMap(Self.element(from:)) {
+            return window
         }
         return focusedWindow()
     }
 
     /// Текущая позиция окна (AX-координаты, origin сверху-слева).
     func position(of window: AXUIElement) -> CGPoint? {
-        var value: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &value) == .success,
-              let raw = value
-        else { return nil }
         var point = CGPoint.zero
-        AXValueGetValue(raw as! AXValue, .cgPoint, &point)
-        return point
+        return readValue(kAXPositionAttribute, of: window, type: .cgPoint, into: &point) ? point : nil
+    }
+
+    /// Window frame in Cocoa coordinates (origin bottom-left).
+    func frame(of window: AXUIElement) -> CGRect? {
+        var size = CGSize.zero
+        guard let origin = position(of: window),
+              readValue(kAXSizeAttribute, of: window, type: .cgSize, into: &size)
+        else { return nil }
+        return CGRect(
+            x: origin.x,
+            y: primaryScreenHeight - origin.y - size.height,
+            width: size.width,
+            height: size.height
+        )
+    }
+
+    /// Applies a Cocoa-coordinate frame. A window whose minimum size exceeds the target
+    /// is moved back inside the visible area of the target's screen.
+    func setFrame(_ frameCocoa: CGRect, for window: AXUIElement) {
+        guard hasPermission() else { return }
+        writePosition(of: frameCocoa, to: window)
+        writeSize(frameCocoa.size, to: window)
+        writePosition(of: frameCocoa, to: window)
+
+        guard let actual = frame(of: window), !Self.sizesMatch(actual.size, frameCocoa.size),
+              let visible = displayIndex(containing: frameCocoa).map({ NSScreen.screens[$0].visibleFrame })
+        else { return }
+        let origin = WindowPlacement.clampedOrigin(target: frameCocoa, actualSize: actual.size, visible: visible)
+        writePosition(of: CGRect(origin: origin, size: actual.size), to: window)
+    }
+
+    // MARK: - Screens
+
+    /// Largest size difference, in points, still treated as the requested size.
+    private static let sizeMatchTolerance: CGFloat = 1
+
+    private static func sizesMatch(_ lhs: CGSize, _ rhs: CGSize) -> Bool {
+        abs(lhs.width - rhs.width) <= sizeMatchTolerance && abs(lhs.height - rhs.height) <= sizeMatchTolerance
+    }
+
+    private var primaryScreenHeight: CGFloat { NSScreen.screens.first?.frame.height ?? 0 }
+
+    /// Index in `NSScreen.screens` of the display `frame` overlaps most, else of the main display.
+    private func displayIndex(containing frame: CGRect) -> Int? {
+        let screens = NSScreen.screens
+        if let index = DisplayArrangement.displayIndex(of: frame, in: screens.map(\.frame)) { return index }
+        guard let main = NSScreen.main else { return nil }
+        return screens.firstIndex(of: main)
     }
 
     // MARK: - AX helpers
@@ -127,39 +206,49 @@ final class WindowManagerService: ObservableObject {
         guard let app = NSWorkspace.shared.frontmostApplication else { return nil }
         let axApp = AXUIElementCreateApplication(app.processIdentifier)
         var value: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(axApp, kAXFocusedWindowAttribute as CFString, &value) == .success,
-              let raw = value
+        guard AXUIElementCopyAttributeValue(axApp, kAXFocusedWindowAttribute as CFString, &value) == .success
         else { return nil }
-        return (raw as! AXUIElement)
+        return value.flatMap(Self.element(from:))
     }
 
-    /// Конвертирует кадр из Cocoa (origin снизу-слева) в AX (origin сверху-слева) и применяет.
-    func setFrame(_ frameCocoa: CGRect, for window: AXUIElement) {
-        let primaryHeight = NSScreen.screens.first?.frame.height ?? 0
-        let axY = primaryHeight - frameCocoa.origin.y - frameCocoa.height
-        var origin = CGPoint(x: frameCocoa.origin.x, y: axY)
-        var size = frameCocoa.size
-
-        if let positionValue = AXValueCreate(.cgPoint, &origin) {
-            AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, positionValue)
-        }
-        if let sizeValue = AXValueCreate(.cgSize, &size) {
-            AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, sizeValue)
-        }
+    private static func element(from value: CFTypeRef) -> AXUIElement? {
+        guard CFGetTypeID(value) == AXUIElementGetTypeID() else { return nil }
+        return unsafeDowncast(value as AnyObject, to: AXUIElement.self)
     }
 
-    /// Экран, на котором сейчас находится окно (по его позиции).
-    private func screen(for window: AXUIElement) -> NSScreen? {
+    private func readValue(
+        _ attribute: String,
+        of element: AXUIElement,
+        type: AXValueType,
+        into storage: UnsafeMutableRawPointer
+    ) -> Bool {
         var value: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &value) == .success,
-              let raw = value
-        else { return nil }
+        guard AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success,
+              let raw = value, CFGetTypeID(raw) == AXValueGetTypeID()
+        else { return false }
+        return AXValueGetValue(unsafeDowncast(raw as AnyObject, to: AXValue.self), type, storage)
+    }
 
-        var axPoint = CGPoint.zero
-        AXValueGetValue(raw as! AXValue, .cgPoint, &axPoint)
+    private func writePosition(of frameCocoa: CGRect, to window: AXUIElement) {
+        var origin = CGPoint(x: frameCocoa.minX, y: primaryScreenHeight - frameCocoa.minY - frameCocoa.height)
+        writeValue(&origin, type: .cgPoint, attribute: kAXPositionAttribute, to: window)
+    }
 
-        let primaryHeight = NSScreen.screens.first?.frame.height ?? 0
-        let cocoaPoint = CGPoint(x: axPoint.x, y: primaryHeight - axPoint.y)
-        return NSScreen.screens.first { $0.frame.contains(cocoaPoint) }
+    private func writeSize(_ size: CGSize, to window: AXUIElement) {
+        var mutable = size
+        writeValue(&mutable, type: .cgSize, attribute: kAXSizeAttribute, to: window)
+    }
+
+    private func writeValue(
+        _ storage: UnsafeRawPointer,
+        type: AXValueType,
+        attribute: String,
+        to window: AXUIElement
+    ) {
+        guard let axValue = AXValueCreate(type, storage) else { return }
+        let result = AXUIElementSetAttributeValue(window, attribute as CFString, axValue)
+        if result != .success {
+            Self.log.debug("AX write of \(attribute, privacy: .public) failed: \(result.rawValue)")
+        }
     }
 }

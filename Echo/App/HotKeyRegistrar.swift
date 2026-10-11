@@ -34,13 +34,15 @@ final class HotKeyRegistrar {
         self.onClipboardCommand = onClipboardCommand
     }
 
-    /// Перерегистрирует все хоткеи по текущим настройкам.
-    /// Оконные команды регистрируются только если включён Window Manager,
-    /// команды раскладки — только если включён Ultra Switch; clipboard — всегда.
+    /// Re-registers every hotkey from the current settings.
+    /// Window commands need the window manager, layout commands need Ultra Switch; clipboard always registers.
+    /// While a shortcut is being recorded the Carbon hotkeys are released but the layout reservations stay,
+    /// so the combination being recorded never reaches the keystroke buffer.
     func registerAll() {
         hotKeys.unregisterAll()
         var layoutShortcuts: [KeyboardShortcut] = []
         defer { ultraSwitch.reserveShortcuts(layoutShortcuts) }
+        let paused = settings.isRecordingShortcut
         for command in WMCommand.allCases {
             guard let shortcut = settings.shortcut(for: command) else { continue }
             guard Self.shouldRegister(
@@ -50,37 +52,45 @@ final class HotKeyRegistrar {
                 autoConvertEnabled: settings.autoConvertEnabled
             ) else { continue }
 
-            if let layout = command.layout {
-                hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
-                    MainActor.assumeIsolated {
-                        guard let self else { return }
-                        self.windowManager.apply(layout, gap: CGFloat(self.settings.windowGap))
-                    }
-                }
-                continue
+            if command == .switchLayout || command == .convertWord {
+                layoutShortcuts.append(shortcut)
             }
+            guard !paused else { continue }
+            register(command, shortcut: shortcut)
+        }
+    }
 
-            switch command {
-            case .switchLayout:
-                layoutShortcuts.append(shortcut)
-                hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
-                    MainActor.assumeIsolated { self?.ultraSwitch.switchLayout() }
+    private func register(_ command: WMCommand, shortcut: KeyboardShortcut) {
+        switch command {
+        case .leftHalf, .rightHalf, .topHalf, .bottomHalf,
+             .topLeft, .topRight, .bottomLeft, .bottomRight,
+             .leftThird, .centerThird, .rightThird, .leftTwoThirds, .rightTwoThirds,
+             .center, .maximize, .nextDisplay, .previousDisplay:
+            hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.windowManager.perform(
+                        command,
+                        gap: CGFloat(self.settings.windowGap),
+                        cycling: self.settings.layoutCyclingEnabled
+                    )
                 }
-            case .convertWord:
-                layoutShortcuts.append(shortcut)
-                hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
-                    MainActor.assumeIsolated { self?.ultraSwitch.convertLastWord() }
-                }
-            case .translateSelection:
-                hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
-                    MainActor.assumeIsolated { self?.translator.translateSelection() }
-                }
-            case .openClipboard:
-                hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
-                    MainActor.assumeIsolated { self?.onClipboardCommand() }
-                }
-            default:
-                continue
+            }
+        case .switchLayout:
+            hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
+                MainActor.assumeIsolated { self?.ultraSwitch.switchLayout() }
+            }
+        case .convertWord:
+            hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
+                MainActor.assumeIsolated { self?.ultraSwitch.convertLastWord() }
+            }
+        case .translateSelection:
+            hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
+                MainActor.assumeIsolated { self?.translator.translateSelection() }
+            }
+        case .openClipboard:
+            hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
+                MainActor.assumeIsolated { self?.onClipboardCommand() }
             }
         }
     }
