@@ -3,6 +3,7 @@
 //  MonitorBarApp
 //
 
+import AppKit
 import Foundation
 
 /// Композиционный корень приложения: создаёт и владеет всеми сервисами,
@@ -26,11 +27,37 @@ final class AppEnvironment {
     let battery: BatteryService
     let gridStore: GridStore
 
+    lazy var snapOverlay = SnapOverlayController(localizer: localizer)
+
     lazy var snapper = WindowSnapper(
         windowManager: windowManager,
         settings: settings,
-        overlay: SnapOverlayController(localizer: localizer),
+        overlay: snapOverlay,
         grids: gridStore
+    )
+
+    lazy var arrangements = ArrangementService(
+        store: gridStore,
+        settings: settings,
+        catalog: AXWindowCatalog(workspace: .shared, ownBundleID: Bundle.main.bundleIdentifier),
+        frames: windowManager,
+        displays: { [gridStore] in DisplaySnapshot.connected(grids: gridStore) },
+        hasPermission: { [windowManager] in windowManager.hasPermission() }
+    )
+
+    lazy var autoRules = AutoRuleEngine(
+        store: gridStore,
+        frames: windowManager,
+        displays: { [gridStore] in DisplaySnapshot.connected(grids: gridStore) },
+        gap: { [settings] in CGFloat(settings.windowGap) },
+        workspace: .shared
+    )
+
+    lazy var gridCycler = GridCycler(
+        windowManager: windowManager,
+        store: gridStore,
+        settings: settings,
+        overlay: snapOverlay
     )
     let monitoring: MonitoringCoordinator
 
