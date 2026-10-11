@@ -41,6 +41,7 @@ enum InputKey: String, LocalizedKey {
     case commandZone7
     case commandZone8
     case commandZone9
+    case commandNextGrid
 
     // MARK: Shortcut recorder / display
     case shortcutRecording
@@ -158,4 +159,41 @@ enum InputKey: String, LocalizedKey {
     case gridEditorBorderHandle
     case gridZoneNumber
     case gridZonesSpan
+
+    // MARK: Arrangements and auto placement
+    case arrangementsTitle
+    case arrangementsCaption
+    case arrangementsEmpty
+    case arrangementCaptureButton
+    case arrangementNameLabel
+    case arrangementDefaultName
+    case arrangementNoWindowsMessage
+    case arrangementApplyButton
+    case arrangementApplyResult
+    case arrangementNotRunning
+    case arrangementDeleteConfirmMessage
+    case arrangementPermissionMessage
+    case arrangementEditorWindowTitle
+    case arrangementEditorHint
+    case arrangementMoveMenu
+    case arrangementRemoveApp
+    case arrangementDisplayDisconnected
+    case arrangementCustomArea
+    case arrangementsMenuTitle
+    case arrangementsMenuEmpty
+    case autoRulesTitle
+    case autoRulesCaption
+    case autoRulesToggle
+    case autoRulesEmpty
+    case autoRuleAddButton
+    case autoRuleSummary
+    case autoRuleSheetTitle
+    case autoRuleAppLabel
+    case autoRuleOtherApp
+    case autoRuleDisplayLabel
+    case autoRuleZoneLabel
+    case autoRuleReplaceNotice
+    case arrangementWindowCount
+    case arrangementDisplayMissingCount
+    case arrangementNoWindowCount
 }

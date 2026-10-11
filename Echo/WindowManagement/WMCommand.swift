@@ -17,6 +17,7 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
     case openClipboard
     case switchLayout, convertWord, translateSelection
     case zone1, zone2, zone3, zone4, zone5, zone6, zone7, zone8, zone9
+    case nextGrid
 
     var id: String { rawValue }
 
@@ -58,6 +59,7 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
         case .zone7:           return .commandZone7
         case .zone8:           return .commandZone8
         case .zone9:           return .commandZone9
+        case .nextGrid:        return .commandNextGrid
         }
     }
 
@@ -81,7 +83,8 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
         case .maximize:       return .maximize
         case .nextDisplay, .previousDisplay,
              .openClipboard, .switchLayout, .convertWord, .translateSelection,
-             .zone1, .zone2, .zone3, .zone4, .zone5, .zone6, .zone7, .zone8, .zone9: return nil
+             .zone1, .zone2, .zone3, .zone4, .zone5, .zone6, .zone7, .zone8, .zone9,
+             .nextGrid: return nil
         }
     }
 
@@ -113,7 +116,7 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
         allCases.first { $0.zoneNumber == number }
     }
 
-    var isWindowCommand: Bool { layout != nil || displayDirection != nil || zoneNumber != nil }
+    var isWindowCommand: Bool { layout != nil || displayDirection != nil || zoneNumber != nil || self == .nextGrid }
 
     /// Shortcut-set version that first shipped this command; drives the default backfill.
     var introducedInShortcutsVersion: Int {
@@ -166,6 +169,7 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
         case .zone7: return KeyboardShortcut(keyCode: UInt32(kVK_ANSI_7), flags: zoneFlags)
         case .zone8: return KeyboardShortcut(keyCode: UInt32(kVK_ANSI_8), flags: zoneFlags)
         case .zone9: return KeyboardShortcut(keyCode: UInt32(kVK_ANSI_9), flags: zoneFlags)
+        case .nextGrid: return nil
         }
     }
 }

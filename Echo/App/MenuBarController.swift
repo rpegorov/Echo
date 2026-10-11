@@ -77,7 +77,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
             .publisher(for: NSApplication.didResignActiveNotification)
             .receive(on: DispatchQueue.main)
             .sink { _ in
-                MainActor.assumeIsolated { settings.setRecordingCommand(nil) }
+                MainActor.assumeIsolated { settings.setRecordingOwner(nil) }
             }
 
         environment.monitoring.start()

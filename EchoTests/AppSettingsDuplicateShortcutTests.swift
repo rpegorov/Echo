@@ -34,7 +34,7 @@ struct AppSettingsDuplicateShortcutTests {
 
             let displaced = settings.setShortcut(leftArrow, for: .maximize)
 
-            #expect(displaced == .leftHalf)
+            #expect(displaced == .command(.leftHalf))
             #expect(settings.shortcut(for: .leftHalf) == nil)
             #expect(settings.shortcut(for: .center) == nil)
             #expect(settings.shortcut(for: .maximize) == leftArrow)
@@ -66,7 +66,7 @@ struct AppSettingsDuplicateShortcutTests {
 
             let displaced = settings.setShortcut(leftArrow, for: .maximize)
 
-            #expect(displaced == .leftHalf)
+            #expect(displaced == .command(.leftHalf))
             #expect(settings.shortcut(for: .leftHalf) == nil)
             #expect(settings.shortcut(for: .center) == nil)
             #expect(holders(of: leftArrow, in: settings) == [.maximize])
@@ -95,7 +95,7 @@ struct AppSettingsDuplicateShortcutTests {
 
             let displaced = settings.setShortcut(leftArrow, for: .center)
 
-            #expect(displaced == .leftHalf)
+            #expect(displaced == .command(.leftHalf))
             #expect(settings.shortcut(for: .leftHalf) == nil)
             #expect(settings.shortcut(for: .center) == leftArrow)
             #expect(holders(of: leftArrow, in: settings) == [.center])
@@ -110,7 +110,7 @@ struct AppSettingsDuplicateShortcutTests {
 
             let displaced = settings.setShortcut(leftArrow, for: .leftHalf)
 
-            #expect(displaced == .center)
+            #expect(displaced == .command(.center))
             #expect(settings.shortcut(for: .center) == nil)
             #expect(holders(of: leftArrow, in: settings) == [.leftHalf])
         }

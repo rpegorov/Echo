@@ -97,6 +97,8 @@ final class HotKeyRegistrar {
             hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
                 MainActor.assumeIsolated { self?.onClipboardCommand() }
             }
+        case .nextGrid:
+            break
         }
     }
 

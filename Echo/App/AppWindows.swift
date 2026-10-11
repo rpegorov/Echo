@@ -141,7 +141,7 @@ final class AppWindows: NSObject, NSWindowDelegate {
             updater: environment.updater,
             metrics: environment.metrics
         )
-        let hosting = HostingFactory.make(root, localizer: environment.localizer)
+        let hosting = HostingFactory.make(root.environmentObject(environment.gridStore), localizer: environment.localizer)
 
         let window = NSWindow(contentViewController: hosting)
         window.styleMask = [.titled, .closable, .fullSizeContentView]
@@ -192,7 +192,7 @@ final class AppWindows: NSObject, NSWindowDelegate {
         if closed == clipboardWindow { clipboardWindow = nil }
         if closed == preferencesWindow {
             preferencesWindow = nil
-            environment.settings.setRecordingCommand(nil)
+            environment.settings.setRecordingOwner(nil)
         }
         onWindowClosed?()
     }
