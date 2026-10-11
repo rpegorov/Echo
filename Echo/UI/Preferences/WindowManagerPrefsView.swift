@@ -53,9 +53,9 @@ struct WindowManagerPrefsView: View {
 
             PrefCard {
                 Toggle(isOn: $settings.layoutCyclingEnabled) {
-                    VStack(alignment: .leading, spacing: 2) {
+                    VStack(alignment: .leading, spacing: DS.ZoneMap.zoneTextSpacing) {
                         Text(loc.t(InputKey.layoutCyclingTitle))
-                            .font(.system(size: 13, weight: .medium))
+                            .font(DS.ZoneMap.titleFont)
                         PrefCaption(loc.t(InputKey.layoutCyclingCaption))
                     }
                 }
