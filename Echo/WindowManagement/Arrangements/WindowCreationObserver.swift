@@ -44,7 +44,7 @@ final class WindowCreationObserver: WindowCreationObserving {
         if result != .success {
             Self.log.debug("remove notification pid=\(self.pid) code=\(result.rawValue)")
         }
-        CFRunLoopRemoveSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), .defaultMode)
+        CFRunLoopRemoveSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), .commonModes)
     }
 
     isolated deinit {
@@ -65,7 +65,7 @@ final class WindowCreationObserver: WindowCreationObserving {
             return false
         }
         // Main run loop: the callback arrives on the main thread, so it may assume main-actor isolation.
-        CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(created), .defaultMode)
+        CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(created), .commonModes)
         observer = created
         return true
     }
