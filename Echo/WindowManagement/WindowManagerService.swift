@@ -139,7 +139,7 @@ final class WindowManagerService: ObservableObject {
 
     /// Окно под точкой экрана (Cocoa-координаты, origin снизу-слева).
     func window(at screenPoint: CGPoint) -> AXUIElement? {
-        let system = AXUIElementCreateSystemWide()
+        let system = AXWindow.bounded(AXUIElementCreateSystemWide())
         var element: AXUIElement?
         let axPoint = ScreenCoordinates.flipped(
             CGRect(origin: screenPoint, size: .zero),
@@ -148,11 +148,12 @@ final class WindowManagerService: ObservableObject {
         let result = AXUIElementCopyElementAtPosition(system, Float(axPoint.x), Float(axPoint.y), &element)
         guard result == .success, let el = element else { return nil }
 
-        if AXWindow.role(of: el) == (kAXWindowRole as String) { return el }
+        let hit = AXWindow.bounded(el)
+        if AXWindow.role(of: hit) == (kAXWindowRole as String) { return hit }
         var windowValue: CFTypeRef?
-        if AXUIElementCopyAttributeValue(el, kAXWindowAttribute as CFString, &windowValue) == .success,
+        if AXUIElementCopyAttributeValue(hit, kAXWindowAttribute as CFString, &windowValue) == .success,
            let window = windowValue.flatMap(AXWindow.element(from:)) {
-            return window
+            return AXWindow.bounded(window)
         }
         return focusedWindow()
     }
@@ -209,7 +210,7 @@ final class WindowManagerService: ObservableObject {
 
     private func focusedWindow() -> AXUIElement? {
         guard let app = NSWorkspace.shared.frontmostApplication else { return nil }
-        return AXWindow.focusedWindow(of: AXUIElementCreateApplication(app.processIdentifier))
+        return AXWindow.focusedWindow(of: AXWindow.applicationElement(pid: app.processIdentifier))
     }
 }
 
