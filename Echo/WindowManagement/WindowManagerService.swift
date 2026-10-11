@@ -123,12 +123,11 @@ final class WindowManagerService: ObservableObject {
     func window(at screenPoint: CGPoint) -> AXUIElement? {
         let system = AXUIElementCreateSystemWide()
         var element: AXUIElement?
-        let result = AXUIElementCopyElementAtPosition(
-            system,
-            Float(screenPoint.x),
-            Float(primaryScreenHeight - screenPoint.y),
-            &element
-        )
+        let axPoint = ScreenCoordinates.flipped(
+            CGRect(origin: screenPoint, size: .zero),
+            primaryHeight: primaryScreenHeight
+        ).origin
+        let result = AXUIElementCopyElementAtPosition(system, Float(axPoint.x), Float(axPoint.y), &element)
         guard result == .success, let el = element else { return nil }
 
         if role(of: el) == (kAXWindowRole as String) { return el }
@@ -152,12 +151,7 @@ final class WindowManagerService: ObservableObject {
         guard let origin = position(of: window),
               readValue(kAXSizeAttribute, of: window, type: .cgSize, into: &size)
         else { return nil }
-        return CGRect(
-            x: origin.x,
-            y: primaryScreenHeight - origin.y - size.height,
-            width: size.width,
-            height: size.height
-        )
+        return ScreenCoordinates.flipped(CGRect(origin: origin, size: size), primaryHeight: primaryScreenHeight)
     }
 
     /// Applies a Cocoa-coordinate frame. A window whose minimum size exceeds the target
@@ -230,7 +224,7 @@ final class WindowManagerService: ObservableObject {
     }
 
     private func writePosition(of frameCocoa: CGRect, to window: AXUIElement) {
-        var origin = CGPoint(x: frameCocoa.minX, y: primaryScreenHeight - frameCocoa.minY - frameCocoa.height)
+        var origin = ScreenCoordinates.flipped(frameCocoa, primaryHeight: primaryScreenHeight).origin
         writeValue(&origin, type: .cgPoint, attribute: kAXPositionAttribute, to: window)
     }
 
