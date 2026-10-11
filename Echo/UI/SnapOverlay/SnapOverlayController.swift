@@ -46,20 +46,25 @@ final class SnapOverlayController: SnapOverlayPresenting {
             window.setFrame(preview.screenFrame, display: true)
         }
 
-        model.layout = zoneLayout(of: preview)
-        model.shortcut = preview.shortcut
         if needsAppear {
+            // The model is shared by every window: placing the zone must never animate, or it flies in from the last one.
             var instant = Transaction()
             instant.disablesAnimations = true
-            withTransaction(instant) { model.settled = false }
-            withAnimation(animationsEnabled ? DS.SnapOverlay.appearAnimation : nil) {
+            withTransaction(instant) {
                 model.activeDisplay = preview.screenFrame
                 model.zone = localZone(of: preview)
+                model.layout = zoneLayout(of: preview)
+                model.shortcut = preview.shortcut
+                model.settled = false
+            }
+            withAnimation(animationsEnabled ? DS.SnapOverlay.appearAnimation : nil) {
                 model.visible = true
                 model.settled = true
             }
             window.orderFront(nil)
         } else {
+            model.layout = zoneLayout(of: preview)
+            model.shortcut = preview.shortcut
             withAnimation(animationsEnabled ? DS.SnapOverlay.morphAnimation : nil) {
                 model.zone = localZone(of: preview)
             }
