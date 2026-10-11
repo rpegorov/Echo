@@ -104,7 +104,7 @@ struct ShortcutMigrationTests {
             _ = AppSettings(defaults: defaults)
 
             let stored = try storedSet(defaults)
-            #expect(Set(stored.keys) == Set(WMCommand.allCases.map(\.rawValue)))
+            #expect(Set(stored.keys) == Set(WMCommand.allCases.filter { $0.defaultShortcut != nil }.map(\.rawValue)))
             #expect(defaults.integer(forKey: versionKey) == currentVersion)
         }
     }
