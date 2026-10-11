@@ -104,7 +104,7 @@ enum AXWindow {
         var value: CFTypeRef?
         guard AXUIElementCopyAttributeValue(app, kAXFocusedWindowAttribute as CFString, &value) == .success
         else { return nil }
-        return value.flatMap(element(from:))
+        return value.flatMap(element(from:)).map(bounded)
     }
 
     // MARK: - Writes
