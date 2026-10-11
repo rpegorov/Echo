@@ -26,6 +26,8 @@ final class ArrangementEditorModel: ObservableObject {
     /// Why a save failed, ready for the view to localize.
     enum SaveMessage: Equatable {
         case write(reason: String)
+        case notFound
+        case invalidSlot
         case unavailable
         case permission
         case noWindows
@@ -172,9 +174,9 @@ final class ArrangementEditorModel: ObservableObject {
         case .storage(.writeFailed(let reason)), .storage(.readFailed(let reason)):
             return .write(reason: reason)
         case .storage(.invalidSlot):
-            return .write(reason: "invalid slot")
+            return .invalidSlot
         case .notFound:
-            return .write(reason: "arrangement not found")
+            return .notFound
         case .storage:
             return .unavailable
         case .accessibilityDenied:
