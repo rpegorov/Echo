@@ -107,10 +107,12 @@ final class ArrangementEditorModel: ObservableObject {
         guard draft.windows[index].slot != slot else { return }
         draft.windows[index].slot = slot
         if draft.displays[display] == nil { draft.displays[display] = target.saved }
+        Self.dropUnreferencedDisplays(from: &draft)
     }
 
     func remove(window id: UUID) {
         draft.windows.removeAll { $0.id == id }
+        Self.dropUnreferencedDisplays(from: &draft)
     }
 
     // MARK: - Drag
@@ -150,8 +152,7 @@ final class ArrangementEditorModel: ObservableObject {
         guard canSave else { return false }
         var arrangement = draft
         arrangement.name = trimmedName
-        let referenced = Set(arrangement.windows.map(\.slot.display))
-        arrangement.displays = arrangement.displays.filter { referenced.contains($0.key) }
+        Self.dropUnreferencedDisplays(from: &arrangement)
         do throws(ArrangementError) {
             try arrangements.save(arrangement)
             draft = arrangement
@@ -181,6 +182,12 @@ final class ArrangementEditorModel: ObservableObject {
         case .noWindows:
             return .noWindows
         }
+    }
+
+    /// Only displays that a window refers to are kept.
+    private static func dropUnreferencedDisplays(from arrangement: inout Arrangement) {
+        let referenced = Set(arrangement.windows.map(\.slot.display))
+        arrangement.displays = arrangement.displays.filter { referenced.contains($0.key) }
     }
 
     private var trimmedName: String {
