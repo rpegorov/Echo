@@ -23,7 +23,8 @@ struct ArrangementMessages {
         case .storage(let storageError): return text(for: storageError)
         case .noWindows:                 return loc.t(InputKey.arrangementNoWindowsMessage)
         case .accessibilityDenied:       return loc.t(InputKey.arrangementPermissionMessage)
-        case .notFound:                  return loc.t(InputKey.gridSaveFailedMessage, loc.t(InputKey.gridUnavailableMessage))
+        case .notFound:                  return loc.t(
+            InputKey.gridSaveFailedMessage, loc.t(InputKey.gridUnavailableMessage))
         }
     }
 

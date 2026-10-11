@@ -34,7 +34,8 @@ struct ArrangementHotKeySelectionTests {
         let orphan = UUID()
 
         let chosen = HotKeyRegistrar.arrangementHotKeys(
-            shortcuts: [saved: comboA, orphan: comboB], existing: [saved], commandShortcuts: [], windowManagerEnabled: true)
+            shortcuts: [saved: comboA, orphan: comboB], existing: [saved],
+            commandShortcuts: [], windowManagerEnabled: true)
 
         #expect(chosen.map(\.0) == [saved])
     }
@@ -51,8 +52,10 @@ struct ArrangementHotKeySelectionTests {
     func emptyInputs() {
         let id = UUID()
 
-        #expect(HotKeyRegistrar.arrangementHotKeys(shortcuts: [:], existing: [id], commandShortcuts: [], windowManagerEnabled: true).isEmpty)
-        #expect(HotKeyRegistrar.arrangementHotKeys(shortcuts: [id: comboA], existing: [], commandShortcuts: [], windowManagerEnabled: true).isEmpty)
+        #expect(HotKeyRegistrar.arrangementHotKeys(
+            shortcuts: [:], existing: [id], commandShortcuts: [], windowManagerEnabled: true).isEmpty)
+        #expect(HotKeyRegistrar.arrangementHotKeys(
+            shortcuts: [id: comboA], existing: [], commandShortcuts: [], windowManagerEnabled: true).isEmpty)
     }
 
     @Test("a key already used by a command is skipped; its neighbours stay")

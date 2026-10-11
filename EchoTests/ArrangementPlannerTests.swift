@@ -32,7 +32,10 @@ struct ArrangementPlannerTests {
 
     @Test("each window goes to the frame of its slot")
     func movesUseSlotFrames() {
-        let entries = [entry(slot: fixtureSlot("uuid:AAAA", 0, 0, 0.5, 1)), entry(slot: fixtureSlot("uuid:AAAA", 0.5, 0, 0.5, 1))]
+        let entries = [
+            entry(slot: fixtureSlot("uuid:AAAA", 0, 0, 0.5, 1)),
+            entry(slot: fixtureSlot("uuid:AAAA", 0.5, 0, 0.5, 1))
+        ]
         let windows = [snapshotWindow(ordinal: 0), snapshotWindow(ordinal: 1)]
         let result = plan(entries, windows: windows)
         #expect(result.moves == [
@@ -89,7 +92,8 @@ struct ArrangementPlannerTests {
     func runningSetDecides() {
         let result = plan([entry()], windows: [snapshotWindow()], running: [])
         #expect(result.moves.isEmpty)
-        #expect(result.report == ArrangementApplyReport(placed: 0, total: 1, notRunning: 1, notRunningApps: ["Terminal"]))
+        #expect(result.report == ArrangementApplyReport(
+            placed: 0, total: 1, notRunning: 1, notRunningApps: ["Terminal"]))
     }
 
     @Test("an entry on a disconnected display is counted and moves nothing")
@@ -119,7 +123,8 @@ struct ArrangementPlannerTests {
 
     @Test("no connected displays means every running entry has a missing display")
     func noDisplays() {
-        let result = plan([entry(), entry()], windows: [snapshotWindow(ordinal: 0), snapshotWindow(ordinal: 1)], displays: [])
+        let result = plan(
+            [entry(), entry()], windows: [snapshotWindow(ordinal: 0), snapshotWindow(ordinal: 1)], displays: [])
         #expect(result.report == ArrangementApplyReport(placed: 0, total: 2, displayMissing: 2))
     }
 
@@ -182,6 +187,16 @@ struct ArrangementPlannerInvariantTests {
     private let bundles = ["b0", "b1", "b2", "b3"]
     private let keys = ["k0", "k1", "k2", "gone"]
 
+    /// Everything one seeded round feeds into the planner, checked against its own report.
+    private struct PlanInput {
+        let entries: [ArrangedWindow]
+        let windows: [WindowSnapshot]
+        let running: Set<String>
+        let displays: [DisplaySnapshot]
+        let gap: CGFloat
+        let round: Int
+    }
+
     private func connectedDisplays(using generator: inout SeededGenerator) -> [DisplaySnapshot] {
         let origins: [CGFloat] = [0, -1440, 2000]
         return zip(keys, origins).compactMap { key, originX in
@@ -198,7 +213,8 @@ struct ArrangementPlannerInvariantTests {
         for round in 0..<500 {
             let entries = (0..<Int.random(in: 0...8, using: &generator)).map { index in
                 entry(
-                    bundles.randomElement(using: &generator) ?? "", "App", hint: titles.randomElement(using: &generator) ?? nil,
+                    bundles.randomElement(using: &generator) ?? "", "App",
+                    hint: titles.randomElement(using: &generator) ?? nil,
                     slot: fixtureSlot(keys.randomElement(using: &generator) ?? "", Double(index) / 16, 0, 1.0 / 16, 1))
             }
             let windows = (0..<Int.random(in: 0...8, using: &generator)).map { ordinal in
@@ -210,44 +226,43 @@ struct ArrangementPlannerInvariantTests {
             let running = Set(bundles.filter { _ in Bool.random(using: &generator) })
             let displays = connectedDisplays(using: &generator)
             let gap: CGFloat = Bool.random(using: &generator) ? 0 : 8
+            let input = PlanInput(
+                entries: entries, windows: windows, running: running, displays: displays, gap: gap, round: round)
 
             let result = ArrangementPlanner.plan(
                 fixtureArrangement(windows: entries), windows: windows, running: running, displays: displays, gap: gap)
-            check(result, entries: entries, windows: windows, running: running, displays: displays, gap: gap, round: round)
+            check(result, input: input)
         }
     }
 
-    private func check(
-        _ result: ArrangementPlan, entries: [ArrangedWindow], windows: [WindowSnapshot], running: Set<String>,
-        displays: [DisplaySnapshot], gap: CGFloat, round: Int
-    ) {
+    private func check(_ result: ArrangementPlan, input: PlanInput) {
         let report = result.report
         let sum = report.placed + report.notRunning + report.noWindow + report.displayMissing
-        #expect(sum == report.total, "round \(round)")
-        #expect(report.total == entries.count, "round \(round)")
-        #expect(report.placed == result.moves.count, "round \(round)")
+        #expect(sum == report.total, "round \(input.round)")
+        #expect(report.total == input.entries.count, "round \(input.round)")
+        #expect(report.placed == result.moves.count, "round \(input.round)")
 
-        let frames = entries.map { SlotPlacement.frame(for: $0.slot, displays: displays, gap: gap) }
-        let idle = entries.filter { !running.contains($0.bundleID) }
-        #expect(report.notRunning == idle.count, "round \(round)")
-        #expect(report.notRunningApps.count == Set(report.notRunningApps).count, "round \(round)")
+        let frames = input.entries.map { SlotPlacement.frame(for: $0.slot, displays: input.displays, gap: input.gap) }
+        let idle = input.entries.filter { !input.running.contains($0.bundleID) }
+        #expect(report.notRunning == idle.count, "round \(input.round)")
+        #expect(report.notRunningApps.count == Set(report.notRunningApps).count, "round \(input.round)")
 
         var expectedPlaced = 0
         var expectedMissing = 0
         var expectedNoWindow = 0
-        for bundle in bundles where running.contains(bundle) {
-            let indices = entries.indices.filter { entries[$0].bundleID == bundle }
+        for bundle in bundles where input.running.contains(bundle) {
+            let indices = input.entries.indices.filter { input.entries[$0].bundleID == bundle }
             let matchable = indices.filter { frames[$0] != nil }.count
-            let available = windows.filter { $0.bundleID == bundle }.count
+            let available = input.windows.filter { $0.bundleID == bundle }.count
             expectedMissing += indices.count - matchable
             expectedPlaced += min(matchable, available)
             expectedNoWindow += matchable - min(matchable, available)
         }
-        #expect(report.displayMissing == expectedMissing, "round \(round)")
-        #expect(report.placed == expectedPlaced, "round \(round)")
-        #expect(report.noWindow == expectedNoWindow, "round \(round)")
+        #expect(report.displayMissing == expectedMissing, "round \(input.round)")
+        #expect(report.placed == expectedPlaced, "round \(input.round)")
+        #expect(report.noWindow == expectedNoWindow, "round \(input.round)")
 
-        checkMoves(result.moves, entries: entries, frames: frames, windows: windows, round: round)
+        checkMoves(result.moves, entries: input.entries, frames: frames, windows: input.windows, round: input.round)
     }
 
     private func checkMoves(

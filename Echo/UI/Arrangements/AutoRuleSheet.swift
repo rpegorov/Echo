@@ -135,7 +135,8 @@ struct AutoRuleSheet: View {
     }
 
     private func save() {
-        guard let app = selectedApp, let display = selectedDisplay, let zoneIndex, zones.indices.contains(zoneIndex) else {
+        guard let app = selectedApp, let display = selectedDisplay, let zoneIndex,
+              zones.indices.contains(zoneIndex) else {
             return
         }
         let rule = AutoRule(

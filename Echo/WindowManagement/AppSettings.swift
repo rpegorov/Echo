@@ -248,19 +248,10 @@ final class AppSettings: ObservableObject {
                 migrated = ShortcutBackfill.apply(to: stored, storedVersion: storedVersion)
                 needsShortcutPersist = true
             }
-            var result: [WMCommand: KeyboardShortcut] = [:]
-            var arrangementEntries: [UUID: KeyboardShortcut] = [:]
-            var unrecognized: [String: KeyboardShortcut] = [:]
-            for (key, value) in migrated {
-                switch ShortcutOwner(storageKey: key) {
-                case .command(let command)?:      result[command] = value
-                case .arrangement(let id)?:       arrangementEntries[id] = value
-                case nil:                         unrecognized[key] = value
-                }
-            }
-            unrecognizedShortcutEntries = unrecognized
-            arrangementShortcuts = arrangementEntries
-            shortcuts = result
+            let split = Self.splitByOwner(migrated)
+            unrecognizedShortcutEntries = split.unrecognized
+            arrangementShortcuts = split.arrangements
+            shortcuts = split.commands
         } else {
             var defaultsMap: [WMCommand: KeyboardShortcut] = [:]
             for command in WMCommand.allCases {
@@ -272,6 +263,26 @@ final class AppSettings: ObservableObject {
 
         if needsShortcutPersist { persistShortcuts() }
         defaults.set(max(storedVersion, Self.shortcutsVersion), forKey: Keys.shortcutsVersion)
+    }
+
+    private struct ShortcutsByOwner {
+        let commands: [WMCommand: KeyboardShortcut]
+        let arrangements: [UUID: KeyboardShortcut]
+        let unrecognized: [String: KeyboardShortcut]
+    }
+
+    private static func splitByOwner(_ entries: [String: KeyboardShortcut]) -> ShortcutsByOwner {
+        var commands: [WMCommand: KeyboardShortcut] = [:]
+        var arrangements: [UUID: KeyboardShortcut] = [:]
+        var unrecognized: [String: KeyboardShortcut] = [:]
+        for (key, value) in entries {
+            switch ShortcutOwner(storageKey: key) {
+            case .command(let command)?:      commands[command] = value
+            case .arrangement(let id)?:       arrangements[id] = value
+            case nil:                         unrecognized[key] = value
+            }
+        }
+        return ShortcutsByOwner(commands: commands, arrangements: arrangements, unrecognized: unrecognized)
     }
 
     func shortcut(for owner: ShortcutOwner) -> KeyboardShortcut? {

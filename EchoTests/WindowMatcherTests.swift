@@ -108,8 +108,10 @@ struct WindowMatcherTests {
         var generator = SeededGenerator(seed: 0xEC40)
         let titles: [String?] = [nil, "a", "b", "c"]
         for _ in 0..<500 {
-            let hints = (0..<Int.random(in: 0...6, using: &generator)).map { _ in titles.randomElement(using: &generator) ?? nil }
-            let names = (0..<Int.random(in: 0...6, using: &generator)).map { _ in titles.randomElement(using: &generator) ?? nil }
+            let hints = (0..<Int.random(in: 0...6, using: &generator))
+                .map { _ in titles.randomElement(using: &generator) ?? nil }
+            let names = (0..<Int.random(in: 0...6, using: &generator))
+                .map { _ in titles.randomElement(using: &generator) ?? nil }
             let result = WindowMatcher.match(entries: entries(hints), windows: windows(names))
             #expect(result.map(\.entry) == result.map(\.entry).sorted())
             #expect(Set(result.map(\.entry)).count == result.count)

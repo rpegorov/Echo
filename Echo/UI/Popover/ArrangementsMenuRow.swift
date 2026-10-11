@@ -16,29 +16,20 @@ struct ArrangementsMenuRow: View {
     @State private var outcome: ArrangementApplyOutcome?
     @State private var isHovering = false
 
-    private enum Metrics {
-        static let titleSize: CGFloat = 12
-        static let countSize: CGFloat = 11
-        static let chevronSize: CGFloat = 9
-        static let verticalPadding: CGFloat = 5
-        static let reportSpacing: CGFloat = 2
-        static let hoverInset: CGFloat = 8
-        static let reportDuration: Duration = .seconds(10)
-    }
-
     private var items: [ArrangementsMenuItem] {
-        ArrangementsMenuModel.items(arrangements: store.document.savedArrangements, shortcuts: settings.arrangementShortcuts)
+        ArrangementsMenuModel.items(
+            arrangements: store.document.savedArrangements, shortcuts: settings.arrangementShortcuts)
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Metrics.reportSpacing) {
+        VStack(alignment: .leading, spacing: DS.Arrangements.menuReportSpacing) {
             menu
             if let outcome { ArrangementApplyReportView(report: outcome.report) }
         }
         .task(id: outcome?.id) {
             guard outcome != nil else { return }
             do {
-                try await Task.sleep(for: Metrics.reportDuration)
+                try await Task.sleep(for: DS.Arrangements.menuReportDuration)
             } catch {
                 return // cancelled: the row went away or a newer report replaced this one
             }
@@ -61,26 +52,26 @@ struct ArrangementsMenuRow: View {
         } label: {
             HStack {
                 Text(loc.t(InputKey.arrangementsMenuTitle))
-                    .font(.system(size: Metrics.titleSize))
+                    .font(DS.Arrangements.menuRowTitleFont)
                     .foregroundStyle(.secondary)
                 Spacer()
                 if !items.isEmpty {
                     Text(items.count.formatted())
-                        .font(.system(size: Metrics.countSize, design: .rounded))
+                        .font(DS.Arrangements.menuRowCountFont)
                         .monospacedDigit()
                         .foregroundStyle(.tertiary)
                 }
                 Image(systemName: "chevron.up.chevron.down")
-                    .font(.system(size: Metrics.chevronSize, weight: .semibold))
+                    .font(DS.Arrangements.menuRowChevronFont)
                     .foregroundStyle(.tertiary)
                     .accessibilityHidden(true)
             }
             .padding(.horizontal, DS.gutter)
-            .padding(.vertical, Metrics.verticalPadding)
+            .padding(.vertical, DS.Arrangements.menuRowVerticalPadding)
             .background(
                 RoundedRectangle(cornerRadius: DS.cornerSM)
                     .fill(isHovering ? DS.pressHighlight : .clear)
-                    .padding(.horizontal, Metrics.hoverInset)
+                    .padding(.horizontal, DS.Arrangements.menuRowHoverInset)
             )
             .contentShape(Rectangle())
         }
@@ -106,23 +97,17 @@ struct ArrangementApplyReportView: View {
     let report: ArrangementApplyReport
     @EnvironmentObject private var loc: Localizer
 
-    private enum Metrics {
-        static let textSize: CGFloat = 10
-        static let spacing: CGFloat = 2
-        static let bottomPadding: CGFloat = 5
-    }
-
     var body: some View {
-        VStack(alignment: .leading, spacing: Metrics.spacing) {
+        VStack(alignment: .leading, spacing: DS.Arrangements.menuReportSpacing) {
             ForEach(ArrangementsMenuModel.reportLines(report, using: loc), id: \.self) { line in
                 Text(line)
-                    .font(.system(size: Metrics.textSize))
+                    .font(DS.Arrangements.menuReportFont)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(.horizontal, DS.gutter)
-        .padding(.bottom, Metrics.bottomPadding)
+        .padding(.bottom, DS.Arrangements.menuReportBottomPadding)
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
         .transition(.opacity)
