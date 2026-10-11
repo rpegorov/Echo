@@ -255,7 +255,7 @@ struct ShortcutMigrationTests {
 
     @Test("a value with an extra field still decodes and the set is not reset to defaults")
     func extraFieldInStoredValueIsTolerated() throws {
-        try withScratchDefaults { defaults in
+        withScratchDefaults { defaults in
             let controlCommandRaw = UInt32(controlCommand.rawValue)
             let json = """
             {
