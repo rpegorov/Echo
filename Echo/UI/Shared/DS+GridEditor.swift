@@ -17,8 +17,8 @@ extension DS {
         /// Share of the target display's width the canvas starts at.
         static let canvasScreenShare: CGFloat = 0.5
         static let windowMinSize = CGSize(width: 520, height: 420)
-        /// Height of the name row, template menu and buttons around the canvas.
-        static let chromeHeight: CGFloat = 120
+        /// Height of the name row, template menu, hint and buttons around the canvas.
+        static let chromeHeight: CGFloat = 156
         /// Display proportions used when no display is connected.
         static let fallbackDisplaySize = CGSize(width: 1440, height: 900)
 
@@ -48,6 +48,25 @@ extension DS {
         static let zoneLabelInset: CGFloat = 6
         static let zoneLabelSpacing: CGFloat = 2
 
+        static let zoneHoverFill = DS.accent.opacity(0.28)
+
+        // MARK: - Border handles
+
+        /// Drawn thickness of an idle border handle.
+        static let handleThickness: CGFloat = 4
+        /// Drawn thickness while the pointer is over the handle or it is being dragged.
+        static let handleThicknessEmphasized: CGFloat = 6
+        /// Width of the strip around a border that grabs the pointer.
+        static let handleHitWidth: CGFloat = 14
+        /// Keeps a handle's ends clear of the canvas edge and of the crossing handles.
+        static let handleEndInset: CGFloat = 8
+        static let handleFill = Color.primary.opacity(0.5)
+        static let handleFillEmphasized = DS.accent
+        static let handleOutline = Color.white.opacity(0.85)
+        static let handleOutlineWidth: CGFloat = 1
+        /// Pointer travel up to which a press on a zone still counts as a click.
+        static let clickSlop: CGFloat = 4
+
         // MARK: - Type
 
         static let zoneNumberFont = Font.system(size: 28, weight: .semibold, design: .rounded)
@@ -57,6 +76,7 @@ extension DS {
         static let zoneTextMinimumScale: CGFloat = 0.5
         static let zoneTextLines = 1
         static let messageFont = Font.system(size: 12)
+        static let hintFont = Font.system(size: 12)
 
         // MARK: - Messages
 
