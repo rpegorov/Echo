@@ -19,5 +19,6 @@ enum UnwiredCapabilities {
         "option-drag tiling switch",
         "zone command icons",
         "grid file recovery",
+        "grid validation on save",
     ]
 }
