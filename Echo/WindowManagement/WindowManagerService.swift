@@ -78,10 +78,21 @@ final class WindowManagerService: ObservableObject {
     }
 
     /// Executes a window command on the focused window of the frontmost app.
-    func perform(_ command: WMCommand, gap: CGFloat, cycling: Bool) {
+    func perform(_ command: WMCommand, gap: CGFloat, cycling: Bool, grids: any ActiveGridProviding) {
         guard hasPermission(), let window = focusedWindow(), let current = frame(of: window) else { return }
         let screens = NSScreen.screens
         guard let sourceIndex = displayIndex(containing: current) else { return }
+        if let number = command.zoneNumber {
+            let screen = screens[sourceIndex]
+            let visible = screen.visibleFrame
+            let zones = grids.activeZones(
+                for: DisplayIdentity.key(for: screen),
+                aspect: visible.width / visible.height
+            )
+            guard let target = ZonePlacement.frame(forZone: number, of: zones, visible: visible, gap: gap) else { return }
+            setFrame(target, for: window)
+            return
+        }
         guard let target = Self.targetFrame(
             for: command,
             windowFrame: current,
