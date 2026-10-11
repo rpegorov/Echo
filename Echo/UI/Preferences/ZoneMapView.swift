@@ -62,17 +62,11 @@ struct ZoneMapView: View {
     @State private var displayID: Int
     @State private var activeCommand: WMCommand?
 
-    init(
-        settings: AppSettings,
-        displays: [ZoneMapDisplay],
-        group: LayoutGroup = .halves,
-        activeCommand: WMCommand? = nil
-    ) {
+    init(settings: AppSettings, displays: [ZoneMapDisplay]) {
         self.settings = settings
         self.displays = displays
-        _group = State(initialValue: group)
+        _group = State(initialValue: .halves)
         _displayID = State(initialValue: displays.first?.id ?? ZoneMapDisplay.fallback.id)
-        _activeCommand = State(initialValue: activeCommand)
     }
 
     private var display: ZoneMapDisplay {
