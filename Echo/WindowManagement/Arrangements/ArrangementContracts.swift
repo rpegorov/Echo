@@ -50,7 +50,7 @@ protocol ArrangementManaging: ArrangementApplying {
 
 @MainActor
 protocol WindowCataloging: AnyObject {
-    /// Eligible windows of regular apps except Echo: apps in launch order, windows front to back.
+    /// Eligible windows of regular apps except Echo: apps in launch order, windows in the order the app reports them.
     func windows() -> [CatalogWindow]
     /// Bundle ids of running regular apps.
     func runningBundleIDs() -> Set<String>
