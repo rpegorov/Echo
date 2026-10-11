@@ -53,7 +53,9 @@ final class SnapOverlayController: SnapOverlayPresenting {
             withTransaction(instant) {
                 model.activeDisplay = preview.screenFrame
                 model.zone = localZone(of: preview)
+                model.contextFrames = localContextFrames(of: preview)
                 model.layout = zoneLayout(of: preview)
+                model.zoneNumbers = gridZoneNumbers(of: preview)
                 model.shortcut = preview.shortcut
                 model.settled = false
                 model.visible = false
@@ -65,9 +67,12 @@ final class SnapOverlayController: SnapOverlayPresenting {
             window.orderFront(nil)
         } else {
             model.layout = zoneLayout(of: preview)
+            model.zoneNumbers = gridZoneNumbers(of: preview)
             model.shortcut = preview.shortcut
             withAnimation(animationsEnabled ? DS.SnapOverlay.morphAnimation : nil) {
                 model.zone = localZone(of: preview)
+                // Entering or leaving grid mode fades the faint zones; within a grid this is a no-op.
+                model.contextFrames = localContextFrames(of: preview)
             }
         }
     }
@@ -119,6 +124,8 @@ final class SnapOverlayController: SnapOverlayPresenting {
         model.visible = false
         model.settled = false
         model.activeDisplay = nil
+        model.contextFrames = []
+        model.zoneNumbers = []
         for window in windows.values { window.orderOut(nil) }
         windows.removeAll()
     }
@@ -130,17 +137,31 @@ final class SnapOverlayController: SnapOverlayPresenting {
     }
 
     /// Window-local SwiftUI coordinates: origin top-left of the display (AX-style flip of the Cocoa frame).
-    private func localZone(of preview: SnapPreview) -> CGRect {
+    private func localFrame(_ frame: CGRect, in screenFrame: CGRect) -> CGRect {
         CGRect(
-            x: preview.frame.minX - preview.screenFrame.minX,
-            y: preview.screenFrame.maxY - preview.frame.maxY,
-            width: preview.frame.width,
-            height: preview.frame.height
+            x: frame.minX - screenFrame.minX,
+            y: screenFrame.maxY - frame.maxY,
+            width: frame.width,
+            height: frame.height
         )
+    }
+
+    private func localZone(of preview: SnapPreview) -> CGRect {
+        localFrame(preview.frame, in: preview.screenFrame)
+    }
+
+    private func localContextFrames(of preview: SnapPreview) -> [CGRect] {
+        guard case .grid(let target) = preview.target else { return [] }
+        return target.contextFrames.map { localFrame($0, in: preview.screenFrame) }
     }
 
     private func zoneLayout(of preview: SnapPreview) -> WindowLayout? {
         guard case .layout(let layout) = preview.target else { return nil }
         return layout
+    }
+
+    private func gridZoneNumbers(of preview: SnapPreview) -> [Int] {
+        guard case .grid(let target) = preview.target else { return [] }
+        return target.zoneNumbers
     }
 }

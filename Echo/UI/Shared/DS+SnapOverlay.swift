@@ -16,6 +16,15 @@ extension DS {
         static let fillOpacity: Double = 0.22
         static let strokeOpacity: Double = 0.85
 
+        // MARK: - Grid context
+
+        /// Faint zones of the active grid drawn behind the bright target; fade only, never scaled.
+        /// Smaller radius than the target so context reads as background on small cells.
+        static let contextCornerRadius: CGFloat = DS.cornerSM
+        static let contextFillOpacity: Double = 0.07
+        static let contextStrokeOpacity: Double = 0.28
+        static let contextStrokeWidth: CGFloat = 1
+
         // MARK: - Motion
 
         static let appearScale: CGFloat = 0.96
@@ -27,7 +36,8 @@ extension DS {
 
         static let captionFontSize: CGFloat = 20
         static let captionLineLimit = 1
-        static let captionMinimumScaleFactor: CGFloat = 0.5
+        /// Floor low enough that "Zone 12 ⌃⌥2" fits a 0.1 x 0.1 zone on a 1280x800 display.
+        static let captionMinimumScaleFactor: CGFloat = 0.4
         static let capsuleFillOpacity: Double = 0.9
         static let capsuleHorizontalPadding: CGFloat = 16
         static let capsuleVerticalPadding: CGFloat = 8
