@@ -353,3 +353,48 @@ struct ArrangementEditorModelDragTests {
         #expect(!rig.model.isDirty)
     }
 }
+
+struct ArrangementEditorModelDraftDisplaysTests {
+    @MainActor private func referencedDisplays(_ model: ArrangementEditorModel) -> Set<String> {
+        Set(model.draft.windows.map(\.slot.display))
+    }
+
+    @Test @MainActor func movingAWindowToAnotherDisplayAndBackLeavesTheModelClean() {
+        let rig = Rig()
+        rig.model.move(window: rig.terminal.id, toDisplay: deskKey, zone: 1)
+        rig.model.move(window: rig.terminal.id, toDisplay: laptopKey, zone: 0)
+        #expect(rig.slot(of: rig.terminal) == ZoneSlot(display: laptopKey, rect: laptopZones[0]))
+        #expect(!rig.model.isDirty)
+    }
+
+    @Test @MainActor func movingTheOnlyWindowOffADisplayDropsItFromTheDraft() {
+        let rig = Rig()
+        rig.model.move(window: rig.terminal.id, toDisplay: deskKey, zone: 1)
+        rig.model.move(window: rig.terminal.id, toDisplay: laptopKey, zone: 0)
+        #expect(rig.model.draft.displays[deskKey] == nil)
+        #expect(!rig.model.displays.map(\.key).contains(deskKey))
+        #expect(Set(rig.model.draft.displays.keys) == referencedDisplays(rig.model))
+    }
+
+    @Test @MainActor func movingTheLastWindowOffAConnectedDisplayDropsItFromTheDraft() {
+        let rig = Rig()
+        rig.model.move(window: rig.mail.id, toDisplay: laptopKey, zone: 0)
+        #expect(rig.model.draft.displays[studioKey] == nil)
+        #expect(Set(rig.model.draft.displays.keys) == referencedDisplays(rig.model))
+    }
+
+    @Test @MainActor func removingTheLastWindowOfADisplayDropsItFromTheDraft() {
+        let rig = Rig()
+        rig.model.remove(window: rig.mail.id)
+        #expect(rig.model.draft.displays[studioKey] == nil)
+        #expect(!rig.model.displays.map(\.key).contains(studioKey))
+        #expect(Set(rig.model.draft.displays.keys) == referencedDisplays(rig.model))
+    }
+
+    @Test @MainActor func removingOneOfTwoWindowsOnADisplayKeepsTheDisplay() {
+        let rig = Rig()
+        rig.model.remove(window: rig.safari.id)
+        #expect(rig.model.draft.displays[laptopKey] != nil)
+        #expect(Set(rig.model.draft.displays.keys) == referencedDisplays(rig.model))
+    }
+}
