@@ -13,7 +13,11 @@ struct ShortcutsPrefsView: View {
     @EnvironmentObject private var loc: Localizer
 
     private var windowCommands: [WMCommand] {
-        WMCommand.allCases.filter { $0.isWindowCommand }
+        WMCommand.allCases.filter { $0.isWindowCommand && $0.zoneNumber == nil }
+    }
+
+    private var zoneCommands: [WMCommand] {
+        WMCommand.allCases.filter { $0.zoneNumber != nil }
     }
 
     @State private var primaryDisplay = ZoneMapDisplay.primary
@@ -22,20 +26,12 @@ struct ShortcutsPrefsView: View {
         VStack(alignment: .leading, spacing: 12) {
             PrefTitle(loc.t(InputKey.shortcutsTitle))
 
-            PrefCard {
-                VStack(spacing: 0) {
-                    ForEach(windowCommands) { command in
-                        row(command)
-                        if command != windowCommands.last { Divider().opacity(0.12) }
-                    }
-                }
-            }
+            commandCard(windowCommands)
 
-            Text(loc.t(InputKey.clipboardHistorySectionTitle))
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.tertiary)
-                .padding(.top, 6)
+            groupTitle(loc.t(InputKey.gridZoneCommandsGroup))
+            commandCard(zoneCommands)
 
+            groupTitle(loc.t(InputKey.clipboardHistorySectionTitle))
             PrefCard {
                 row(.openClipboard)
             }
@@ -45,11 +41,27 @@ struct ShortcutsPrefsView: View {
         }
     }
 
+    private func commandCard(_ commands: [WMCommand]) -> some View {
+        PrefCard {
+            VStack(spacing: 0) {
+                ForEach(commands) { command in
+                    row(command)
+                    if command != commands.last { Divider().opacity(0.12) }
+                }
+            }
+        }
+    }
+
+    private func groupTitle(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(.tertiary)
+            .padding(.top, 6)
+    }
+
     private func row(_ command: WMCommand) -> some View {
         HStack(spacing: DS.ZoneMap.thumbnailRowSpacing) {
-            if command.isWindowCommand {
-                LayoutThumbnailView(command: command, display: primaryDisplay)
-            }
+            thumbnail(for: command)
             Text(loc.t(command.titleKey))
                 .font(.system(size: 13))
                 .fixedSize(horizontal: false, vertical: true)
@@ -57,5 +69,22 @@ struct ShortcutsPrefsView: View {
             ShortcutRecorderView(command: command, settings: settings)
         }
         .padding(.vertical, 7)
+    }
+
+    @ViewBuilder
+    private func thumbnail(for command: WMCommand) -> some View {
+        if let number = command.zoneNumber {
+            zoneIcon(number, title: loc.t(command.titleKey))
+        } else if command.isWindowCommand {
+            LayoutThumbnailView(command: command, display: primaryDisplay)
+        }
+    }
+
+    private func zoneIcon(_ number: Int, title: String) -> some View {
+        Image(systemName: "\(number).square")
+            .font(DS.ZoneMap.thumbnailSymbolFont)
+            .foregroundStyle(.secondary)
+            .frame(width: DS.ZoneMap.thumbnailSize.width, height: DS.ZoneMap.thumbnailSize.height)
+            .accessibilityLabel(title)
     }
 }
