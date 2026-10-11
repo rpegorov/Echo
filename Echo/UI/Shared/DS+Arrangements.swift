@@ -2,6 +2,7 @@
 //  DS+Arrangements.swift
 //  Echo
 //
+
 // swiftlint:disable no_magic_numbers
 // lint-allow: no_magic_numbers design tokens are the named constants
 
