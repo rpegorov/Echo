@@ -66,6 +66,7 @@ enum InputKey: String, LocalizedKey {
     case zoneGroupCenterAndFull
     case shortcutConflictMessage
     case shortcutReassignButton
+    case shortcutClearButton
 
     // MARK: Ultra Switch section
     case ultraSwitchTitle

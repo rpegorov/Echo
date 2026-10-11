@@ -88,6 +88,7 @@ struct ShortcutRecorderView: View {
                 .foregroundStyle(.tertiary)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(loc.t(InputKey.shortcutClearButton))
     }
 
     private func conflictNotice(_ pending: PendingShortcut) -> some View {
