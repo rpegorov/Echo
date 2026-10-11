@@ -285,6 +285,7 @@ struct GridCanvasView: View {
                 model.drag(toPointerPosition: GridCanvasLayout.position(of: value.location, across: axis, in: size))
             }
             .onEnded { value in
+                guard pressBegan else { return }
                 defer { pressBegan = false }
                 if model.isDragging {
                     model.endDrag()
@@ -342,13 +343,21 @@ private final class OptionKeyWatcher: ObservableObject {
     private var monitor: Any?
 
     func start() {
-        optionHeld = NSEvent.modifierFlags.contains(.option)
+        update(held: NSEvent.modifierFlags.contains(.option))
         guard monitor == nil else { return }
         monitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
             let held = event.modifierFlags.contains(.option)
-            MainActor.assumeIsolated { self?.optionHeld = held }
+            MainActor.assumeIsolated { self?.update(held: held) }
             return event
         }
+    }
+
+    isolated deinit {
+        stop()
+    }
+
+    private func update(held: Bool) {
+        if optionHeld != held { optionHeld = held }
     }
 
     func stop() {
