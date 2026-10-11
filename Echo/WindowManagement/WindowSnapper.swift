@@ -173,8 +173,8 @@ final class WindowSnapper {
     /// Resolves the dragged window and caches screen geometry once per drag.
     private func beginDrag(at down: CGPoint) {
         downLocation = nil
-        dragScreens = NSScreen.screens.map(makeScreenGeometry)
         guard let window = windowManager.window(at: down) else { return }
+        dragScreens = NSScreen.screens.map(makeScreenGeometry)
         dragWindow = window
         startPosition = windowManager.position(of: window)
         dragProbe = WindowDragProbe(downLocation: down, threshold: Self.movementThreshold)
@@ -184,16 +184,12 @@ final class WindowSnapper {
         let visible = screen.visibleFrame
         let gap = CGFloat(settings.windowGap)
         let zones = grids.activeZones(for: DisplayIdentity.key(for: screen), aspect: visible.width / visible.height)
-        return ScreenGeometry(
-            frame: screen.frame,
+        return ScreenGeometry(grid: GridDragTarget.Display(
+            screenFrame: screen.frame,
             visibleFrame: visible,
-            grid: GridDragTarget.Display(
-                screenFrame: screen.frame,
-                visibleFrame: visible,
-                zones: zones,
-                contextFrames: zones.map { $0.frame(in: visible, gap: gap) }
-            )
-        )
+            zones: zones,
+            contextFrames: zones.map { $0.frame(in: visible, gap: gap) }
+        ))
     }
 
     private func reset() {
@@ -245,9 +241,10 @@ final class WindowSnapper {
 
 /// Screen geometry captured once per drag so drag events stay free of NSScreen queries.
 private struct ScreenGeometry {
-    let frame: CGRect
-    let visibleFrame: CGRect
     let grid: GridDragTarget.Display
+
+    var frame: CGRect { grid.screenFrame }
+    var visibleFrame: CGRect { grid.visibleFrame }
 }
 
 /// Zone a multi-zone span grows from, valid only on the screen it was taken on.
