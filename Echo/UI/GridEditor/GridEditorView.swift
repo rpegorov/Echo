@@ -93,6 +93,8 @@ struct GridEditorView: View {
         switch error {
         case .writeFailed(let reason), .readFailed(let reason):
             return loc.t(InputKey.gridSaveFailedMessage, reason)
+        case .invalidGrid:
+            return loc.t(InputKey.gridInvalidMessage)
         case .locationUnavailable, .unreadable, .newerSchema, .readOnly:
             return loc.t(InputKey.gridUnavailableMessage)
         }

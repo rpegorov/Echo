@@ -15,6 +15,8 @@ enum GridStorageError: Error, Equatable {
     case readFailed(String)
     case readOnly
     case writeFailed(String)
+    /// The grid's zones overlap, leave gaps or break the canonical order; nothing was written.
+    case invalidGrid
 }
 
 /// Disk side of `GridStore`. `load` returns `.empty` when nothing was saved yet.
