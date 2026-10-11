@@ -30,6 +30,8 @@ extension DS {
         static let rowFont = Font.system(size: 13)
         static let detailFont = Font.system(size: 11)
         static let actionIconFont = Font.system(size: 12)
+        static let deleteIcon = "trash"
+        static let nameLineLimit = 1
 
         // MARK: - Controls
 

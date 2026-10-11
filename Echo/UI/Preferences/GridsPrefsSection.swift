@@ -17,6 +17,7 @@ struct GridsPrefsSection: View {
     @State private var displays: [ConnectedDisplay]
     @State private var renamingID: UUID?
     @State private var renameText = ""
+    @FocusState private var renameFieldFocused: Bool
     @State private var deletionCandidate: ZoneGrid?
     @State private var saveFailure: GridStorageError?
 
@@ -81,7 +82,7 @@ struct GridsPrefsSection: View {
             )
             Text(display.name)
                 .font(DS.Grids.rowFont)
-                .lineLimit(1)
+                .lineLimit(DS.Grids.nameLineLimit)
                 .truncationMode(.middle)
                 .help(display.name)
             Spacer(minLength: 0)
@@ -171,13 +172,19 @@ struct GridsPrefsSection: View {
             TextField(loc.t(InputKey.gridRenameAction), text: $renameText)
                 .textFieldStyle(.roundedBorder)
                 .frame(maxWidth: DS.Grids.renameFieldWidth)
+                .focused($renameFieldFocused)
+                .onAppear { renameFieldFocused = true }
                 .onSubmit { commitRename(of: grid) }
+                .onExitCommand(perform: endRenaming)
+                .onChange(of: renameFieldFocused) { _, focused in
+                    if !focused { endRenaming() }
+                }
                 .accessibilityLabel(loc.t(InputKey.gridRenameAction))
         } else {
             VStack(alignment: .leading, spacing: DS.Grids.nameCountSpacing) {
                 Text(grid.name)
                     .font(DS.Grids.rowFont)
-                    .lineLimit(1)
+                    .lineLimit(DS.Grids.nameLineLimit)
                     .truncationMode(.middle)
                 Text(loc.t(InputKey.gridZoneCount, Int64(grid.zones.count)))
                     .font(DS.Grids.detailFont)
@@ -190,7 +197,7 @@ struct GridsPrefsSection: View {
         Button {
             deletionCandidate = grid
         } label: {
-            Image(systemName: "trash")
+            Image(systemName: DS.Grids.deleteIcon)
                 .font(DS.Grids.actionIconFont)
                 .foregroundStyle(.secondary)
         }
@@ -236,7 +243,7 @@ struct GridsPrefsSection: View {
 
     private func messageLine(_ text: String) -> some View {
         HStack(alignment: .top, spacing: DS.Grids.rowSpacing) {
-            Image(systemName: "exclamationmark.triangle.fill")
+            Image(systemName: DS.GridEditor.messageIcon)
                 .foregroundStyle(DS.Grids.noticeColor)
                 .accessibilityHidden(true)
             Text(text)
