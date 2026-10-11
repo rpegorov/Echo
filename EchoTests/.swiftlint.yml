@@ -1,0 +1,3 @@
+disabled_rules:
+  # Test fixtures are data, not tunable constants.
+  - no_magic_numbers
