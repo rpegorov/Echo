@@ -135,6 +135,8 @@ final class GridEditorModel: ObservableObject {
     func drag(toPointerPosition pointerPosition: Double) {
         guard let snapshot = dragSnapshot else { return }
         let target = pointerPosition + snapshot.grabOffset
+        // A press without movement must not snap the border to the grid step.
+        guard abs(target - snapshot.edge.position) > GridEditing.tolerance else { return }
         let zones = GridEditing.move(snapshot.edge, to: target, in: snapshot.zones)
         guard zones != draft.zones else { return }
         draft.zones = zones
