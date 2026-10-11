@@ -134,7 +134,8 @@ struct ArrangementFileStorageTests {
         try withTemporaryDirectory { directory in
             let storage = files(in: directory)
             let content = """
-            {"schemaVersion":\(GridFileStorage.schemaVersion + 1),"document":{"grids":[],"activeByDisplay":{},"arrangements":[],"futureThing":1}}
+            {"schemaVersion":\(GridFileStorage.schemaVersion + 1),\
+            "document":{"grids":[],"activeByDisplay":{},"arrangements":[],"futureThing":1}}
             """
             try write(content, to: storage.fileURL)
             let store = GridStore(storage: storage)

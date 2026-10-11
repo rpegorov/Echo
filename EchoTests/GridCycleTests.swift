@@ -50,8 +50,10 @@ struct GridCycleNextTests {
     func nextFollowsCurrent() {
         let saved = savedGrid("Thirds")
 
-        #expect(GridCycle.next(after: .saved(id: saved.id), saved: [saved], aspect: regularAspect) == .template(kind: .twoColumns))
-        #expect(GridCycle.next(after: .template(kind: .twoByTwo), saved: [saved], aspect: regularAspect) == .template(kind: .mainAndSide))
+        #expect(GridCycle.next(after: .saved(id: saved.id), saved: [saved], aspect: regularAspect)
+            == .template(kind: .twoColumns))
+        #expect(GridCycle.next(after: .template(kind: .twoByTwo), saved: [saved], aspect: regularAspect)
+            == .template(kind: .mainAndSide))
     }
 
     @Test("the last template wraps to the first saved grid")

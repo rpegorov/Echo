@@ -81,7 +81,8 @@ final class ArrangementService: ArrangementManaging {
 
     /// Moves the planned windows; a move whose window is absent from the pass is reported as missing.
     private func place(_ plan: ArrangementPlan, using windows: [CatalogWindow]) -> ArrangementApplyReport {
-        let elements = Dictionary(windows.map { ($0.snapshot.ref, $0.element) }, uniquingKeysWith: { first, _ in first })
+        let elements = Dictionary(
+            windows.map { ($0.snapshot.ref, $0.element) }, uniquingKeysWith: { first, _ in first })
         var report = plan.report
         for move in plan.moves {
             guard let element = elements[move.ref] else {

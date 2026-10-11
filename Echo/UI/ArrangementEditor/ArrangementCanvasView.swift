@@ -17,7 +17,8 @@ struct ArrangementCanvasView: View {
     var body: some View {
         GeometryReader { proxy in
             let size = proxy.size
-            let gap = GridCanvasLayout.scaledGap(windowGap, canvasWidth: size.width, displayWidth: display.referenceWidth)
+            let gap = GridCanvasLayout.scaledGap(
+                windowGap, canvasWidth: size.width, displayWidth: display.referenceWidth)
             let frames = GridCanvasLayout.frames(for: display.zones, in: size, gap: gap)
             ZStack(alignment: .topLeading) {
                 ForEach(Array(frames.enumerated()), id: \.offset) { index, frame in
@@ -46,7 +47,9 @@ struct ArrangementCanvasView: View {
                 }
         }
         .opacity(display.isConnected ? 1 : DS.ArrangementEditor.disconnectedOpacity)
-        .onGeometryChange(for: CGRect.self) { [space] in $0.frame(in: space) } action: { model.canvasFrames[display.key] = $0 }
+        .onGeometryChange(for: CGRect.self) { [space] in $0.frame(in: space) } action: { frame in
+            model.canvasFrames[display.key] = frame
+        }
         .accessibilityElement(children: .contain)
     }
 
@@ -98,15 +101,18 @@ private struct ArrangementSlotsLayer: View {
 
     private func slotView(group: ArrangementSlotGroup, frame: CGRect) -> some View {
         let isCustom = group.zoneIndex == nil
-        let inset = min(DS.ArrangementEditor.iconInset, min(frame.width, frame.height) * DS.ArrangementEditor.iconInsetShare)
+        let inset = min(
+            DS.ArrangementEditor.iconInset, min(frame.width, frame.height) * DS.ArrangementEditor.iconInsetShare)
+        let insetOnBothSides = inset + inset
         let showsLabel = isCustom
-            && frame.height >= DS.ArrangementEditor.customLabelHeight + DS.ArrangementEditor.iconMinSize + inset * 2
+            && frame.height >= DS.ArrangementEditor.customLabelHeight
+                + DS.ArrangementEditor.iconMinSize + insetOnBothSides
         let labelHeight = showsLabel ? DS.ArrangementEditor.customLabelHeight : 0
         let area = CGRect(
             x: frame.minX + inset,
             y: frame.minY + inset + labelHeight,
-            width: max(0, frame.width - inset * 2),
-            height: max(0, frame.height - inset * 2 - labelHeight)
+            width: max(0, frame.width - insetOnBothSides),
+            height: max(0, frame.height - insetOnBothSides - labelHeight)
         )
         let grid = ArrangementEditorLayout.iconGrid(
             count: group.windowIDs.count,
@@ -115,7 +121,8 @@ private struct ArrangementSlotsLayer: View {
             maxSize: DS.ArrangementEditor.iconMaxSize,
             minSize: min(DS.ArrangementEditor.iconMinSize, area.width, area.height)
         )
-        let zoneName = group.zoneIndex.map { loc.t(InputKey.gridZoneNumber, $0 + 1) } ?? loc.t(InputKey.arrangementCustomArea)
+        let zoneName = group.zoneIndex.map { loc.t(InputKey.gridZoneNumber, $0 + 1) }
+            ?? loc.t(InputKey.arrangementCustomArea)
         return ZStack(alignment: .topLeading) {
             if isCustom { customOutline(frame: frame, showsLabel: showsLabel) }
             ForEach(Array(group.windowIDs.prefix(grid.visible).enumerated()), id: \.element) { cell, id in

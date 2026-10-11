@@ -65,21 +65,27 @@ struct TargetFrameForRuleTests {
     func disabledRule() {
         let rules = [fixtureRule(bundleID: "com.app", slot: rightHalf, isEnabled: false)]
 
-        #expect(AutoRuleEngine.targetFrame(forBundleID: "com.app", rules: rules, displays: [hostDisplay], gap: 0) == nil)
+        #expect(
+            AutoRuleEngine.targetFrame(forBundleID: "com.app", rules: rules, displays: [hostDisplay], gap: 0) == nil
+        )
     }
 
     @Test("an app without a rule gives no frame")
     func otherApp() {
         let rules = [fixtureRule(bundleID: "com.app", slot: rightHalf)]
 
-        #expect(AutoRuleEngine.targetFrame(forBundleID: "com.other", rules: rules, displays: [hostDisplay], gap: 0) == nil)
+        #expect(
+            AutoRuleEngine.targetFrame(forBundleID: "com.other", rules: rules, displays: [hostDisplay], gap: 0) == nil
+        )
     }
 
     @Test("a rule whose display is not connected gives no frame")
     func displayNotConnected() {
         let rules = [fixtureRule(bundleID: "com.app", slot: fixtureSlot("uuid:GONE", 0.5, 0, 0.5, 1))]
 
-        #expect(AutoRuleEngine.targetFrame(forBundleID: "com.app", rules: rules, displays: [hostDisplay], gap: 0) == nil)
+        #expect(
+            AutoRuleEngine.targetFrame(forBundleID: "com.app", rules: rules, displays: [hostDisplay], gap: 0) == nil
+        )
     }
 
     @Test("the enabled rule wins over a disabled one for the same app")
@@ -126,7 +132,9 @@ private final class ObserverFactory {
     private(set) var made: [FakeObserver] = []
     var failing: Set<Int32> = []
 
-    func make(pid: Int32, onWindowCreated: @escaping @MainActor (AXUIElement) -> Void) -> (any WindowCreationObserving)? {
+    func make(
+        pid: Int32, onWindowCreated: @escaping @MainActor (AXUIElement) -> Void
+    ) -> (any WindowCreationObserving)? {
         attempts.append(pid)
         guard !failing.contains(pid) else { return nil }
         let observer = FakeObserver(pid: pid)
@@ -137,6 +145,8 @@ private final class ObserverFactory {
     func live(_ pid: Int32) -> [FakeObserver] { made.filter { $0.pid == pid && $0.invalidations == 0 } }
 }
 
+// lint-allow: unchecked_sendable AppKit subclass used only on the main actor in tests
+// swiftlint:disable:next unchecked_sendable
 private final class FakeApp: NSRunningApplication, @unchecked Sendable {
     private let bundle: String
     private let pid: pid_t
@@ -152,7 +162,9 @@ private final class FakeApp: NSRunningApplication, @unchecked Sendable {
     override var isTerminated: Bool { false }
 }
 
-/// A workspace with its own notification center and a settable list of running apps.
+// lint-allow: unchecked_sendable AppKit subclass used only on the main actor in tests
+// A workspace with its own notification center and a settable list of running apps.
+// swiftlint:disable:next unchecked_sendable
 private final class FakeWorkspace: NSWorkspace, @unchecked Sendable {
     let center = NotificationCenter()
     var apps: [NSRunningApplication] = []
@@ -396,7 +408,8 @@ struct AutoRuleEngineRuleChangeTests {
         let rig = EngineRig(rules: [rule], running: [appA])
         rig.engine.update(enabled: true)
 
-        try rig.store.saveRule(fixtureRule(id: rule.id, bundleID: "com.test.a", slot: fixtureSlot("uuid:AAAA", 0, 0, 0.5, 1)))
+        let slot = fixtureSlot("uuid:AAAA", 0, 0, 0.5, 1)
+        try rig.store.saveRule(fixtureRule(id: rule.id, bundleID: "com.test.a", slot: slot))
 
         #expect(rig.factory.made.count == 1)
         #expect(rig.factory.made[0].invalidations == 0)

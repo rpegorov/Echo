@@ -80,7 +80,8 @@ struct ArrangementServiceDeleteTests {
                 events.append(rig.settings.shortcut(for: .arrangement(id)) == nil ? "save:hotkey-gone" : "save")
             }
             rig.settings.onChange = {
-                events.append(rig.storage.document.savedArrangements.contains { $0.id == id } ? "change:file-stale" : "change")
+                let stale = rig.storage.document.savedArrangements.contains { $0.id == id }
+                events.append(stale ? "change:file-stale" : "change")
             }
 
             try rig.service.delete(id)
@@ -94,7 +95,7 @@ struct ArrangementServiceDeleteTests {
 
     @Test("a failed write keeps the arrangement and its hotkey")
     func failedWriteKeepsBoth() throws {
-        try withScratchDefaults { defaults in
+        withScratchDefaults { defaults in
             let rig = Rig(defaults: defaults)
             rig.storage.saveError = .writeFailed("disk full")
             var changes = 0
@@ -112,7 +113,7 @@ struct ArrangementServiceDeleteTests {
 
     @Test("a read-only store refuses to delete and keeps the hotkey")
     func readOnlyKeepsTheHotkey() throws {
-        try withScratchDefaults { defaults in
+        withScratchDefaults { defaults in
             let rig = Rig(defaults: defaults, loadError: .newerSchema(3))
 
             #expect(throws: ArrangementError.storage(.readOnly)) { try rig.service.delete(rig.arrangement.id) }
@@ -123,7 +124,7 @@ struct ArrangementServiceDeleteTests {
 
     @Test("applying an unknown arrangement reports nothing and moves no window, even when the store is read-only")
     func applyUnknownIdIsEmpty() throws {
-        try withScratchDefaults { defaults in
+        withScratchDefaults { defaults in
             let rig = Rig(defaults: defaults, loadError: .newerSchema(3))
 
             let report = rig.service.apply(UUID())

@@ -132,7 +132,11 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
     /// Drag-to-snap and auto-placement follow the Window Manager switch; rules also need their own switch.
     private func updateWindowAutomation() {
         let settings = environment.settings
-        settings.windowManagerEnabled ? environment.snapper.start() : environment.snapper.stop()
+        if settings.windowManagerEnabled {
+            environment.snapper.start()
+        } else {
+            environment.snapper.stop()
+        }
 
         // The engine attaches its observers once, so a grant after it started needs a restart.
         let hasPermission = environment.windowManager.hasPermission()

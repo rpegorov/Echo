@@ -148,7 +148,8 @@ final class AppWindows: NSObject, NSWindowDelegate {
             updater: environment.updater,
             metrics: environment.metrics
         )
-        let hosting = HostingFactory.make(root.environmentObject(environment.gridStore), localizer: environment.localizer)
+        let content = root.environmentObject(environment.gridStore)
+        let hosting = HostingFactory.make(content, localizer: environment.localizer)
 
         let window = NSWindow(contentViewController: hosting)
         window.styleMask = [.titled, .closable, .fullSizeContentView]

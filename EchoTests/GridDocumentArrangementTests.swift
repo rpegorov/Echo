@@ -193,14 +193,14 @@ struct GridDocumentArrangementTests {
 @Suite("Zone slot")
 struct ZoneSlotTests {
 
-    private func slot(_ x: Double, _ y: Double, _ width: Double, _ height: Double) -> ZoneSlot {
-        fixtureSlot("uuid:AAAA", x, y, width, height)
+    private func slot(_ originX: Double, _ originY: Double, _ width: Double, _ height: Double) -> ZoneSlot {
+        fixtureSlot("uuid:AAAA", originX, originY, width, height)
     }
 
     @Test("rects inside the unit square are valid",
           arguments: [(0.0, 0.0, 1.0, 1.0), (0.5, 0.0, 0.5, 1.0), (0.25, 0.25, 0.5, 0.5), (0.0, 0.5, 1.0, 0.5)])
-    func insideIsValid(x: Double, y: Double, width: Double, height: Double) {
-        #expect(slot(x, y, width, height).isValid)
+    func insideIsValid(originX: Double, originY: Double, width: Double, height: Double) {
+        #expect(slot(originX, originY, width, height).isValid)
     }
 
     @Test("the edges are valid within the tolerance and invalid beyond it")
@@ -217,16 +217,22 @@ struct ZoneSlotTests {
     }
 
     @Test("a rect without area is invalid",
-          arguments: [(0.0, 0.0, 0.0, 1.0), (0.0, 0.0, 1.0, 0.0), (0.0, 0.0, tolerance / 2, 1.0), (0.0, 0.0, 1.0, tolerance / 2),
-                      (0.5, 0.5, -0.1, 0.2), (0.5, 0.5, 0.2, -0.1)])
-    func degenerateIsInvalid(x: Double, y: Double, width: Double, height: Double) {
-        #expect(!slot(x, y, width, height).isValid)
+          arguments: [
+              (0.0, 0.0, 0.0, 1.0), (0.0, 0.0, 1.0, 0.0),
+              (0.0, 0.0, tolerance / 2, 1.0), (0.0, 0.0, 1.0, tolerance / 2),
+              (0.5, 0.5, -0.1, 0.2), (0.5, 0.5, 0.2, -0.1)
+          ])
+    func degenerateIsInvalid(originX: Double, originY: Double, width: Double, height: Double) {
+        #expect(!slot(originX, originY, width, height).isValid)
     }
 
     @Test("a rect outside the unit square is invalid",
-          arguments: [(1.2, 0.0, 0.5, 1.0), (0.0, 1.2, 0.5, 0.5), (-0.1, 0.0, 0.5, 1.0), (0.6, 0.0, 0.5, 1.0), (0.0, 0.6, 1.0, 0.5)])
-    func outsideIsInvalid(x: Double, y: Double, width: Double, height: Double) {
-        #expect(!slot(x, y, width, height).isValid)
+          arguments: [
+              (1.2, 0.0, 0.5, 1.0), (0.0, 1.2, 0.5, 0.5), (-0.1, 0.0, 0.5, 1.0),
+              (0.6, 0.0, 0.5, 1.0), (0.0, 0.6, 1.0, 0.5)
+          ])
+    func outsideIsInvalid(originX: Double, originY: Double, width: Double, height: Double) {
+        #expect(!slot(originX, originY, width, height).isValid)
     }
 }
 

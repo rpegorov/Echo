@@ -20,6 +20,9 @@ struct GridFlashView: View {
 
     @EnvironmentObject private var localizer: Localizer
 
+    /// Divisor that halves a length, so centring geometry carries no bare literal.
+    private static let centerDivisor: CGFloat = 2
+
     var body: some View {
         ZStack {
             ForEach(zones, id: \.number) { zone in
@@ -33,7 +36,7 @@ struct GridFlashView: View {
                     .padding(.vertical, DS.SnapOverlay.flashTitleVerticalPadding)
                     .background(Capsule().fill(DS.accent.opacity(DS.SnapOverlay.flashBadgeFillOpacity)))
                     .frame(maxWidth: displaySize.width * DS.SnapOverlay.flashTitleMaxWidthShare)
-                    .position(x: displaySize.width / 2, y: displaySize.height / 2)
+                    .position(x: displaySize.width / Self.centerDivisor, y: displaySize.height / Self.centerDivisor)
             }
         }
         .accessibilityElement(children: .ignore)
@@ -54,7 +57,9 @@ struct GridFlashView: View {
                 .fill(DS.accent.opacity(DS.SnapOverlay.flashFillOpacity))
                 .overlay(
                     RoundedRectangle(cornerRadius: DS.SnapOverlay.cornerRadius)
-                        .strokeBorder(DS.accent.opacity(DS.SnapOverlay.flashStrokeOpacity), lineWidth: DS.SnapOverlay.flashStrokeWidth)
+                        .strokeBorder(
+                            DS.accent.opacity(DS.SnapOverlay.flashStrokeOpacity),
+                            lineWidth: DS.SnapOverlay.flashStrokeWidth)
                 )
             VStack(spacing: DS.SnapOverlay.flashContentSpacing) {
                 numberBadge(zone.number)
@@ -63,7 +68,7 @@ struct GridFlashView: View {
                 }
             }
             .padding(.horizontal, DS.SnapOverlay.captionInset)
-            .position(x: zone.frame.width / 2, y: contentY(in: zone.frame))
+            .position(x: zone.frame.width / Self.centerDivisor, y: contentY(in: zone.frame))
         }
     }
 
@@ -71,7 +76,7 @@ struct GridFlashView: View {
     private func contentY(in frame: CGRect) -> CGFloat {
         frame.height >= DS.SnapOverlay.flashRaisedContentMinHeight
             ? frame.height * DS.SnapOverlay.flashRaisedContentShare
-            : frame.height / 2
+            : frame.height / Self.centerDivisor
     }
 
     private func numberBadge(_ number: Int) -> some View {
@@ -82,7 +87,9 @@ struct GridFlashView: View {
     }
 
     private func shortcutBadge(_ shortcut: KeyboardShortcut) -> some View {
-        badge(shortcut.displayString(spaceName: localizer.t(InputKey.keySpace)), fontSize: DS.SnapOverlay.flashShortcutFontSize)
+        badge(
+            shortcut.displayString(spaceName: localizer.t(InputKey.keySpace)),
+            fontSize: DS.SnapOverlay.flashShortcutFontSize)
             .padding(.horizontal, DS.SnapOverlay.capsuleHorizontalPadding)
             .padding(.vertical, DS.SnapOverlay.flashBadgeVerticalPadding)
             .background(Capsule().fill(DS.accent.opacity(DS.SnapOverlay.flashBadgeFillOpacity)))
