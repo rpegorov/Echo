@@ -165,14 +165,17 @@ final class AppSettings: ObservableObject {
         static let language = "general.language"
     }
 
-    /// Текущая версия набора хоткеев. При росте — в сохранённый набор
-    /// доливаются дефолты команд, которых на прошлой версии ещё не было.
-    private static let shortcutsVersion = 2
+    /// Version of the stored shortcut set. When it grows, defaults of newer commands are added
+    /// to a stored set by `ShortcutBackfill`.
+    private static let shortcutsVersion = 3
+
+    /// Stored entries whose key is not a `WMCommand` raw value; written back unchanged.
+    private var unrecognizedShortcutEntries: [String: KeyboardShortcut] = [:]
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        // Долитые дефолты обязаны попасть в хранилище: маркер версии пишется в
-        // конце init, и без сохранения следующий запуск остался бы без хоткеев.
+        // Backfilled defaults must be saved: the version marker is written at the end of init,
+        // so without a save the next launch would not add them again.
         var needsShortcutPersist = false
 
         windowManagerEnabled = defaults.object(forKey: Keys.enabled) as? Bool ?? true
@@ -215,22 +218,27 @@ final class AppSettings: ObservableObject {
         ultraSwitchEnabled = defaults.object(forKey: Keys.ultraSwitch) as? Bool ?? false
         autoConvertEnabled = defaults.object(forKey: Keys.autoConvert) as? Bool ?? false
 
+        let storedVersion = defaults.integer(forKey: Keys.shortcutsVersion)
+
         // Если есть сохранённый набор — он авторитетный (учитывает удалённые
         // пользователем хоткеи). Иначе — дефолты (первый запуск).
         if let data = defaults.data(forKey: Keys.shortcuts),
            let stored = try? JSONDecoder().decode([String: KeyboardShortcut].self, from: data) {
-            var result: [WMCommand: KeyboardShortcut] = [:]
-            for (key, value) in stored {
-                if let command = WMCommand(rawValue: key) { result[command] = value }
-            }
-            // Доливаем дефолты команд, появившихся после сохранения набора.
-            let storedVersion = defaults.integer(forKey: Keys.shortcutsVersion)
+            var migrated = stored
             if storedVersion < Self.shortcutsVersion {
-                for command in WMCommand.allCases where result[command] == nil && command.isUltraSwitchCommand {
-                    result[command] = command.defaultShortcut
-                }
+                migrated = ShortcutBackfill.apply(to: stored, storedVersion: storedVersion)
                 needsShortcutPersist = true
             }
+            var result: [WMCommand: KeyboardShortcut] = [:]
+            var unrecognized: [String: KeyboardShortcut] = [:]
+            for (key, value) in migrated {
+                if let command = WMCommand(rawValue: key) {
+                    result[command] = value
+                } else {
+                    unrecognized[key] = value
+                }
+            }
+            unrecognizedShortcutEntries = unrecognized
             shortcuts = result
         } else {
             var defaultsMap: [WMCommand: KeyboardShortcut] = [:]
@@ -241,7 +249,7 @@ final class AppSettings: ObservableObject {
         }
 
         if needsShortcutPersist { persistShortcuts() }
-        defaults.set(Self.shortcutsVersion, forKey: Keys.shortcutsVersion)
+        defaults.set(max(storedVersion, Self.shortcutsVersion), forKey: Keys.shortcutsVersion)
     }
 
     func shortcut(for command: WMCommand) -> KeyboardShortcut? {
@@ -278,7 +286,8 @@ final class AppSettings: ObservableObject {
     }
 
     private func persistShortcuts() {
-        let stringKeyed = Dictionary(uniqueKeysWithValues: shortcuts.map { ($0.key.rawValue, $0.value) })
+        let recognized = Dictionary(uniqueKeysWithValues: shortcuts.map { ($0.key.rawValue, $0.value) })
+        let stringKeyed = recognized.merging(unrecognizedShortcutEntries, uniquingKeysWith: { current, _ in current })
         if let data = try? JSONEncoder().encode(stringKeyed) {
             defaults.set(data, forKey: Keys.shortcuts)
         }
