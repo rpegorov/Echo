@@ -24,6 +24,7 @@ final class WindowSnapper {
     private var downLocation: CGPoint?
     private var dragWindow: AXUIElement?
     private var startPosition: CGPoint?
+    private var dragProbe: WindowDragProbe?
     private var dragScreens: [ScreenGeometry] = []
     private var isDraggingWindow = false
     private var shownPreview: SnapPreview?
@@ -81,8 +82,16 @@ final class WindowSnapper {
         }
 
         // Убеждаемся, что окно реально перемещают (а не выделяют текст и т. п.).
-        if !isDraggingWindow, let start = startPosition, let current = windowManager.position(of: window) {
-            if hypot(current.x - start.x, current.y - start.y) > Self.movementThreshold { isDraggingWindow = true }
+        // The probe limits the reads; after it gives up, the rest of the drag is ignored.
+        if !isDraggingWindow, let start = startPosition, var probe = dragProbe {
+            if probe.shouldProbe(cursor: NSEvent.mouseLocation),
+               let current = windowManager.position(of: window) {
+                let moved = hypot(current.x - start.x, current.y - start.y) >= Self.movementThreshold
+                if probe.record(moved: moved) == .windowMoving {
+                    isDraggingWindow = true
+                }
+                dragProbe = probe
+            }
         }
         guard isDraggingWindow else { return }
 
@@ -123,12 +132,14 @@ final class WindowSnapper {
         guard let window = windowManager.window(at: down) else { return }
         dragWindow = window
         startPosition = windowManager.position(of: window)
+        dragProbe = WindowDragProbe(downLocation: down, threshold: Self.movementThreshold)
     }
 
     private func reset() {
         downLocation = nil
         dragWindow = nil
         startPosition = nil
+        dragProbe = nil
         dragScreens = []
         isDraggingWindow = false
         hideOverlayIfNeeded()
