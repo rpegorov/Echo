@@ -174,6 +174,8 @@ struct ShortcutRecorderView: View {
     }
 
     private func capture(_ event: NSEvent) {
+        // A key event can still be queued after recording ended; it must not reassign anything.
+        guard isRecording else { return }
         defer { settings.setRecordingCommand(nil) }
         guard event.keyCode != UInt16(kVK_Escape) else { return }
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
