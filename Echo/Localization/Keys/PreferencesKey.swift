@@ -98,6 +98,7 @@ extension PreferencesView.PrefSection {
         case .appearance:    return .sectionAppearance
         case .menuBar:       return .sectionMenuBar
         case .windowManager: return .sectionWindowManager
+        case .arrangements:  return .sectionArrangements
         case .ultraSwitch:   return .sectionUltraSwitch
         case .snippets:      return .sectionSnippets
         case .keyboard:      return .sectionKeyboard

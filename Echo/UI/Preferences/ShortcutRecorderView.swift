@@ -198,13 +198,15 @@ struct ShortcutRecorderView: View {
         }
     }
 
-    /// nil for an arrangement missing from the document; its shortcut is taken over without asking.
+    /// nil for an arrangement missing from the document, whose shortcut is taken over without asking.
+    /// A read-only store has an empty document, so there the arrangement may still exist in the file: ask instead.
     private func ownerName(_ owner: ShortcutOwner) -> String? {
         switch owner {
         case .command(let command):
             return loc.t(command.titleKey)
         case .arrangement(let id):
-            return gridStore.document.savedArrangements.first { $0.id == id }?.name
+            if let saved = gridStore.document.savedArrangements.first(where: { $0.id == id }) { return saved.name }
+            return gridStore.isReadOnly ? loc.t(InputKey.arrangementUnknownOwnerName) : nil
         }
     }
 }

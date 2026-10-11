@@ -18,8 +18,12 @@ struct ArrangementEditorView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: DS.ArrangementEditor.sectionSpacing) {
             toolbar
-            canvases
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            if model.draft.windows.isEmpty {
+                emptyState
+            } else {
+                canvases
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
             Text(loc.t(InputKey.arrangementEditorHint))
                 .font(DS.ArrangementEditor.hintFont)
                 .foregroundStyle(.secondary)
@@ -41,6 +45,12 @@ struct ArrangementEditorView: View {
             .frame(maxWidth: DS.ArrangementEditor.nameFieldMaxWidth)
             Spacer(minLength: 0)
         }
+    }
+
+    private var emptyState: some View {
+        Text(loc.t(InputKey.arrangementEditorEmpty))
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Canvases
@@ -140,10 +150,19 @@ struct ArrangementEditorView: View {
 
     private func text(for message: ArrangementEditorModel.SaveMessage) -> String {
         switch message {
-        case .write(let reason): return loc.t(InputKey.gridSaveFailedMessage, reason)
+        case .write(let reason): return loc.t(InputKey.arrangementSaveFailedMessage, writeFailureReason(fallback: reason))
         case .unavailable: return loc.t(InputKey.gridUnavailableMessage)
         case .permission: return loc.t(InputKey.arrangementPermissionMessage)
         case .noWindows: return loc.t(InputKey.arrangementNoWindowsMessage)
+        }
+    }
+
+    /// Names the failure for the two errors the model reports with a fixed English text.
+    private func writeFailureReason(fallback: String) -> String {
+        switch model.saveError {
+        case .notFound: return loc.t(InputKey.arrangementSaveNotFoundReason)
+        case .storage(.invalidSlot): return loc.t(InputKey.arrangementSaveInvalidSlotReason)
+        default: return fallback
         }
     }
 }
