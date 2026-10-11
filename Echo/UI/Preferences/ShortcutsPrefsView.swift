@@ -15,6 +15,8 @@ struct ShortcutsPrefsView: View {
         WMCommand.allCases.filter { $0.isWindowCommand }
     }
 
+    private var primaryDisplay: ZoneMapDisplay { ZoneMapDisplay.primary }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             PrefTitle(loc.t(InputKey.shortcutsTitle))
@@ -40,10 +42,14 @@ struct ShortcutsPrefsView: View {
     }
 
     private func row(_ command: WMCommand) -> some View {
-        HStack {
+        HStack(spacing: DS.ZoneMap.thumbnailRowSpacing) {
+            if command.isWindowCommand {
+                LayoutThumbnailView(command: command, display: primaryDisplay)
+            }
             Text(loc.t(command.titleKey))
                 .font(.system(size: 13))
-            Spacer()
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer(minLength: 0)
             ShortcutRecorderView(command: command, settings: settings)
         }
         .padding(.vertical, 7)

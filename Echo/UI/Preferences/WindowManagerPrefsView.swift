@@ -3,6 +3,7 @@
 //  MonitorBarApp
 //
 
+import AppKit
 import SwiftUI
 
 /// Раздел Preferences: тайлинг окон.
@@ -13,6 +14,8 @@ struct WindowManagerPrefsView: View {
     let hasAXPermission: Bool
     let systemTilingEnabled: Bool
     let onDisableSystemTiling: () -> Void
+
+    @State private var displays = ZoneMapDisplay.connected()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -47,6 +50,25 @@ struct WindowManagerPrefsView: View {
                         .tint(DS.accent)
                 }
             }
+
+            PrefCard {
+                Toggle(isOn: $settings.layoutCyclingEnabled) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(loc.t(InputKey.layoutCyclingTitle))
+                            .font(.system(size: 13, weight: .medium))
+                        PrefCaption(loc.t(InputKey.layoutCyclingCaption))
+                    }
+                }
+                .toggleStyle(.switch)
+                .tint(DS.accent)
+            }
+
+            PrefCard {
+                ZoneMapView(settings: settings, displays: displays)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in
+            displays = ZoneMapDisplay.connected()
         }
     }
 
