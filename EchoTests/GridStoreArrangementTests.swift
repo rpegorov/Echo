@@ -83,6 +83,19 @@ struct GridStoreArrangementTests {
         #expect(storage.saveCount == 0)
     }
 
+    @Test("a slot on a display the arrangement does not describe is rejected before storage is touched")
+    func slotOnUndescribedDisplayRejectsArrangement() {
+        let storage = InMemoryGridStorage(document: populated)
+        let store = GridStore(storage: storage)
+        var broken = knownArrangement
+        broken.windows.append(fixtureWindow(slot: fixtureSlot("uuid:UNKNOWN", 0, 0, 0.5, 1)))
+
+        #expect(throws: GridStorageError.invalidSlot) { try store.saveArrangement(broken) }
+
+        #expect(storage.saveCount == 0)
+        #expect(store.document == populated)
+    }
+
     @Test("an invalid edit of a stored arrangement keeps the stored version")
     func invalidEditKeepsStoredArrangement() {
         let storage = InMemoryGridStorage(document: populated)

@@ -73,7 +73,8 @@ final class GridStore: ObservableObject, ActiveGridProviding {
     }
 
     func saveArrangement(_ arrangement: Arrangement) throws(GridStorageError) {
-        guard arrangement.windows.allSatisfy({ $0.slot.isValid }) else { throw .invalidSlot }
+        guard arrangement.windows.allSatisfy({ $0.slot.isValid && arrangement.displays[$0.slot.display] != nil })
+        else { throw .invalidSlot }
         try commit { $0.saveArrangement(arrangement) }
     }
 
