@@ -162,12 +162,9 @@ final class GridEditorModel: ObservableObject {
         var grid = draft
         grid.name = trimmedName
         do {
-            try store.save(grid)
+            try store.save(grid, activatingOn: activatesOnSave ? display?.key : nil)
             draft = grid
             baseline = grid
-            if activatesOnSave, let display {
-                try store.setActive(.saved(id: grid.id), for: display.key)
-            }
             saveError = nil
             return true
         } catch {

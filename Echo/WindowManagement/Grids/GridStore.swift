@@ -48,8 +48,16 @@ final class GridStore: ObservableObject, ActiveGridProviding {
     }
 
     func save(_ grid: ZoneGrid) throws(GridStorageError) {
+        try save(grid, activatingOn: nil)
+    }
+
+    /// Saves the grid and, when `display` is given, makes it that display's active grid in the same write.
+    func save(_ grid: ZoneGrid, activatingOn display: DisplayKey?) throws(GridStorageError) {
         guard GridEditing.isValid(grid.zones) else { throw .invalidGrid }
-        try commit { $0.save(grid) }
+        try commit {
+            $0.save(grid)
+            if let display { $0.setActive(.saved(id: grid.id), for: display) }
+        }
     }
 
     func rename(_ id: UUID, to name: String) throws(GridStorageError) {
