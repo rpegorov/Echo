@@ -6,6 +6,7 @@
 import Foundation
 
 /// The grid a display uses.
+/// Persisted: any change to the stored shape bumps `GridFileStorage.schemaVersion`.
 enum ActiveGridRef: Codable, Hashable, Sendable {
     case template(kind: GridTemplate)
     case saved(id: UUID)
