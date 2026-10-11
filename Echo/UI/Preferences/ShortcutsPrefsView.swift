@@ -13,11 +13,11 @@ struct ShortcutsPrefsView: View {
     @EnvironmentObject private var loc: Localizer
 
     private var windowCommands: [WMCommand] {
-        WMCommand.allCases.filter { $0.isWindowCommand && $0.zoneNumber == nil }
+        WMCommand.allCases.filter { $0.isWindowCommand && $0.zoneNumber == nil && $0 != .nextGrid }
     }
 
     private var zoneCommands: [WMCommand] {
-        WMCommand.allCases.filter { $0.zoneNumber != nil }
+        WMCommand.allCases.filter { $0.zoneNumber != nil } + [.nextGrid]
     }
 
     @State private var primaryDisplay = ZoneMapDisplay.primary
@@ -74,14 +74,16 @@ struct ShortcutsPrefsView: View {
     @ViewBuilder
     private func thumbnail(for command: WMCommand) -> some View {
         if let number = command.zoneNumber {
-            zoneIcon(number, title: loc.t(command.titleKey))
+            symbolIcon("\(number).square", title: loc.t(command.titleKey))
+        } else if command == .nextGrid {
+            symbolIcon("square.grid.2x2", title: loc.t(command.titleKey))
         } else if command.isWindowCommand {
             LayoutThumbnailView(command: command, display: primaryDisplay)
         }
     }
 
-    private func zoneIcon(_ number: Int, title: String) -> some View {
-        Image(systemName: "\(number).square")
+    private func symbolIcon(_ systemName: String, title: String) -> some View {
+        Image(systemName: systemName)
             .font(DS.ZoneMap.thumbnailSymbolFont)
             .foregroundStyle(.secondary)
             .frame(width: DS.ZoneMap.thumbnailSize.width, height: DS.ZoneMap.thumbnailSize.height)
