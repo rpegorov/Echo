@@ -12,8 +12,10 @@ struct WindowManagerPrefsView: View {
     @ObservedObject var windowManager: WindowManagerService
     @EnvironmentObject private var loc: Localizer
     let hasAXPermission: Bool
-    let systemTilingEnabled: Bool
-    let onDisableSystemTiling: () -> Void
+    @ObservedObject var gridStore: GridStore
+    let tilingConflict: TilingConflict
+    let onResolveTilingConflict: (TilingConflict) -> Void
+    let onOpenGridEditor: (GridEditorRequest) -> Void
 
     @State private var displays = ZoneMapDisplay.connected()
 
@@ -22,7 +24,7 @@ struct WindowManagerPrefsView: View {
             PrefTitle(loc.t(InputKey.windowManagerTitle))
 
             hasAXPermission ? AnyView(permissionGranted) : AnyView(permissionMissing)
-            if settings.windowManagerEnabled && systemTilingEnabled { tilingConflict }
+            if settings.windowManagerEnabled && tilingConflict.exists { tilingConflictCard }
 
             PrefCard {
                 Toggle(isOn: $settings.windowManagerEnabled) {
@@ -66,6 +68,8 @@ struct WindowManagerPrefsView: View {
             PrefCard {
                 ZoneMapView(settings: settings, displays: displays)
             }
+
+            GridsPrefsSection(store: gridStore, settings: settings, onOpenEditor: onOpenGridEditor)
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in
             displays = ZoneMapDisplay.connected()
@@ -110,7 +114,7 @@ struct WindowManagerPrefsView: View {
         }
     }
 
-    private var tilingConflict: some View {
+    private var tilingConflictCard: some View {
         PrefCard {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .top, spacing: 10) {
@@ -119,12 +123,13 @@ struct WindowManagerPrefsView: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(loc.t(InputKey.tilingConflictTitle))
                             .font(.system(size: 13, weight: .medium))
-                        PrefCaption(loc.t(InputKey.tilingConflictCaption))
+                        if tilingConflict.edge { PrefCaption(loc.t(InputKey.tilingConflictCaption)) }
+                        if tilingConflict.optionDrag { PrefCaption(loc.t(InputKey.tilingOptionConflictCaption)) }
                     }
                     Spacer()
                 }
                 HStack(spacing: 10) {
-                    Button(loc.t(InputKey.disableSystemTilingButton), action: onDisableSystemTiling)
+                    Button(loc.t(InputKey.disableSystemTilingButton)) { onResolveTilingConflict(tilingConflict) }
                         .buttonStyle(.borderedProminent)
                         .tint(DS.accent)
                     Button(loc.t(InputKey.openSettingsButton)) { windowManager.openTilingSettings() }

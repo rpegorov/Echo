@@ -16,13 +16,15 @@ struct PreferencesView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var clipboard: ClipboardService
     @ObservedObject var windowManager: WindowManagerService
+    let gridStore: GridStore
+    let onOpenGridEditor: (GridEditorRequest) -> Void
     let ultraSwitch: UltraSwitchService
     @ObservedObject var updater: UpdaterService
     @ObservedObject var metrics: MetricsService
 
     @State private var section: PrefSection? = .general
     @State private var hasAXPermission = false
-    @State private var systemTilingEnabled = false
+    @State private var tilingConflict = TilingConflict(edge: false, optionDrag: false)
     @State private var hasBothLayouts = true
 
     /// Живой опрос статуса доступа — UI сам переключится, когда выдашь право.
@@ -76,6 +78,7 @@ struct PreferencesView: View {
         .frame(width: 720, height: 520)
         .onAppear(perform: refreshStatuses)
         .onReceive(permissionTimer) { _ in refreshStatuses() }
+        .onChange(of: settings.gridModifier) { _, _ in refreshStatuses() }
     }
 
     @ViewBuilder
@@ -96,11 +99,13 @@ struct PreferencesView: View {
                 settings: settings,
                 windowManager: windowManager,
                 hasAXPermission: hasAXPermission,
-                systemTilingEnabled: systemTilingEnabled,
-                onDisableSystemTiling: {
-                    windowManager.disableSystemEdgeTiling()
-                    systemTilingEnabled = false
-                }
+                gridStore: gridStore,
+                tilingConflict: tilingConflict,
+                onResolveTilingConflict: {
+                    windowManager.resolveSystemTilingConflict($0)
+                    refreshStatuses()
+                },
+                onOpenGridEditor: onOpenGridEditor
             )
         case .ultraSwitch:
             UltraSwitchPrefsView(
@@ -125,8 +130,8 @@ struct PreferencesView: View {
         let granted = windowManager.hasPermission()
         if granted != hasAXPermission { hasAXPermission = granted }
 
-        let tiling = windowManager.isSystemEdgeTilingEnabled()
-        if tiling != systemTilingEnabled { systemTilingEnabled = tiling }
+        let conflict = windowManager.systemTilingConflict(gridModifier: settings.gridModifier)
+        if conflict != tilingConflict { tilingConflict = conflict }
 
         let layouts = ultraSwitch.diagnostics().hasBothLayouts
         if layouts != hasBothLayouts { hasBothLayouts = layouts }
