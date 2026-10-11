@@ -9,7 +9,7 @@ import Foundation
 struct Arrangement: Codable, Equatable, Identifiable, Sendable {
     let id: UUID
     var name: String
-    /// Entries of one app keep the app's front-to-back window order at capture time.
+    /// Entries of one app keep the order the app reports its windows in at capture time.
     var windows: [ArrangedWindow]
     var displays: [String: SavedDisplay]
 }
