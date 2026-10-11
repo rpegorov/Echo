@@ -17,6 +17,7 @@ final class WindowSnapper {
     private var downMonitor: Any?
     private var dragMonitor: Any?
     private var upMonitor: Any?
+    private var flagsMonitor: Any?
 
     /// Window movement below this distance is treated as a click, not a drag.
     private static let movementThreshold: CGFloat = 8
@@ -28,6 +29,7 @@ final class WindowSnapper {
     private var dragScreens: [ScreenGeometry] = []
     private var isDraggingWindow = false
     private var shownPreview: SnapPreview?
+    private var gridAnchor: GridAnchor?
 
     private let overlay: any SnapOverlayPresenting
     private let grids: any ActiveGridProviding
@@ -102,22 +104,8 @@ final class WindowSnapper {
         }
         guard isDraggingWindow else { return }
 
-        let location = NSEvent.mouseLocation
-        guard let screen = dragScreens.first(where: { $0.frame.contains(location) }) else {
-            hideOverlayIfNeeded()
-            return
-        }
-
-        if let layout = EdgeSnapResolver.layout(at: location, in: screen.frame) {
-            showOverlayIfNeeded(SnapPreview(
-                target: .layout(layout),
-                frame: layout.frame(in: screen.visibleFrame, gap: CGFloat(settings.windowGap)),
-                screenFrame: screen.frame,
-                shortcut: settings.shortcut(for: layout.command)
-            ))
-        } else {
-            hideOverlayIfNeeded()
-        }
+        installFlagsMonitorIfNeeded()
+        updateTarget(flags: event.modifierFlags, at: NSEvent.mouseLocation)
     }
 
     private func handleUp(_ event: NSEvent) {
@@ -130,19 +118,87 @@ final class WindowSnapper {
         reset()
     }
 
+    // MARK: - Target
+
+    /// Picks the target for the current modifiers: free (none), grid, or edge; Shift beats the grid modifier.
+    private func updateTarget(flags: NSEvent.ModifierFlags, at location: CGPoint) {
+        guard !flags.contains(.shift),
+              let screen = dragScreens.first(where: { $0.frame.contains(location) }) else {
+            gridAnchor = nil
+            hideOverlayIfNeeded()
+            return
+        }
+        if flags.contains(settings.gridModifier.flags) {
+            updateGridTarget(on: screen, flags: flags, at: location)
+        } else {
+            gridAnchor = nil
+            updateEdgeTarget(on: screen, at: location)
+        }
+    }
+
+    private func updateEdgeTarget(on screen: ScreenGeometry, at location: CGPoint) {
+        if let layout = EdgeSnapResolver.layout(at: location, in: screen.frame) {
+            showOverlayIfNeeded(SnapPreview(
+                target: .layout(layout),
+                frame: layout.frame(in: screen.visibleFrame, gap: CGFloat(settings.windowGap)),
+                screenFrame: screen.frame,
+                shortcut: settings.shortcut(for: layout.command)
+            ))
+        } else {
+            hideOverlayIfNeeded()
+        }
+    }
+
+    private func updateGridTarget(on screen: ScreenGeometry, flags: NSEvent.ModifierFlags, at location: CGPoint) {
+        let spanning = flags.contains(GridDragModifier.spanFlags)
+        let sameScreenAnchor = gridAnchor?.screenFrame == screen.frame ? gridAnchor?.zone : nil
+        let resolution = GridDragTarget.resolve(
+            cursor: location,
+            on: screen.grid,
+            spanning: spanning,
+            anchor: sameScreenAnchor,
+            gap: CGFloat(settings.windowGap),
+            shortcutForZone: { number in WMCommand.zone(number).flatMap { self.settings.shortcut(for: $0) } }
+        )
+        gridAnchor = resolution?.anchor.map { GridAnchor(screenFrame: screen.frame, zone: $0) }
+        if let preview = resolution?.preview {
+            showOverlayIfNeeded(preview)
+        } else {
+            hideOverlayIfNeeded()
+        }
+    }
+
     // MARK: - Drag state
 
     /// Resolves the dragged window and caches screen geometry once per drag.
     private func beginDrag(at down: CGPoint) {
         downLocation = nil
-        dragScreens = NSScreen.screens.map { ScreenGeometry(frame: $0.frame, visibleFrame: $0.visibleFrame) }
+        dragScreens = NSScreen.screens.map(makeScreenGeometry)
         guard let window = windowManager.window(at: down) else { return }
         dragWindow = window
         startPosition = windowManager.position(of: window)
         dragProbe = WindowDragProbe(downLocation: down, threshold: Self.movementThreshold)
     }
 
+    private func makeScreenGeometry(for screen: NSScreen) -> ScreenGeometry {
+        let visible = screen.visibleFrame
+        let gap = CGFloat(settings.windowGap)
+        let zones = grids.activeZones(for: DisplayIdentity.key(for: screen), aspect: visible.width / visible.height)
+        return ScreenGeometry(
+            frame: screen.frame,
+            visibleFrame: visible,
+            grid: GridDragTarget.Display(
+                screenFrame: screen.frame,
+                visibleFrame: visible,
+                zones: zones,
+                contextFrames: zones.map { $0.frame(in: visible, gap: gap) }
+            )
+        )
+    }
+
     private func reset() {
+        removeFlagsMonitor()
+        gridAnchor = nil
         downLocation = nil
         dragWindow = nil
         startPosition = nil
@@ -150,6 +206,26 @@ final class WindowSnapper {
         dragScreens = []
         isDraggingWindow = false
         hideOverlayIfNeeded()
+    }
+
+    // MARK: - Modifier changes
+
+    /// Lets a modifier pressed or released while the mouse is still change the target.
+    private func installFlagsMonitorIfNeeded() {
+        guard flagsMonitor == nil else { return }
+        flagsMonitor = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
+            MainActor.assumeIsolated { self?.handleFlagsChanged(event) }
+        }
+    }
+
+    private func removeFlagsMonitor() {
+        if let flagsMonitor { NSEvent.removeMonitor(flagsMonitor) }
+        flagsMonitor = nil
+    }
+
+    private func handleFlagsChanged(_ event: NSEvent) {
+        guard isDraggingWindow else { return }
+        updateTarget(flags: event.modifierFlags, at: NSEvent.mouseLocation)
     }
 
     // MARK: - Overlay
@@ -171,4 +247,11 @@ final class WindowSnapper {
 private struct ScreenGeometry {
     let frame: CGRect
     let visibleFrame: CGRect
+    let grid: GridDragTarget.Display
+}
+
+/// Zone a multi-zone span grows from, valid only on the screen it was taken on.
+private struct GridAnchor {
+    let screenFrame: CGRect
+    let zone: Int
 }
