@@ -91,7 +91,7 @@ struct ShortcutRecorderView: View {
         VStack(alignment: .trailing, spacing: Recorder.conflictSpacing) {
             HStack(alignment: .firstTextBaseline, spacing: Recorder.conflictIconSpacing) {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(Recorder.conflictIconColor)
                     .accessibilityHidden(true)
                 Text(loc.t(
                     InputKey.shortcutConflictMessage,
