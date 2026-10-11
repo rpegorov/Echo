@@ -67,6 +67,14 @@ extension DS {
         /// Pointer travel up to which a press on a zone still counts as a click.
         static let clickSlop: CGFloat = 4
 
+        // MARK: - Split preview
+
+        static let splitPreviewColor = Color.primary.opacity(0.85)
+        static let splitPreviewWidth: CGFloat = 2
+        static let splitPreviewDash: [CGFloat] = [6, 4]
+        /// Keeps the preview line clear of the zone outline.
+        static let splitPreviewInset: CGFloat = 6
+
         // MARK: - Type
 
         static let zoneNumberFont = Font.system(size: 28, weight: .semibold, design: .rounded)

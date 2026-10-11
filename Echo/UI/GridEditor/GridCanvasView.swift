@@ -28,6 +28,23 @@ enum GridCanvasLayout {
         size.width >= size.height ? .columns : .rows
     }
 
+    /// The axis a click on zone `index` splits along: its longer side, or the other one with Option held.
+    static func splitAxis(forZone index: Int, of zones: [UnitRect], in size: CGSize, optionHeld: Bool) -> SplitAxis {
+        let frames = frames(for: zones, in: size, gap: 0)
+        let longSide = longSideAxis(of: frames[index].size)
+        return optionHeld ? longSide.other : longSide
+    }
+
+    /// The line a split along `axis` would draw across `frame`, `inset` short of the frame's sides.
+    static func splitLine(in frame: CGRect, axis: SplitAxis, inset: CGFloat) -> (from: CGPoint, to: CGPoint) {
+        switch axis {
+        case .columns:
+            return (CGPoint(x: frame.midX, y: frame.minY + inset), CGPoint(x: frame.midX, y: frame.maxY - inset))
+        case .rows:
+            return (CGPoint(x: frame.minX + inset, y: frame.midY), CGPoint(x: frame.maxX - inset, y: frame.midY))
+        }
+    }
+
     /// A canvas point (top-left origin) in unit space (origin bottom-left), clamped to the square.
     static func unitPoint(_ point: CGPoint, in size: CGSize) -> CGPoint {
         GridSnapResolver.unitPoint(
@@ -82,6 +99,7 @@ struct GridCanvasView: View {
     @EnvironmentObject private var loc: Localizer
     /// True from the first event of a press until it ends, so a press is classified once.
     @State private var pressBegan = false
+    @StateObject private var optionWatcher = OptionKeyWatcher()
 
     var body: some View {
         GeometryReader { proxy in
@@ -94,6 +112,7 @@ struct GridCanvasView: View {
                     zoneView(index: index, size: frame.size)
                         .offset(x: frame.minX, y: frame.minY)
                 }
+                splitPreview(frames: frames, in: size)
                 ForEach(model.edges, id: \.self) { edge in
                     handleView(edge, in: size)
                 }
@@ -116,7 +135,10 @@ struct GridCanvasView: View {
         .onChange(of: (model.activeEdge ?? model.hoveredEdge)?.axis) { _, axis in
             EdgeCursor.show(for: axis)
         }
-        .onDisappear { EdgeCursor.show(for: nil) }
+        .onDisappear {
+            EdgeCursor.show(for: nil)
+            optionWatcher.stop()
+        }
     }
 
     // MARK: - Zones
@@ -173,6 +195,35 @@ struct GridCanvasView: View {
         return shortcut.map { name + " " + $0 } ?? name
     }
 
+    // MARK: - Split preview
+
+    /// A dashed line where a click on the hovered zone would split it; absent when the zone cannot be halved.
+    @ViewBuilder
+    private func splitPreview(frames: [CGRect], in size: CGSize) -> some View {
+        if let index = model.hoveredZone, model.hoveredEdge == nil, !model.isDragging, frames.indices.contains(index) {
+            let axis = GridCanvasLayout.splitAxis(
+                forZone: index, of: model.draft.zones, in: size, optionHeld: optionWatcher.optionHeld
+            )
+            if model.canSplit(zone: index, along: axis) {
+                let line = GridCanvasLayout.splitLine(in: frames[index], axis: axis, inset: DS.GridEditor.splitPreviewInset)
+                Path { path in
+                    path.move(to: line.from)
+                    path.addLine(to: line.to)
+                }
+                .stroke(
+                    DS.GridEditor.splitPreviewColor,
+                    style: StrokeStyle(
+                        lineWidth: DS.GridEditor.splitPreviewWidth,
+                        lineCap: .round,
+                        dash: DS.GridEditor.splitPreviewDash
+                    )
+                )
+                .allowsHitTesting(false)
+                .accessibilityHidden(true)
+            }
+        }
+    }
+
     // MARK: - Border handles
 
     private func handleView(_ edge: GridEdge, in size: CGSize) -> some View {
@@ -200,9 +251,11 @@ struct GridCanvasView: View {
         guard !model.isDragging else { return }
         switch phase {
         case .active(let point):
+            optionWatcher.start()
             let edge = GridCanvasLayout.edge(at: point, among: model.edges, in: size, hitWidth: DS.GridEditor.handleHitWidth)
             model.setHover(zone: zoneIndex(at: point, in: size), edge: edge)
         case .ended:
+            optionWatcher.stop()
             model.setHover(zone: nil, edge: nil)
         }
     }
@@ -240,10 +293,11 @@ struct GridCanvasView: View {
     private func click(at point: CGPoint, in size: CGSize) {
         // Control-click opens the context menu; it must not also split.
         guard !NSEvent.modifierFlags.contains(.control), let index = zoneIndex(at: point, in: size) else { return }
-        let frames = GridCanvasLayout.frames(for: model.draft.zones, in: size, gap: 0)
-        let longSide = GridCanvasLayout.longSideAxis(of: frames[index].size)
         let optionHeld = NSEvent.modifierFlags.contains(.option)
-        model.split(zone: index, along: optionHeld ? longSide.other : longSide)
+        model.split(
+            zone: index,
+            along: GridCanvasLayout.splitAxis(forZone: index, of: model.draft.zones, in: size, optionHeld: optionHeld)
+        )
     }
 
     private func zoneIndex(at point: CGPoint, in size: CGSize) -> Int? {
@@ -264,6 +318,29 @@ private enum EdgeCursor {
         guard let axis else { return }
         (axis == .vertical ? NSCursor.resizeLeftRight : NSCursor.resizeUpDown).push()
         pushed = true
+    }
+}
+
+/// Publishes whether Option is held while started; the local monitor lives only between `start` and `stop`.
+@MainActor
+private final class OptionKeyWatcher: ObservableObject {
+    @Published private(set) var optionHeld = false
+    private var monitor: Any?
+
+    func start() {
+        optionHeld = NSEvent.modifierFlags.contains(.option)
+        guard monitor == nil else { return }
+        monitor = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
+            let held = event.modifierFlags.contains(.option)
+            MainActor.assumeIsolated { self?.optionHeld = held }
+            return event
+        }
+    }
+
+    func stop() {
+        if let monitor { NSEvent.removeMonitor(monitor) }
+        monitor = nil
+        optionHeld = false
     }
 }
 
