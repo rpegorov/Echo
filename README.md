@@ -120,6 +120,8 @@ open Echo.xcodeproj   # build & run in Xcode (⌘R)
 > Tip: in Xcode → target → Signing & Capabilities, select a Team (a free Apple ID
 > works). A stable signature keeps Accessibility permission across rebuilds.
 
+Lint before committing: `swiftlint lint --strict` (config in `.swiftlint.yml`).
+
 ## Keyboard shortcuts
 
 Defaults (editable in Preferences → Keyboard Shortcuts):
