@@ -3,6 +3,7 @@
 //  MonitorBarApp
 //
 
+import AppKit
 import SwiftUI
 
 /// Раздел Preferences: горячие клавиши оконных команд и буфера обмена.
@@ -15,7 +16,7 @@ struct ShortcutsPrefsView: View {
         WMCommand.allCases.filter { $0.isWindowCommand }
     }
 
-    private var primaryDisplay: ZoneMapDisplay { ZoneMapDisplay.primary }
+    @State private var primaryDisplay = ZoneMapDisplay.primary
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -38,6 +39,9 @@ struct ShortcutsPrefsView: View {
             PrefCard {
                 row(.openClipboard)
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in
+            primaryDisplay = ZoneMapDisplay.primary
         }
     }
 
