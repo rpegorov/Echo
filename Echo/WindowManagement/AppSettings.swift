@@ -218,12 +218,13 @@ final class AppSettings: ObservableObject {
         ultraSwitchEnabled = defaults.object(forKey: Keys.ultraSwitch) as? Bool ?? false
         autoConvertEnabled = defaults.object(forKey: Keys.autoConvert) as? Bool ?? false
 
+        let storedVersion = defaults.integer(forKey: Keys.shortcutsVersion)
+
         // Если есть сохранённый набор — он авторитетный (учитывает удалённые
         // пользователем хоткеи). Иначе — дефолты (первый запуск).
         if let data = defaults.data(forKey: Keys.shortcuts),
            let stored = try? JSONDecoder().decode([String: KeyboardShortcut].self, from: data) {
             var migrated = stored
-            let storedVersion = defaults.integer(forKey: Keys.shortcutsVersion)
             if storedVersion < Self.shortcutsVersion {
                 migrated = ShortcutBackfill.apply(to: stored, storedVersion: storedVersion)
                 needsShortcutPersist = true
@@ -248,7 +249,7 @@ final class AppSettings: ObservableObject {
         }
 
         if needsShortcutPersist { persistShortcuts() }
-        defaults.set(Self.shortcutsVersion, forKey: Keys.shortcutsVersion)
+        defaults.set(max(storedVersion, Self.shortcutsVersion), forKey: Keys.shortcutsVersion)
     }
 
     func shortcut(for command: WMCommand) -> KeyboardShortcut? {
