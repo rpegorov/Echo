@@ -209,7 +209,7 @@ final class WindowManagerService: ObservableObject {
 
     private func focusedWindow() -> AXUIElement? {
         guard let app = NSWorkspace.shared.frontmostApplication else { return nil }
-        return AXWindow.focusedWindow(of: AXUIElementCreateApplication(app.processIdentifier))
+        return AXWindow.focusedWindow(of: AXWindow.applicationElement(pid: app.processIdentifier))
     }
 }
 
