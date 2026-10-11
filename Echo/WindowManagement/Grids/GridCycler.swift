@@ -84,3 +84,5 @@ final class GridCycler {
         }
     }
 }
+
+extension GridCycler: GridCycling {}

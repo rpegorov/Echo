@@ -26,6 +26,8 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         ultraSwitch: environment.ultraSwitch,
         translator: environment.translator,
         grids: environment.gridStore,
+        arrangements: environment.arrangements,
+        gridCycler: environment.gridCycler,
         onClipboardCommand: { [weak self] in self?.openClipboard() }
     )
 
@@ -40,6 +42,12 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
 
     /// Ends a shortcut recording when Echo loses focus, so its hotkeys never stay unregistered.
     private var resignActiveObserver: AnyCancellable?
+
+    /// Re-checks Accessibility when the user comes back from System Settings.
+    private var becomeActiveObserver: AnyCancellable?
+
+    /// Accessibility state the auto-placement engine was last started under.
+    private var autoRulesHadPermission = false
 
     init(environment: AppEnvironment) {
         self.environment = environment
@@ -63,7 +71,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         let settings = environment.settings
         settings.onChange = { [weak self] in
             self?.hotKeyRegistrar.registerAll()
-            self?.updateSnapper()
+            self?.updateWindowAutomation()
         }
         settings.onMonitoringChange   = { [weak self] in self?.environment.monitoring.applyMonitoring() }
         settings.onAppearanceChange   = { [weak self] in self?.applyAppearance() }
@@ -80,10 +88,18 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
                 MainActor.assumeIsolated { settings.setRecordingOwner(nil) }
             }
 
+        becomeActiveObserver = NotificationCenter.default
+            .publisher(for: NSApplication.didBecomeActiveNotification)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                MainActor.assumeIsolated { self?.updateWindowAutomation() }
+            }
+        windows.onAccessibilityGranted = { [weak self] in self?.updateWindowAutomation() }
+
         environment.monitoring.start()
         applyAppearance()
         hotKeyRegistrar.registerAll()
-        updateSnapper()
+        updateWindowAutomation()
         applyUltraSwitch()
     }
 
@@ -113,9 +129,16 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         }
     }
 
-    /// Запускает/останавливает drag-to-snap по флагу Window Manager.
-    private func updateSnapper() {
-        environment.settings.windowManagerEnabled ? environment.snapper.start() : environment.snapper.stop()
+    /// Drag-to-snap and auto-placement follow the Window Manager switch; rules also need their own switch.
+    private func updateWindowAutomation() {
+        let settings = environment.settings
+        settings.windowManagerEnabled ? environment.snapper.start() : environment.snapper.stop()
+
+        // The engine attaches its observers once, so a grant after it started needs a restart.
+        let hasPermission = environment.windowManager.hasPermission()
+        if hasPermission != autoRulesHadPermission { environment.autoRules.update(enabled: false) }
+        autoRulesHadPermission = hasPermission
+        environment.autoRules.update(enabled: settings.windowManagerEnabled && settings.autoRulesEnabled)
     }
 
     /// Автозамена раскладки не зависит от хоткеев Ultra Switch.
@@ -177,9 +200,11 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
             settings: environment.settings,
             ultraSwitch: environment.ultraSwitch,
             battery: environment.battery,
+            gridStore: environment.gridStore,
             onSelect: { [weak self] tab in self?.openDetail(tab) },
             onOpenClipboard: { [weak self] in self?.openClipboard() },
-            onOpenPreferences: { [weak self] in self?.openPreferences() }
+            onOpenPreferences: { [weak self] in self?.openPreferences() },
+            onApplyArrangement: { [environment] in environment.arrangements.apply($0) }
         )
         let hosting = HostingFactory.make(root, localizer: environment.localizer)
         hosting.view.wantsLayer = true

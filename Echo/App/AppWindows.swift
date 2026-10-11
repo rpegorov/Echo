@@ -18,6 +18,7 @@ final class AppWindows: NSObject, NSWindowDelegate {
     private let externalApps = ExternalAppTracker()
 
     private var gridEditor: GridEditorWindowController?
+    private var arrangementEditor: ArrangementEditorWindowController?
 
     private(set) var detailWindow: NSWindow?
     private(set) var clipboardWindow: NSWindow?
@@ -26,6 +27,9 @@ final class AppWindows: NSObject, NSWindowDelegate {
     /// Вызывается при закрытии любого из окон — владелец пересчитывает
     /// политику мониторинга по новому набору видимых окон.
     var onWindowClosed: (() -> Void)?
+
+    /// Called when Preferences sees Accessibility turn from denied to granted.
+    var onAccessibilityGranted: (() -> Void)?
 
     /// Открыто ли хотя бы одно из окон, за которые отвечает этот тип.
     var isAnyWindowVisible: Bool {
@@ -137,6 +141,9 @@ final class AppWindows: NSObject, NSWindowDelegate {
             windowManager: environment.windowManager,
             gridStore: environment.gridStore,
             onOpenGridEditor: { [weak self] in self?.openGridEditor($0) },
+            arrangements: environment.arrangements,
+            onOpenArrangementEditor: { [weak self] in self?.openArrangementEditor($0) },
+            onAccessibilityGranted: { [weak self] in self?.onAccessibilityGranted?() },
             ultraSwitch: environment.ultraSwitch,
             updater: environment.updater,
             metrics: environment.metrics
@@ -168,6 +175,19 @@ final class AppWindows: NSObject, NSWindowDelegate {
         controller.open(request)
     }
 
+    // MARK: - Arrangement editor
+
+    func openArrangementEditor(_ id: UUID) {
+        let controller = arrangementEditor ?? ArrangementEditorWindowController(
+            store: environment.gridStore,
+            arrangements: environment.arrangements,
+            settings: environment.settings,
+            localizer: environment.localizer
+        )
+        arrangementEditor = controller
+        controller.open(id)
+    }
+
     // MARK: - Language change
 
     /// Re-titles already open windows after the language changed on the fly.
@@ -176,6 +196,7 @@ final class AppWindows: NSObject, NSWindowDelegate {
         clipboardWindow?.title = localizer.t(SystemKey.windowTitleClipboard)
         preferencesWindow?.title = localizer.t(SystemKey.windowTitlePreferences)
         gridEditor?.applyTitle()
+        arrangementEditor?.applyTitle()
     }
 
     // MARK: - NSWindowDelegate

@@ -19,6 +19,8 @@ final class HotKeyRegistrar {
     private let ultraSwitch: UltraSwitchService
     private let translator: SelectionTranslator
     private let grids: any ActiveGridProviding
+    private let arrangements: any ArrangementApplying
+    private let gridCycler: any GridCycling
     private let onClipboardCommand: () -> Void
 
     init(
@@ -27,6 +29,8 @@ final class HotKeyRegistrar {
         ultraSwitch: UltraSwitchService,
         translator: SelectionTranslator,
         grids: any ActiveGridProviding,
+        arrangements: any ArrangementApplying,
+        gridCycler: any GridCycling,
         onClipboardCommand: @escaping () -> Void
     ) {
         self.settings = settings
@@ -34,6 +38,8 @@ final class HotKeyRegistrar {
         self.ultraSwitch = ultraSwitch
         self.translator = translator
         self.grids = grids
+        self.arrangements = arrangements
+        self.gridCycler = gridCycler
         self.onClipboardCommand = onClipboardCommand
     }
 
@@ -60,6 +66,22 @@ final class HotKeyRegistrar {
             }
             guard !paused else { continue }
             register(command, shortcut: shortcut)
+        }
+        guard !paused else { return }
+        registerArrangements()
+    }
+
+    private func registerArrangements() {
+        let chosen = Self.arrangementHotKeys(
+            shortcuts: settings.arrangementShortcuts,
+            existing: arrangements.arrangementIDs,
+            commandShortcuts: WMCommand.allCases.compactMap { settings.shortcut(for: $0) },
+            windowManagerEnabled: settings.windowManagerEnabled
+        )
+        for (id, shortcut) in chosen {
+            hotKeys.register(shortcut, label: ShortcutOwner.arrangement(id).storageKey) { [weak self] in
+                MainActor.assumeIsolated { _ = self?.arrangements.apply(id) }
+            }
         }
     }
 
@@ -98,8 +120,27 @@ final class HotKeyRegistrar {
                 MainActor.assumeIsolated { self?.onClipboardCommand() }
             }
         case .nextGrid:
-            break
+            hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
+                MainActor.assumeIsolated { self?.gridCycler.advance() }
+            }
         }
+    }
+
+    /// Arrangement hotkeys to install, in a stable order. Skipped: a key whose arrangement is gone,
+    /// anything while the window manager is off, and a key a command already uses.
+    static func arrangementHotKeys(
+        shortcuts: [UUID: KeyboardShortcut],
+        existing: Set<UUID>,
+        commandShortcuts: [KeyboardShortcut],
+        windowManagerEnabled: Bool
+    ) -> [(UUID, KeyboardShortcut)] {
+        guard windowManagerEnabled else { return [] }
+        return shortcuts
+            .filter { id, shortcut in
+                existing.contains(id) && !commandShortcuts.contains { $0.collides(with: shortcut) }
+            }
+            .sorted { $0.key.uuidString < $1.key.uuidString }
+            .map { ($0.key, $0.value) }
     }
 
     /// Владелец хоткея команды. Оконным нужен Window Manager, хоткеям раскладки
