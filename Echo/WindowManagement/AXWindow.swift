@@ -19,7 +19,26 @@ enum AXWindow {
     /// Not exported by ApplicationServices as a constant.
     private static let fullScreenAttribute = "AXFullScreen"
 
+    /// Upper bound for one AX request to an app, so a hung app cannot stall the main thread for long.
+    static let messagingTimeout: Float = 1
+
     private static var primaryScreenHeight: CGFloat { NSScreen.screens.first?.frame.height ?? 0 }
+
+    // MARK: - Elements
+
+    /// Application element with the messaging timeout applied.
+    static func applicationElement(pid: pid_t) -> AXUIElement {
+        let element = AXUIElementCreateApplication(pid)
+        AXUIElementSetMessagingTimeout(element, messagingTimeout)
+        return element
+    }
+
+    /// Applies the messaging timeout to a window element and returns it.
+    @discardableResult
+    static func bounded(_ window: AXUIElement) -> AXUIElement {
+        AXUIElementSetMessagingTimeout(window, messagingTimeout)
+        return window
+    }
 
     // MARK: - Reads
 
@@ -78,7 +97,7 @@ enum AXWindow {
               let raw = value, CFGetTypeID(raw) == CFArrayGetTypeID(),
               let items = raw as? [AnyObject]
         else { return [] }
-        return items.compactMap { element(from: $0) }
+        return items.compactMap { element(from: $0).map(bounded) }
     }
 
     static func focusedWindow(of app: AXUIElement) -> AXUIElement? {
