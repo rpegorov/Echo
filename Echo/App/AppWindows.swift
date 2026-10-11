@@ -17,6 +17,8 @@ final class AppWindows: NSObject, NSWindowDelegate {
     private let environment: AppEnvironment
     private let externalApps = ExternalAppTracker()
 
+    private var gridEditor: GridEditorWindowController?
+
     private(set) var detailWindow: NSWindow?
     private(set) var clipboardWindow: NSWindow?
     private(set) var preferencesWindow: NSWindow?
@@ -133,6 +135,8 @@ final class AppWindows: NSObject, NSWindowDelegate {
             settings: environment.settings,
             clipboard: environment.clipboard,
             windowManager: environment.windowManager,
+            gridStore: environment.gridStore,
+            onOpenGridEditor: { [weak self] in self?.openGridEditor($0) },
             ultraSwitch: environment.ultraSwitch,
             updater: environment.updater,
             metrics: environment.metrics
@@ -152,6 +156,18 @@ final class AppWindows: NSObject, NSWindowDelegate {
         window.makeKeyAndOrderFront(nil)
     }
 
+    // MARK: - Grid editor
+
+    func openGridEditor(_ request: GridEditorRequest) {
+        let controller = gridEditor ?? GridEditorWindowController(
+            store: environment.gridStore,
+            settings: environment.settings,
+            localizer: environment.localizer
+        )
+        gridEditor = controller
+        controller.open(request)
+    }
+
     // MARK: - Language change
 
     /// Re-titles already open windows after the language changed on the fly.
@@ -159,6 +175,7 @@ final class AppWindows: NSObject, NSWindowDelegate {
         detailWindow?.title = localizer.t(SystemKey.windowTitleDetail)
         clipboardWindow?.title = localizer.t(SystemKey.windowTitleClipboard)
         preferencesWindow?.title = localizer.t(SystemKey.windowTitlePreferences)
+        gridEditor?.applyTitle()
     }
 
     // MARK: - NSWindowDelegate

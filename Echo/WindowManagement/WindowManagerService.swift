@@ -41,18 +41,6 @@ final class WindowManagerService: ObservableObject {
         SystemTiling(defaults: UserDefaults(suiteName: Self.systemWindowManagerDomain))
     }
 
-    /// Включён ли системный тайлинг перетаскиванием к краям (конфликтует с нашим).
-    func isSystemEdgeTilingEnabled() -> Bool {
-        systemTiling.isEnabled
-    }
-
-    /// Отключает системный тайлинг к краям и перезапускает WindowManager,
-    /// чтобы изменение вступило в силу.
-    func disableSystemEdgeTiling() {
-        systemTiling.disable()
-        restartSystemWindowManager()
-    }
-
     /// Which macOS drag-tiling switches collide with Echo's grid drag mode.
     func systemTilingConflict(gridModifier: GridDragModifier) -> TilingConflict {
         systemTiling.conflict(gridModifier: gridModifier)
