@@ -50,6 +50,25 @@ final class WindowManagerService: ObservableObject {
     /// чтобы изменение вступило в силу.
     func disableSystemEdgeTiling() {
         systemTiling.disable()
+        restartSystemWindowManager()
+    }
+
+    /// Which macOS drag-tiling switches collide with Echo's grid drag mode.
+    func systemTilingConflict(gridModifier: GridDragModifier) -> TilingConflict {
+        systemTiling.conflict(gridModifier: gridModifier)
+    }
+
+    /// Writes false to the conflicting switches, then restarts WindowManager once
+    /// so both changes take effect together.
+    func resolveSystemTilingConflict(_ conflict: TilingConflict) {
+        if conflict.edge { systemTiling.disable() }
+        if conflict.optionDrag { systemTiling.disableOptionDrag() }
+        guard conflict.exists else { return }
+        restartSystemWindowManager()
+    }
+
+    /// WindowManager caches the switches at launch, so it must be relaunched after a write.
+    private func restartSystemWindowManager() {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/killall")
         task.arguments = ["WindowManager"]
