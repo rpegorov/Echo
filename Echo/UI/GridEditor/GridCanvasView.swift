@@ -99,6 +99,8 @@ struct GridCanvasView: View {
     @EnvironmentObject private var loc: Localizer
     /// True from the first event of a press until it ends, so a press is classified once.
     @State private var pressBegan = false
+    /// Tracks the press itself; SwiftUI resets it to false when the gesture ends or is cancelled.
+    @GestureState private var isPressing = false
     @StateObject private var optionWatcher = OptionKeyWatcher()
 
     var body: some View {
@@ -135,9 +137,13 @@ struct GridCanvasView: View {
         .onChange(of: (model.activeEdge ?? model.hoveredEdge)?.axis) { _, axis in
             EdgeCursor.show(for: axis)
         }
+        .onChange(of: isPressing) { _, pressing in
+            if !pressing { abandonPress() }
+        }
         .onDisappear {
             EdgeCursor.show(for: nil)
             optionWatcher.stop()
+            abandonPress()
         }
     }
 
@@ -260,8 +266,16 @@ struct GridCanvasView: View {
         }
     }
 
+    /// Ends what a press left behind when SwiftUI cancelled the gesture without `onEnded`.
+    private func abandonPress() {
+        guard pressBegan else { return }
+        pressBegan = false
+        model.endDrag()
+    }
+
     private func pressGesture(in size: CGSize) -> some Gesture {
         DragGesture(minimumDistance: 0)
+            .updating($isPressing) { _, pressing, _ in pressing = true }
             .onChanged { value in
                 if !pressBegan {
                     pressBegan = true
