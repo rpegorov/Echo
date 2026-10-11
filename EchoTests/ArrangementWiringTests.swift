@@ -57,7 +57,7 @@ struct ArrangementWiringTests {
         }
     }
 
-    @Test("next grid has no shortcut until one is bound, and then it is registered exactly when the window manager is on")
+    @Test("next grid registers once bound, and only while the window manager is on")
     func nextGridHotKeyFollowsBindingAndWindowManagerFlag() {
         withScratchDefaults { defaults in
             let settings = makeEnvironment(defaults).settings
@@ -73,7 +73,7 @@ struct ArrangementWiringTests {
         }
     }
 
-    @Test("a shortcut bound to a saved arrangement reaches the registrar's hotkey list only while the window manager is on")
+    @Test("an arrangement shortcut reaches the hotkey list only while the window manager is on")
     func arrangementShortcutIsRegisteredUnderTheWindowManagerFlag() {
         let saved = fixtureArrangement(id: fixtureArrangementID)
         let document = GridDocument(grids: [], activeByDisplay: [:], arrangements: [saved], autoRules: nil)
