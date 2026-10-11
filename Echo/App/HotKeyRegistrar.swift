@@ -76,7 +76,8 @@ final class HotKeyRegistrar {
                     self.windowManager.perform(
                         command,
                         gap: CGFloat(self.settings.windowGap),
-                        cycling: self.settings.layoutCyclingEnabled
+                        cycling: self.settings.layoutCyclingEnabled,
+                        grids: self.grids
                     )
                 }
             }
