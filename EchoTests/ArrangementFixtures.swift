@@ -45,9 +45,10 @@ let v2ReferenceJSON = """
 """
 
 func fixtureSlot(
-    _ display: String = "uuid:AAAA", _ x: Double = 0, _ y: Double = 0, _ width: Double = 0.5, _ height: Double = 1
+    _ display: String = "uuid:AAAA", _ originX: Double = 0, _ originY: Double = 0,
+    _ width: Double = 0.5, _ height: Double = 1
 ) -> ZoneSlot {
-    ZoneSlot(display: display, rect: UnitRect(x: x, y: y, width: width, height: height))
+    ZoneSlot(display: display, rect: UnitRect(x: originX, y: originY, width: width, height: height))
 }
 
 func fixtureWindow(
@@ -87,8 +88,12 @@ func v2ReferenceDocument() -> GridDocument {
                 id: fixtureArrangementID,
                 name: "Review",
                 windows: [
-                    fixtureWindow(id: fixtureTitledWindowID, titleHint: "build", slot: fixtureSlot("uuid:AAAA", 0, 0, 0.5, 1)),
-                    fixtureWindow(id: fixtureUntitledWindowID, titleHint: nil, slot: fixtureSlot("edid:1-2-3", 0.5, 0, 0.5, 0.5))
+                    fixtureWindow(
+                        id: fixtureTitledWindowID, titleHint: "build", slot: fixtureSlot("uuid:AAAA", 0, 0, 0.5, 1)
+                    ),
+                    fixtureWindow(
+                        id: fixtureUntitledWindowID, titleHint: nil, slot: fixtureSlot("edid:1-2-3", 0.5, 0, 0.5, 0.5)
+                    )
                 ],
                 displays: [
                     "uuid:AAAA": SavedDisplay(name: "Studio Display", aspect: 1.6),

@@ -206,7 +206,8 @@ struct CaptureWindowsTests {
         let main = snapshotDisplay(key: "uuid:AAAA", name: "Studio Display")
         let side = snapshotDisplay(
             key: "edid:1-2-3", name: "Laptop", frame: CGRect(x: -1440, y: 0, width: 1440, height: 900))
-        let result = capture([snapshotWindow(frame: leftHalf), snapshotWindow(ordinal: 1, frame: rightHalf)], on: [main, side])
+        let result = capture(
+            [snapshotWindow(frame: leftHalf), snapshotWindow(ordinal: 1, frame: rightHalf)], on: [main, side])
         #expect(Set(result.displays.keys) == ["uuid:AAAA"])
         #expect(result.displays["uuid:AAAA"] == SavedDisplay(name: "Studio Display", aspect: 1000.0 / 800.0))
     }
@@ -217,7 +218,8 @@ struct CaptureWindowsTests {
         let laptopFrame = CGRect(x: -1440, y: 0, width: 1440, height: 900)
         let side = snapshotDisplay(key: "edid:1-2-3", name: "Laptop", frame: laptopFrame)
         let onLaptop = CGRect(x: -700, y: 100, width: 300, height: 300)
-        let result = capture([snapshotWindow(frame: leftHalf), snapshotWindow(ordinal: 1, frame: onLaptop)], on: [main, side])
+        let result = capture(
+            [snapshotWindow(frame: leftHalf), snapshotWindow(ordinal: 1, frame: onLaptop)], on: [main, side])
         #expect(result.windows.map(\.slot.display) == ["uuid:AAAA", "edid:1-2-3"])
         #expect(result.windows[1].slot.rect == halves[1])
         #expect(result.displays == [
@@ -229,7 +231,8 @@ struct CaptureWindowsTests {
     @Test("a window between two displays belongs to the one it overlaps most")
     func straddlingWindowTakesLargerDisplay() {
         let main = snapshotDisplay(key: "uuid:AAAA")
-        let side = snapshotDisplay(key: "edid:1-2-3", name: "Laptop", frame: CGRect(x: -1000, y: 0, width: 1000, height: 800))
+        let side = snapshotDisplay(
+            key: "edid:1-2-3", name: "Laptop", frame: CGRect(x: -1000, y: 0, width: 1000, height: 800))
         let window = snapshotWindow(frame: CGRect(x: -100, y: 100, width: 400, height: 300))
         let result = capture([window], on: [main, side])
         #expect(result.windows.map(\.slot.display) == ["uuid:AAAA"])

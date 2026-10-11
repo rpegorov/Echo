@@ -100,9 +100,11 @@ final class ArrangementEditorWindowController: NSObject, NSWindowDelegate {
         let canvasHeight = DS.ArrangementEditor.initialCanvasHeight
         let gaps = DS.ArrangementEditor.canvasSpacing * CGFloat(max(displays.count - 1, 0))
         let rowWidth = displays.reduce(gaps) { $0 + canvasHeight * $1.aspect }
-        let padding = DS.ArrangementEditor.contentPadding * 2
+        let padding = DS.ArrangementEditor.contentPaddingBothSides
         return NSSize(
-            width: min(max(rowWidth + padding, DS.ArrangementEditor.windowMinSize.width), DS.ArrangementEditor.initialMaxWidth),
+            width: min(
+                max(rowWidth + padding, DS.ArrangementEditor.windowMinSize.width),
+                DS.ArrangementEditor.initialMaxWidth),
             height: max(canvasHeight + DS.ArrangementEditor.chromeHeight, DS.ArrangementEditor.windowMinSize.height)
         )
     }

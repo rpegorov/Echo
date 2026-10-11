@@ -53,14 +53,18 @@ struct ArrangementSlotLabelTests {
     @Test func slotWithinToleranceStillReadsAsTheZone() {
         let nudge = GridEditing.tolerance / 2
         let zone = zones[1]
-        let rect = UnitRect(x: zone.x + nudge, y: zone.y - nudge, width: zone.width - nudge, height: zone.height + nudge)
-        #expect(ArrangementPresentation.label(for: ZoneSlot(display: "uuid:AAAA", rect: rect), zones: zones) == .zone(2))
+        let rect = UnitRect(
+            x: zone.x + nudge, y: zone.y - nudge, width: zone.width - nudge, height: zone.height + nudge
+        )
+        #expect(ArrangementPresentation.label(for: ZoneSlot(display: "uuid:AAAA", rect: rect), zones: zones)
+            == .zone(2))
     }
 
     @Test func slotBeyondToleranceIsACustomArea() {
         let zone = zones[1]
         let rect = UnitRect(x: zone.x + GridEditing.tolerance * 10, y: zone.y, width: zone.width, height: zone.height)
-        #expect(ArrangementPresentation.label(for: ZoneSlot(display: "uuid:AAAA", rect: rect), zones: zones) == .customArea)
+        #expect(ArrangementPresentation.label(for: ZoneSlot(display: "uuid:AAAA", rect: rect), zones: zones)
+            == .customArea)
     }
 
     @Test func slotMatchingNoZoneOrAnEmptyGridIsACustomArea() {
@@ -76,7 +80,9 @@ struct ArrangementSlotLabelTests {
             UnitRect(x: zone.x, y: zone.y + 0.1, width: zone.width, height: zone.height),
             UnitRect(x: zone.x, y: zone.y, width: zone.width * 2, height: zone.height)
         ] {
-            #expect(ArrangementPresentation.label(for: ZoneSlot(display: "uuid:AAAA", rect: rect), zones: zones) == .customArea)
+            #expect(
+                ArrangementPresentation.label(for: ZoneSlot(display: "uuid:AAAA", rect: rect), zones: zones)
+                    == .customArea)
         }
     }
 }
@@ -135,7 +141,8 @@ struct ArrangementThumbnailSizeTests {
 
     @Test func degenerateVisibleAreaUsesTheFallbackProportions() {
         for visible in [CGSize.zero, CGSize(width: 0, height: 900), CGSize(width: 1600, height: 0)] {
-            let size = ArrangementPresentation.fittedSize(visible: visible, in: CGSize(width: 160, height: 160), fallback: fallback)
+            let size = ArrangementPresentation.fittedSize(
+                visible: visible, in: CGSize(width: 160, height: 160), fallback: fallback)
             #expect(abs(size.width - 160) < 1e-9)
             #expect(abs(size.height - 100) < 1e-9)
         }
@@ -143,7 +150,9 @@ struct ArrangementThumbnailSizeTests {
 
     @Test func resultFitsTheBoundsAndKeepsTheProportions() {
         let bounds = CGSize(width: 120, height: 80)
-        for visible in [CGSize(width: 1440, height: 900), CGSize(width: 3440, height: 1440), CGSize(width: 800, height: 1200)] {
+        for visible in [
+            CGSize(width: 1440, height: 900), CGSize(width: 3440, height: 1440), CGSize(width: 800, height: 1200)
+        ] {
             let size = ArrangementPresentation.fittedSize(visible: visible, in: bounds, fallback: fallback)
             #expect(size.width <= bounds.width + 1e-9 && size.height <= bounds.height + 1e-9)
             #expect(abs(size.width / size.height - visible.width / visible.height) < 1e-9)

@@ -48,7 +48,8 @@ extension DS {
         // MARK: - Grid flash
 
         /// How long the grid stays on screen before it hides itself.
-        static let flashDuration: Duration = .milliseconds(1400)
+        static let flashDurationMilliseconds = 1400
+        static let flashDuration = Duration.milliseconds(flashDurationMilliseconds)
         static let flashFillOpacity: Double = 0.16
         static let flashStrokeOpacity: Double = 0.7
         static let flashStrokeWidth: CGFloat = 2

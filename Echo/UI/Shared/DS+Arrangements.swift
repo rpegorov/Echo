@@ -2,6 +2,8 @@
 //  DS+Arrangements.swift
 //  Echo
 //
+// swiftlint:disable no_magic_numbers
+// lint-allow: no_magic_numbers design tokens are the named constants
 
 import SwiftUI
 
@@ -70,5 +72,19 @@ extension DS {
         static let pickerZoneFillSelected = DS.accent.opacity(0.45)
         static let pickerZoneStroke = DS.accent.opacity(0.5)
         static let pickerZoneStrokeSelected = DS.accent
+
+        // MARK: - Popover menu row
+
+        static let menuRowTitleFont = Font.system(size: 12)
+        static let menuRowCountFont = Font.system(size: 11, design: .rounded)
+        static let menuRowChevronFont = Font.system(size: 9, weight: .semibold)
+        static let menuRowVerticalPadding: CGFloat = 5
+        static let menuRowHoverInset: CGFloat = 8
+        static let menuReportSpacing: CGFloat = 2
+        static let menuReportFont = Font.system(size: 10)
+        static let menuReportBottomPadding: CGFloat = 5
+        /// How long the outcome of an apply stays under the row.
+        static let menuReportDuration = Duration.seconds(10)
     }
 }
+// swiftlint:enable no_magic_numbers

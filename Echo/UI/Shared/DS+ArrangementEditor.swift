@@ -2,6 +2,8 @@
 //  DS+ArrangementEditor.swift
 //  Echo
 //
+// swiftlint:disable no_magic_numbers
+// lint-allow: no_magic_numbers design tokens are the named constants
 
 import SwiftUI
 
@@ -15,6 +17,8 @@ extension DS {
         static let chromeHeight: CGFloat = 190
 
         static let contentPadding: CGFloat = DS.gutter
+        /// Padding applies on both sides of the row of canvases.
+        static let contentPaddingBothSides: CGFloat = contentPadding * 2
         static let sectionSpacing: CGFloat = 12
         static let toolbarSpacing: CGFloat = 12
         static let buttonSpacing: CGFloat = 10
@@ -76,3 +80,4 @@ extension DS {
         static let messageColor = Color.orange
     }
 }
+// swiftlint:enable no_magic_numbers

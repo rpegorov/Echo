@@ -67,13 +67,16 @@ struct GridStoreArrangementTests {
     }
 
     @Test("one invalid slot rejects the whole arrangement before storage is touched",
-          arguments: [(1.2, 0.0, 0.5, 1.0), (0.0, 0.0, 0.0, 1.0), (0.0, 0.0, 1.0, 0.0), (-0.2, 0.0, 0.5, 1.0), (0.6, 0.0, 0.6, 1.0)])
-    func invalidSlotRejectsArrangement(x: Double, y: Double, width: Double, height: Double) {
+          arguments: [
+              (1.2, 0.0, 0.5, 1.0), (0.0, 0.0, 0.0, 1.0), (0.0, 0.0, 1.0, 0.0),
+              (-0.2, 0.0, 0.5, 1.0), (0.6, 0.0, 0.6, 1.0)
+          ])
+    func invalidSlotRejectsArrangement(originX: Double, originY: Double, width: Double, height: Double) {
         let storage = InMemoryGridStorage(document: populated)
         let store = GridStore(storage: storage)
         let broken = fixtureArrangement(windows: [
             fixtureWindow(slot: fixtureSlot("uuid:AAAA", 0, 0, 0.5, 1)),
-            fixtureWindow(slot: fixtureSlot("uuid:AAAA", x, y, width, height))
+            fixtureWindow(slot: fixtureSlot("uuid:AAAA", originX, originY, width, height))
         ])
 
         #expect(throws: GridStorageError.invalidSlot) { try store.saveArrangement(broken) }
@@ -122,10 +125,11 @@ struct GridStoreArrangementTests {
 
     @Test("a rule with an invalid slot is rejected before storage is touched",
           arguments: [(1.2, 0.0, 0.5, 1.0), (0.0, 0.0, 0.0, 1.0)])
-    func invalidSlotRejectsRule(x: Double, y: Double, width: Double, height: Double) {
+    func invalidSlotRejectsRule(originX: Double, originY: Double, width: Double, height: Double) {
         let storage = InMemoryGridStorage(document: populated)
         let store = GridStore(storage: storage)
-        let broken = fixtureRule(bundleID: "com.apple.Notes", slot: fixtureSlot("uuid:AAAA", x, y, width, height))
+        let slot = fixtureSlot("uuid:AAAA", originX, originY, width, height)
+        let broken = fixtureRule(bundleID: "com.apple.Notes", slot: slot)
 
         #expect(throws: GridStorageError.invalidSlot) { try store.saveRule(broken) }
 

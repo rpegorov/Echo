@@ -5,7 +5,8 @@ import Testing
 
 struct ArrangementCanvasHeightTests {
     private func height(
-        _ available: CGSize, _ aspects: [Double], spacing: CGFloat = 0, caption: CGFloat = 0, captionSpacing: CGFloat = 0
+        _ available: CGSize, _ aspects: [Double],
+        spacing: CGFloat = 0, caption: CGFloat = 0, captionSpacing: CGFloat = 0
     ) -> CGFloat {
         ArrangementEditorLayout.canvasHeight(
             available: available, aspects: aspects, spacing: spacing,
@@ -79,16 +80,17 @@ struct ArrangementSlotGroupTests {
     @Test func slotsEqualWithinToleranceMergeIntoOneGroup() {
         let zone = zones[2]
         let nudged = UnitRect(x: zone.x + GridEditing.tolerance / 2, y: zone.y, width: zone.width, height: zone.height)
-        let a = window("uuid:AAAA", zone)
-        let b = window("uuid:AAAA", nudged)
-        let groups = ArrangementEditorLayout.groups(of: [a, b], on: "uuid:AAAA", zones: zones)
+        let first = window("uuid:AAAA", zone)
+        let second = window("uuid:AAAA", nudged)
+        let groups = ArrangementEditorLayout.groups(of: [first, second], on: "uuid:AAAA", zones: zones)
         #expect(groups.count == 1)
-        #expect(groups.first?.windowIDs == [a.id, b.id])
+        #expect(groups.first?.windowIDs == [first.id, second.id])
     }
 
     @Test func slotsDifferingBeyondToleranceStaySeparate() {
         let zone = zones[2]
-        let shifted = UnitRect(x: zone.x + GridEditing.tolerance * 10, y: zone.y, width: zone.width, height: zone.height)
+        let shifted = UnitRect(
+            x: zone.x + GridEditing.tolerance * 10, y: zone.y, width: zone.width, height: zone.height)
         let groups = ArrangementEditorLayout.groups(
             of: [window("uuid:AAAA", zone), window("uuid:AAAA", shifted)], on: "uuid:AAAA", zones: zones)
         #expect(groups.count == 2)
@@ -183,7 +185,9 @@ struct ArrangementIconGridTests {
 struct ArrangementEditorDisplayResolveTests {
     private let zones = GridTemplate.twoColumns.zones
 
-    private func snapshot(_ key: String?, _ name: String, width: Double = 1600, height: Double = 1000) -> DisplaySnapshot {
+    private func snapshot(
+        _ key: String?, _ name: String, width: Double = 1600, height: Double = 1000
+    ) -> DisplaySnapshot {
         let frame = CGRect(x: 0, y: 0, width: width, height: height)
         return DisplaySnapshot(
             key: key.map { DisplayKey(rawValue: $0) }, name: name, frame: frame, visibleFrame: frame, zones: zones)
@@ -194,7 +198,8 @@ struct ArrangementEditorDisplayResolveTests {
         zonesForDisconnected: @escaping (String, Double) -> [UnitRect] = { _, _ in [] }
     ) -> (shown: [ArrangementEditorDisplay], targets: [ArrangementEditorDisplay]) {
         ArrangementEditorDisplay.resolve(
-            saved: saved, connected: connected, disconnectedReferenceWidth: 1440, zonesForDisconnected: zonesForDisconnected)
+            saved: saved, connected: connected,
+            disconnectedReferenceWidth: 1440, zonesForDisconnected: zonesForDisconnected)
     }
 
     @Test func shownAreTheSavedDisplaysAndTargetsAddEveryKeyedConnectedOne() {

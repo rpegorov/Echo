@@ -32,6 +32,9 @@ struct ArrangementIconGrid: Equatable {
 /// Pure geometry of the arrangement editor.
 enum ArrangementEditorLayout {
 
+    /// Divisor that halves a length, so centring geometry carries no bare literal.
+    private static let half: CGFloat = 2
+
     /// Height of every canvas: all displays share one height and sit in a row, so the row must fit the width
     /// and each canvas its caption within the height.
     static func canvasHeight(
@@ -53,7 +56,9 @@ enum ArrangementEditorLayout {
     }
 
     /// Windows placed on `displayKey`, grouped by slot in order of first appearance.
-    static func groups(of windows: [ArrangedWindow], on displayKey: String, zones: [UnitRect]) -> [ArrangementSlotGroup] {
+    static func groups(
+        of windows: [ArrangedWindow], on displayKey: String, zones: [UnitRect]
+    ) -> [ArrangementSlotGroup] {
         var groups: [ArrangementSlotGroup] = []
         for window in windows where window.slot.display == displayKey {
             if let index = groups.firstIndex(where: { sameArea($0.rect, window.slot.rect) }) {
@@ -63,7 +68,8 @@ enum ArrangementEditorLayout {
                 )
             } else {
                 let zoneIndex = zones.firstIndex { sameArea($0, window.slot.rect) }
-                groups.append(ArrangementSlotGroup(rect: window.slot.rect, zoneIndex: zoneIndex, windowIDs: [window.id]))
+                groups.append(
+                    ArrangementSlotGroup(rect: window.slot.rect, zoneIndex: zoneIndex, windowIDs: [window.id]))
             }
         }
         return groups
@@ -106,10 +112,10 @@ enum ArrangementEditorLayout {
         // The last row is centred on its own so a short row does not hang to the left.
         let rowCells = row == rows - 1 ? grid.cellCount - row * columns : columns
         let rowWidth = CGFloat(rowCells) * grid.iconSize + CGFloat(max(rowCells - 1, 0)) * spacing
-        let originX = area.midX - blockWidth / 2 + (blockWidth - rowWidth) / 2
+        let originX = area.midX - blockWidth / half + (blockWidth - rowWidth) / half
         return CGPoint(
             x: originX + CGFloat(index % columns) * (grid.iconSize + spacing),
-            y: area.midY - blockHeight / 2 + CGFloat(row) * (grid.iconSize + spacing)
+            y: area.midY - blockHeight / half + CGFloat(row) * (grid.iconSize + spacing)
         )
     }
 }
