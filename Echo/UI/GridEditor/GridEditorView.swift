@@ -95,7 +95,7 @@ struct GridEditorView: View {
             return loc.t(InputKey.gridSaveFailedMessage, reason)
         case .invalidGrid:
             return loc.t(InputKey.gridInvalidMessage)
-        case .locationUnavailable, .unreadable, .newerSchema, .readOnly:
+        case .locationUnavailable, .unreadable, .newerSchema, .readOnly, .invalidSlot:
             return loc.t(InputKey.gridUnavailableMessage)
         }
     }

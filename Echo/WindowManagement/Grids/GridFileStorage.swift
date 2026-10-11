@@ -17,6 +17,8 @@ enum GridStorageError: Error, Equatable {
     case writeFailed(String)
     /// The grid's zones overlap, leave gaps or break the canonical order; nothing was written.
     case invalidGrid
+    /// A slot lies outside the unit square or has no area; nothing was written.
+    case invalidSlot
 }
 
 /// Disk side of `GridStore`. `load` returns `.empty` when nothing was saved yet.
@@ -28,7 +30,7 @@ protocol GridDocumentStoring {
 
 /// `window-zones.json` in the app's Application Support folder, replaced atomically on every save.
 struct GridFileStorage: GridDocumentStoring {
-    static let schemaVersion = 1
+    static let schemaVersion = 2
     static let fileName = "window-zones.json"
     static let backupPrefix = "window-zones.corrupt-"
     static let backupSuffix = ".json"

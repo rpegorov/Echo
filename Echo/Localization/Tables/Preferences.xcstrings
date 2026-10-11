@@ -986,6 +986,23 @@
           }
         }
       }
+    },
+    "sectionArrangements" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arrangements"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Расстановки"
+          }
+        }
+      }
     }
   },
   "version" : "1.0"

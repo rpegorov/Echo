@@ -77,6 +77,8 @@ final class SnapOverlayController: SnapOverlayPresenting {
         }
     }
 
+    func flash(_ grid: GridFlash) {}
+
     func hide() {
         guard currentPreview != nil else { return }
         currentPreview = nil

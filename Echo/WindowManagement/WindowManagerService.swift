@@ -180,6 +180,12 @@ final class WindowManagerService: ObservableObject {
         AXWindow.writePosition(origin, of: actual.size, to: window)
     }
 
+    /// Index in `NSScreen.screens` of the display the focused window is on; nil without a focused window.
+    func focusedDisplayIndex() -> Int? {
+        guard hasPermission(), let window = focusedWindow(), let current = frame(of: window) else { return nil }
+        return displayIndex(containing: current)
+    }
+
     // MARK: - Screens
 
     /// Largest size difference, in points, still treated as the requested size.
@@ -206,3 +212,5 @@ final class WindowManagerService: ObservableObject {
         return AXWindow.focusedWindow(of: AXUIElementCreateApplication(app.processIdentifier))
     }
 }
+
+extension WindowManagerService: WindowFrameSetting {}

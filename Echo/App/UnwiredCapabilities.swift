@@ -8,5 +8,14 @@ import Foundation
 /// Capabilities that exist in code but have no caller yet — kept visible so an in-progress
 /// wave never silently ships dead code. Cleared by the integration task once wired.
 enum UnwiredCapabilities {
-    static let items: [String] = []
+    static let items: [String] = [
+        "arrangement capture and apply",
+        "arrangement hotkeys",
+        "arrangement editor window",
+        "arrangements settings page",
+        "arrangements popover menu",
+        "auto placement rules",
+        "next grid command",
+        "grid flash overlay"
+    ]
 }

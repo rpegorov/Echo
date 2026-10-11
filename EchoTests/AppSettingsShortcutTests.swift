@@ -17,10 +17,10 @@ struct AppSettingsShortcutTests {
 
             let displaced = settings.setShortcut(leftArrow, for: .rightHalf)
 
-            #expect(displaced == .leftHalf)
+            #expect(displaced == .command(.leftHalf))
             #expect(settings.shortcut(for: .leftHalf) == nil)
             #expect(settings.shortcut(for: .rightHalf) == leftArrow)
-            #expect(settings.command(using: leftArrow) == .rightHalf)
+            #expect(settings.owner(using: leftArrow) == .command(.rightHalf))
         }
     }
 
@@ -33,7 +33,7 @@ struct AppSettingsShortcutTests {
 
             let displaced = settings.setShortcut(recorded, for: .topHalf)
 
-            #expect(displaced == .leftHalf)
+            #expect(displaced == .command(.leftHalf))
             #expect(settings.shortcut(for: .leftHalf) == nil)
         }
     }
@@ -115,22 +115,22 @@ struct AppSettingsShortcutTests {
             var calls = 0
             settings.onChange = { calls += 1 }
 
-            settings.setRecordingCommand(nil)
+            settings.setRecordingOwner(nil)
             #expect(calls == 0)
             #expect(!settings.isRecordingShortcut)
 
-            settings.setRecordingCommand(.leftHalf)
+            settings.setRecordingOwner(.command(.leftHalf))
             #expect(calls == 1)
             #expect(settings.isRecordingShortcut)
-            #expect(settings.recordingCommand == .leftHalf)
+            #expect(settings.recordingOwner == .command(.leftHalf))
 
-            settings.setRecordingCommand(.leftHalf)
+            settings.setRecordingOwner(.command(.leftHalf))
             #expect(calls == 1)
 
-            settings.setRecordingCommand(nil)
+            settings.setRecordingOwner(nil)
             #expect(calls == 2)
             #expect(!settings.isRecordingShortcut)
-            #expect(settings.recordingCommand == nil)
+            #expect(settings.recordingOwner == nil)
         }
     }
 
@@ -141,10 +141,10 @@ struct AppSettingsShortcutTests {
             var calls = 0
             settings.onChange = { calls += 1 }
 
-            settings.setRecordingCommand(.leftHalf)
-            settings.setRecordingCommand(.rightHalf)
+            settings.setRecordingOwner(.command(.leftHalf))
+            settings.setRecordingOwner(.command(.rightHalf))
 
-            #expect(settings.recordingCommand == .rightHalf)
+            #expect(settings.recordingOwner == .command(.rightHalf))
             #expect(calls == 2)
         }
     }
@@ -153,11 +153,11 @@ struct AppSettingsShortcutTests {
     func recordingIsNotPersisted() {
         withScratchDefaults { defaults in
             let settings = AppSettings(defaults: defaults)
-            settings.setRecordingCommand(.leftHalf)
+            settings.setRecordingOwner(.command(.leftHalf))
 
             let restarted = AppSettings(defaults: defaults)
 
-            #expect(restarted.recordingCommand == nil)
+            #expect(restarted.recordingOwner == nil)
         }
     }
 

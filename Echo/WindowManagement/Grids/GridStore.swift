@@ -72,6 +72,28 @@ final class GridStore: ObservableObject, ActiveGridProviding {
         try commit { $0.setActive(ref, for: display) }
     }
 
+    func saveArrangement(_ arrangement: Arrangement) throws(GridStorageError) {
+        guard arrangement.windows.allSatisfy({ $0.slot.isValid }) else { throw .invalidSlot }
+        try commit { $0.saveArrangement(arrangement) }
+    }
+
+    func deleteArrangement(_ id: UUID) throws(GridStorageError) {
+        try commit { $0.deleteArrangement(id) }
+    }
+
+    func saveRule(_ rule: AutoRule) throws(GridStorageError) {
+        guard rule.slot.isValid else { throw .invalidSlot }
+        try commit { $0.saveRule(rule) }
+    }
+
+    func deleteRule(_ id: UUID) throws(GridStorageError) {
+        try commit { $0.deleteRule(id) }
+    }
+
+    func setRuleEnabled(_ id: UUID, _ isEnabled: Bool) throws(GridStorageError) {
+        try commit { $0.setRuleEnabled(id, isEnabled) }
+    }
+
     private func commit(_ change: (inout GridDocument) -> Void) throws(GridStorageError) {
         guard !isReadOnly else { throw .readOnly }
         var next = document
