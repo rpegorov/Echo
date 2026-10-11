@@ -148,10 +148,10 @@ final class WindowManagerService: ObservableObject {
         let result = AXUIElementCopyElementAtPosition(system, Float(axPoint.x), Float(axPoint.y), &element)
         guard result == .success, let el = element else { return nil }
 
-        if role(of: el) == (kAXWindowRole as String) { return el }
+        if AXWindow.role(of: el) == (kAXWindowRole as String) { return el }
         var windowValue: CFTypeRef?
         if AXUIElementCopyAttributeValue(el, kAXWindowAttribute as CFString, &windowValue) == .success,
-           let window = windowValue.flatMap(Self.element(from:)) {
+           let window = windowValue.flatMap(AXWindow.element(from:)) {
             return window
         }
         return focusedWindow()
@@ -159,32 +159,25 @@ final class WindowManagerService: ObservableObject {
 
     /// Текущая позиция окна (AX-координаты, origin сверху-слева).
     func position(of window: AXUIElement) -> CGPoint? {
-        var point = CGPoint.zero
-        return readValue(kAXPositionAttribute, of: window, type: .cgPoint, into: &point) ? point : nil
+        AXWindow.position(of: window)
     }
 
     /// Window frame in Cocoa coordinates (origin bottom-left).
     func frame(of window: AXUIElement) -> CGRect? {
-        var size = CGSize.zero
-        guard let origin = position(of: window),
-              readValue(kAXSizeAttribute, of: window, type: .cgSize, into: &size)
-        else { return nil }
-        return ScreenCoordinates.flipped(CGRect(origin: origin, size: size), primaryHeight: primaryScreenHeight)
+        AXWindow.frame(of: window)
     }
 
     /// Applies a Cocoa-coordinate frame. A window whose minimum size exceeds the target
     /// is moved back inside the visible area of the target's screen.
     func setFrame(_ frameCocoa: CGRect, for window: AXUIElement) {
         guard hasPermission() else { return }
-        writePosition(of: frameCocoa, to: window)
-        writeSize(frameCocoa.size, to: window)
-        writePosition(of: frameCocoa, to: window)
+        AXWindow.writeFrame(frameCocoa, to: window)
 
         guard let actual = frame(of: window), !Self.sizesMatch(actual.size, frameCocoa.size),
               let visible = displayIndex(containing: frameCocoa).map({ NSScreen.screens[$0].visibleFrame })
         else { return }
         let origin = WindowPlacement.clampedOrigin(target: frameCocoa, actualSize: actual.size, visible: visible)
-        writePosition(of: CGRect(origin: origin, size: actual.size), to: window)
+        AXWindow.writePosition(origin, of: actual.size, to: window)
     }
 
     // MARK: - Screens
@@ -208,59 +201,8 @@ final class WindowManagerService: ObservableObject {
 
     // MARK: - AX helpers
 
-    private func role(of element: AXUIElement) -> String? {
-        var value: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &value) == .success else { return nil }
-        return value as? String
-    }
-
     private func focusedWindow() -> AXUIElement? {
         guard let app = NSWorkspace.shared.frontmostApplication else { return nil }
-        let axApp = AXUIElementCreateApplication(app.processIdentifier)
-        var value: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(axApp, kAXFocusedWindowAttribute as CFString, &value) == .success
-        else { return nil }
-        return value.flatMap(Self.element(from:))
-    }
-
-    private static func element(from value: CFTypeRef) -> AXUIElement? {
-        guard CFGetTypeID(value) == AXUIElementGetTypeID() else { return nil }
-        return unsafeDowncast(value as AnyObject, to: AXUIElement.self)
-    }
-
-    private func readValue(
-        _ attribute: String,
-        of element: AXUIElement,
-        type: AXValueType,
-        into storage: UnsafeMutableRawPointer
-    ) -> Bool {
-        var value: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success,
-              let raw = value, CFGetTypeID(raw) == AXValueGetTypeID()
-        else { return false }
-        return AXValueGetValue(unsafeDowncast(raw as AnyObject, to: AXValue.self), type, storage)
-    }
-
-    private func writePosition(of frameCocoa: CGRect, to window: AXUIElement) {
-        var origin = ScreenCoordinates.flipped(frameCocoa, primaryHeight: primaryScreenHeight).origin
-        writeValue(&origin, type: .cgPoint, attribute: kAXPositionAttribute, to: window)
-    }
-
-    private func writeSize(_ size: CGSize, to window: AXUIElement) {
-        var mutable = size
-        writeValue(&mutable, type: .cgSize, attribute: kAXSizeAttribute, to: window)
-    }
-
-    private func writeValue(
-        _ storage: UnsafeRawPointer,
-        type: AXValueType,
-        attribute: String,
-        to window: AXUIElement
-    ) {
-        guard let axValue = AXValueCreate(type, storage) else { return }
-        let result = AXUIElementSetAttributeValue(window, attribute as CFString, axValue)
-        if result != .success {
-            Self.log.debug("AX write of \(attribute, privacy: .public) failed: \(result.rawValue)")
-        }
+        return AXWindow.focusedWindow(of: AXUIElementCreateApplication(app.processIdentifier))
     }
 }
