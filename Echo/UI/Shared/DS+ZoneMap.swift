@@ -90,6 +90,7 @@ extension DS {
             static let font = Font.system(size: 12, weight: .medium, design: .rounded)
             static let clearIconFont = Font.system(size: 11)
             static let conflictFont = Font.system(size: 11)
+            static let conflictIconColor = Color.orange
             static let fill = Color.primary.opacity(0.06)
             static let fillHover = Color.primary.opacity(0.11)
             static let fillRecording = DS.accent.opacity(0.18)
