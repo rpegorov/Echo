@@ -8,7 +8,8 @@ private let originalCommands: [WMCommand] = [
     .center, .maximize, .openClipboard, .switchLayout, .convertWord, .translateSelection
 ]
 private let addedCommands: [WMCommand] = [
-    .leftThird, .centerThird, .rightThird, .leftTwoThirds, .rightTwoThirds, .nextDisplay, .previousDisplay
+    .leftThird, .centerThird, .rightThird, .leftTwoThirds, .rightTwoThirds, .nextDisplay, .previousDisplay,
+    .zone1, .zone2, .zone3, .zone4, .zone5, .zone6, .zone7, .zone8, .zone9
 ]
 
 private func previousVersionSet() -> [String: KeyboardShortcut] {
@@ -57,7 +58,7 @@ struct ShortcutBackfillTests {
         #expect(result["rightTwoThirds"] == nil)
     }
 
-    @Test("the current version and newer ones are returned unchanged", arguments: [3, 4, 99])
+    @Test("the current version and newer ones are returned unchanged", arguments: [4, 5, 99])
     func currentVersionIsUntouched(version: Int) {
         let stored = previousVersionSet()
         #expect(ShortcutBackfill.apply(to: stored, storedVersion: version) == stored)

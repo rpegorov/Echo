@@ -68,7 +68,8 @@ struct WMCommandTests {
             let expected = !others.contains(command)
             #expect(command.isWindowCommand == expected, "\(command)")
             if command.isWindowCommand {
-                #expect((command.layout != nil) != (command.displayDirection != nil), "\(command)")
+                let kinds = [command.layout != nil, command.displayDirection != nil, command.zoneNumber != nil]
+                #expect(kinds.filter { $0 }.count == 1, "\(command)")
                 #expect(!command.isUltraSwitchCommand, "\(command)")
             }
         }
@@ -111,8 +112,10 @@ struct WMCommandTests {
                                   .nextDisplay, .previousDisplay]
         for command in original { #expect(command.introducedInShortcutsVersion == 1, "\(command)") }
         for command in ultra { #expect(command.introducedInShortcutsVersion == 2, "\(command)") }
+        let zones: [WMCommand] = [.zone1, .zone2, .zone3, .zone4, .zone5, .zone6, .zone7, .zone8, .zone9]
         for command in added { #expect(command.introducedInShortcutsVersion == 3, "\(command)") }
-        #expect(original.count + ultra.count + added.count == WMCommand.allCases.count)
+        for command in zones { #expect(command.introducedInShortcutsVersion == 4, "\(command)") }
+        #expect(original.count + ultra.count + added.count + zones.count == WMCommand.allCases.count)
     }
 
     @Test("a shortcut matches by physical key, whatever character the active layout produces",

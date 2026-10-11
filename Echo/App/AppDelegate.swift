@@ -25,7 +25,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     /// Инициализирует контроллер строки меню, кроме случая запуска под тестами
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard !isRunningAsTestHost else { return }
-        let environment = AppEnvironment()
+        let environment = AppEnvironment(gridStorage: AppEnvironment.liveGridStorage())
         self.environment = environment
         menuBarController = MenuBarController(environment: environment)
         isComposed = true

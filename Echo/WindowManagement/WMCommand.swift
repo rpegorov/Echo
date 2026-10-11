@@ -16,6 +16,7 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
     case nextDisplay, previousDisplay
     case openClipboard
     case switchLayout, convertWord, translateSelection
+    case zone1, zone2, zone3, zone4, zone5, zone6, zone7, zone8, zone9
 
     var id: String { rawValue }
 
@@ -48,6 +49,15 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
         case .switchLayout:    return .commandSwitchLayout
         case .convertWord:     return .commandConvertWord
         case .translateSelection: return .commandTranslateSelection
+        case .zone1:           return .commandZone1
+        case .zone2:           return .commandZone2
+        case .zone3:           return .commandZone3
+        case .zone4:           return .commandZone4
+        case .zone5:           return .commandZone5
+        case .zone6:           return .commandZone6
+        case .zone7:           return .commandZone7
+        case .zone8:           return .commandZone8
+        case .zone9:           return .commandZone9
         }
     }
 
@@ -70,7 +80,8 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
         case .center:         return .center
         case .maximize:       return .maximize
         case .nextDisplay, .previousDisplay,
-             .openClipboard, .switchLayout, .convertWord, .translateSelection: return nil
+             .openClipboard, .switchLayout, .convertWord, .translateSelection,
+             .zone1, .zone2, .zone3, .zone4, .zone5, .zone6, .zone7, .zone8, .zone9: return nil
         }
     }
 
@@ -82,7 +93,27 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
         }
     }
 
-    var isWindowCommand: Bool { layout != nil || displayDirection != nil }
+    /// 1-based zone of the active grid this command places the focused window into.
+    var zoneNumber: Int? {
+        switch self {
+        case .zone1: return 1
+        case .zone2: return 2
+        case .zone3: return 3
+        case .zone4: return 4
+        case .zone5: return 5
+        case .zone6: return 6
+        case .zone7: return 7
+        case .zone8: return 8
+        case .zone9: return 9
+        default:     return nil
+        }
+    }
+
+    static func zone(_ number: Int) -> WMCommand? {
+        allCases.first { $0.zoneNumber == number }
+    }
+
+    var isWindowCommand: Bool { layout != nil || displayDirection != nil || zoneNumber != nil }
 
     /// Shortcut-set version that first shipped this command; drives the default backfill.
     var introducedInShortcutsVersion: Int {
@@ -92,6 +123,8 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
         case .leftThird, .centerThird, .rightThird, .leftTwoThirds, .rightTwoThirds,
              .nextDisplay, .previousDisplay:
             return 3
+        case .zone1, .zone2, .zone3, .zone4, .zone5, .zone6, .zone7, .zone8, .zone9:
+            return 4
         default:
             return 1
         }
@@ -101,6 +134,7 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
     var defaultShortcut: KeyboardShortcut? {
         let wm: NSEvent.ModifierFlags = [.control, .command]
         let extended: NSEvent.ModifierFlags = [.control, .option, .command]
+        let zoneFlags: NSEvent.ModifierFlags = [.control, .option]
         switch self {
         case .leftHalf:      return KeyboardShortcut(keyCode: 123, flags: wm) // ←
         case .rightHalf:     return KeyboardShortcut(keyCode: 124, flags: wm) // →
@@ -123,6 +157,15 @@ enum WMCommand: String, CaseIterable, Identifiable, Codable {
         case .switchLayout:  return KeyboardShortcut(keyCode: 49, flags: [.option]) // ⌥Space
         case .convertWord:   return KeyboardShortcut(keyCode: 49, flags: [.option, .shift]) // ⌥⇧Space
         case .translateSelection: return KeyboardShortcut(keyCode: 17, flags: [.control, .option]) // ⌃⌥T
+        case .zone1: return KeyboardShortcut(keyCode: UInt32(kVK_ANSI_1), flags: zoneFlags)
+        case .zone2: return KeyboardShortcut(keyCode: UInt32(kVK_ANSI_2), flags: zoneFlags)
+        case .zone3: return KeyboardShortcut(keyCode: UInt32(kVK_ANSI_3), flags: zoneFlags)
+        case .zone4: return KeyboardShortcut(keyCode: UInt32(kVK_ANSI_4), flags: zoneFlags)
+        case .zone5: return KeyboardShortcut(keyCode: UInt32(kVK_ANSI_5), flags: zoneFlags)
+        case .zone6: return KeyboardShortcut(keyCode: UInt32(kVK_ANSI_6), flags: zoneFlags)
+        case .zone7: return KeyboardShortcut(keyCode: UInt32(kVK_ANSI_7), flags: zoneFlags)
+        case .zone8: return KeyboardShortcut(keyCode: UInt32(kVK_ANSI_8), flags: zoneFlags)
+        case .zone9: return KeyboardShortcut(keyCode: UInt32(kVK_ANSI_9), flags: zoneFlags)
         }
     }
 }

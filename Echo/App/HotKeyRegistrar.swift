@@ -18,6 +18,7 @@ final class HotKeyRegistrar {
     private let windowManager: WindowManagerService
     private let ultraSwitch: UltraSwitchService
     private let translator: SelectionTranslator
+    private let grids: any ActiveGridProviding
     private let onClipboardCommand: () -> Void
 
     init(
@@ -25,12 +26,14 @@ final class HotKeyRegistrar {
         windowManager: WindowManagerService,
         ultraSwitch: UltraSwitchService,
         translator: SelectionTranslator,
+        grids: any ActiveGridProviding,
         onClipboardCommand: @escaping () -> Void
     ) {
         self.settings = settings
         self.windowManager = windowManager
         self.ultraSwitch = ultraSwitch
         self.translator = translator
+        self.grids = grids
         self.onClipboardCommand = onClipboardCommand
     }
 
@@ -65,7 +68,8 @@ final class HotKeyRegistrar {
         case .leftHalf, .rightHalf, .topHalf, .bottomHalf,
              .topLeft, .topRight, .bottomLeft, .bottomRight,
              .leftThird, .centerThird, .rightThird, .leftTwoThirds, .rightTwoThirds,
-             .center, .maximize, .nextDisplay, .previousDisplay:
+             .center, .maximize, .nextDisplay, .previousDisplay,
+             .zone1, .zone2, .zone3, .zone4, .zone5, .zone6, .zone7, .zone8, .zone9:
             hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
                 MainActor.assumeIsolated {
                     guard let self else { return }
