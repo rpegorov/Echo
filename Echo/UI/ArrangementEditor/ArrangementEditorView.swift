@@ -150,19 +150,12 @@ struct ArrangementEditorView: View {
 
     private func text(for message: ArrangementEditorModel.SaveMessage) -> String {
         switch message {
-        case .write(let reason): return loc.t(InputKey.arrangementSaveFailedMessage, writeFailureReason(fallback: reason))
+        case .write(let reason): return loc.t(InputKey.arrangementSaveFailedMessage, reason)
+        case .notFound: return loc.t(InputKey.arrangementSaveFailedMessage, loc.t(InputKey.arrangementSaveNotFoundReason))
+        case .invalidSlot: return loc.t(InputKey.arrangementSaveFailedMessage, loc.t(InputKey.arrangementSaveInvalidSlotReason))
         case .unavailable: return loc.t(InputKey.gridUnavailableMessage)
         case .permission: return loc.t(InputKey.arrangementPermissionMessage)
         case .noWindows: return loc.t(InputKey.arrangementNoWindowsMessage)
-        }
-    }
-
-    /// Names the failure for the two errors the model reports with a fixed English text.
-    private func writeFailureReason(fallback: String) -> String {
-        switch model.saveError {
-        case .notFound: return loc.t(InputKey.arrangementSaveNotFoundReason)
-        case .storage(.invalidSlot): return loc.t(InputKey.arrangementSaveInvalidSlotReason)
-        default: return fallback
         }
     }
 }
