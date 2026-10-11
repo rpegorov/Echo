@@ -48,6 +48,7 @@ final class GridStore: ObservableObject, ActiveGridProviding {
     }
 
     func save(_ grid: ZoneGrid) throws(GridStorageError) {
+        guard GridEditing.isValid(grid.zones) else { throw .invalidGrid }
         try commit { $0.save(grid) }
     }
 

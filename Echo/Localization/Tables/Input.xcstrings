@@ -1958,6 +1958,23 @@
         }
       }
     },
+    "gridInvalidMessage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This grid has overlapping or uncovered areas and can't be saved."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В сетке есть пересечения или пустые места — сохранить её нельзя."
+          }
+        }
+      }
+    },
     "gridSaveFailedMessage": {
       "extractionState": "manual",
       "localizations": {
@@ -2141,6 +2158,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Объединить с зоной снизу"
+          }
+        }
+      }
+    },
+    "gridEditorBorderHandle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zone border"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Граница зон"
           }
         }
       }

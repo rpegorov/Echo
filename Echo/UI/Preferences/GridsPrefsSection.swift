@@ -259,6 +259,7 @@ struct GridsPrefsSection: View {
         switch error {
         case .writeFailed(let detail), .readFailed(let detail): return detail
         case .unreadable(let fileName):                         return fileName
+        case .invalidGrid:                                      return loc.t(InputKey.gridInvalidMessage)
         case .locationUnavailable, .newerSchema, .readOnly:     return loc.t(InputKey.gridUnavailableMessage)
         }
     }

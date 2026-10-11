@@ -138,6 +138,7 @@ enum InputKey: String, LocalizedKey {
     case gridLoadFailedMessage
     case gridReadOnlyMessage
     case gridUnavailableMessage
+    case gridInvalidMessage
     case gridSaveFailedMessage
     case gridZoneCommandsGroup
     case tilingOptionConflictCaption
@@ -154,6 +155,7 @@ enum InputKey: String, LocalizedKey {
     case gridEditorMergeAbove
     case gridEditorMergeBelow
     case gridEditorSave
+    case gridEditorBorderHandle
     case gridZoneNumber
     case gridZonesSpan
 }
