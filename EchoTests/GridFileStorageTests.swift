@@ -16,7 +16,9 @@ private let sampleDocument = GridDocument(
 /// A moment in the middle of a day, so the expected name is the same in every time zone.
 private func moment(second: Int) -> Date {
     let parts = DateComponents(year: 2026, month: 10, day: 11, hour: 13, minute: 45, second: second)
-    return Calendar.current.date(from: parts) ?? Date(timeIntervalSince1970: 0)
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = TimeZone.current
+    return calendar.date(from: parts) ?? Date(timeIntervalSince1970: 0)
 }
 
 private func backupName(second: Int) -> String {

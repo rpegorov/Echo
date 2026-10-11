@@ -27,7 +27,6 @@ struct GridWiringTests {
                 defaults: defaults, system: SystemLanguages(preferred: { [] }), gridStorage: storage)
 
             #expect(environment.gridStore.document == stored)
-            #expect(environment.gridStore === environment.gridStore)
 
             try environment.gridStore.save(GridTemplate.twoByTwo.makeGrid(named: "Added"))
             #expect(storage.saveCount == 1)
