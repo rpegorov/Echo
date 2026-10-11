@@ -56,6 +56,7 @@ final class SnapOverlayController: SnapOverlayPresenting {
                 model.layout = zoneLayout(of: preview)
                 model.shortcut = preview.shortcut
                 model.settled = false
+                model.visible = false
             }
             withAnimation(animationsEnabled ? DS.SnapOverlay.appearAnimation : nil) {
                 model.visible = true
