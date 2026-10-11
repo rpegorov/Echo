@@ -19,6 +19,10 @@ final class SnapOverlayController: SnapOverlayPresenting {
     /// Bumped on every show/hide; pending animation completions only act when their generation is current.
     private var generation = 0
     private var screenObserver: AnyCancellable?
+    /// A grid flash is on screen; `currentPreview` stays nil for its whole life.
+    private var isFlashing = false
+    /// The only pending hide; show, hide and a newer flash cancel it.
+    private var flashHideTask: Task<Void, Never>?
 
     init(localizer: Localizer) {
         self.localizer = localizer
@@ -32,6 +36,7 @@ final class SnapOverlayController: SnapOverlayPresenting {
 
     func show(_ preview: SnapPreview) {
         guard preview != currentPreview else { return }
+        endFlash()
         let displayChanged = preview.screenFrame != currentPreview?.screenFrame
         let needsAppear = currentPreview == nil || displayChanged
         currentPreview = preview
@@ -57,6 +62,8 @@ final class SnapOverlayController: SnapOverlayPresenting {
                 model.layout = zoneLayout(of: preview)
                 model.zoneNumbers = gridZoneNumbers(of: preview)
                 model.shortcut = preview.shortcut
+                model.flashZones = []
+                model.flashTitle = nil
                 model.settled = false
                 model.visible = false
             }
@@ -77,10 +84,53 @@ final class SnapOverlayController: SnapOverlayPresenting {
         }
     }
 
-    func flash(_ grid: GridFlash) {}
+    func flash(_ grid: GridFlash) {
+        guard !grid.zoneFrames.isEmpty else { return }
+        flashHideTask?.cancel()
+        let displayChanged = grid.screenFrame != activeWindow?.frame
+        let needsAppear = !isFlashing || displayChanged
+        isFlashing = true
+        currentPreview = nil
+        generation += 1
+
+        let window = self.window(for: grid.screenFrame)
+        if displayChanged, let previous = activeWindow, previous !== window {
+            previous.orderOut(nil)
+        }
+        activeWindow = window
+        if window.frame != grid.screenFrame {
+            window.setFrame(grid.screenFrame, display: true)
+        }
+
+        var instant = Transaction()
+        instant.disablesAnimations = true
+        withTransaction(instant) {
+            model.activeDisplay = grid.screenFrame
+            model.flashZones = flashZones(of: grid)
+            model.flashTitle = grid.title
+            model.contextFrames = []
+            model.zoneNumbers = []
+            model.layout = nil
+            model.shortcut = nil
+            if needsAppear {
+                model.settled = false
+                model.visible = false
+            }
+        }
+        if needsAppear {
+            withAnimation(animationsEnabled ? DS.SnapOverlay.appearAnimation : nil) {
+                model.visible = true
+                model.settled = true
+            }
+            window.orderFront(nil)
+        }
+        scheduleFlashHide()
+    }
 
     func hide() {
-        guard currentPreview != nil else { return }
+        guard currentPreview != nil || isFlashing else { return }
+        flashHideTask?.cancel()
+        isFlashing = false
         currentPreview = nil
         generation += 1
         let current = generation
@@ -119,7 +169,25 @@ final class SnapOverlayController: SnapOverlayPresenting {
         return window
     }
 
+    private func scheduleFlashHide() {
+        flashHideTask = Task { [weak self] in
+            do {
+                try await Task.sleep(for: DS.SnapOverlay.flashDuration)
+            } catch {
+                // Only cancellation throws: a newer show, hide or flash owns the overlay now.
+                return
+            }
+            self?.hide()
+        }
+    }
+
+    private func endFlash() {
+        flashHideTask?.cancel()
+        isFlashing = false
+    }
+
     private func dropAllWindows() {
+        endFlash()
         generation += 1
         currentPreview = nil
         activeWindow = nil
@@ -128,6 +196,8 @@ final class SnapOverlayController: SnapOverlayPresenting {
         model.activeDisplay = nil
         model.contextFrames = []
         model.zoneNumbers = []
+        model.flashZones = []
+        model.flashTitle = nil
         for window in windows.values { window.orderOut(nil) }
         windows.removeAll()
     }
@@ -155,6 +225,16 @@ final class SnapOverlayController: SnapOverlayPresenting {
     private func localContextFrames(of preview: SnapPreview) -> [CGRect] {
         guard case .grid(let target) = preview.target else { return [] }
         return target.contextFrames.map { localFrame($0, in: preview.screenFrame) }
+    }
+
+    private func flashZones(of grid: GridFlash) -> [GridFlashZone] {
+        grid.zoneFrames.enumerated().map { index, frame in
+            GridFlashZone(
+                frame: localFrame(frame, in: grid.screenFrame),
+                number: index + 1,
+                shortcut: grid.zoneShortcuts.indices.contains(index) ? grid.zoneShortcuts[index] : nil
+            )
+        }
     }
 
     private func zoneLayout(of preview: SnapPreview) -> WindowLayout? {
