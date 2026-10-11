@@ -12,7 +12,6 @@ import SwiftUI
 struct ShortcutRecorderView: View {
     let command: WMCommand
     @ObservedObject var settings: AppSettings
-    var autoStart: Bool = false
     @EnvironmentObject private var loc: Localizer
 
     @State private var monitor: Any?
@@ -39,9 +38,6 @@ struct ShortcutRecorderView: View {
             if let pending { conflictNotice(pending) }
         }
         .onChange(of: settings.recordingCommand, initial: true) { _, _ in syncMonitor() }
-        .onAppear {
-            if autoStart { settings.setRecordingCommand(command) }
-        }
         .onDisappear {
             removeMonitor()
             if isRecording { settings.setRecordingCommand(nil) }
