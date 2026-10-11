@@ -31,7 +31,7 @@ final class WindowCreationObserver: WindowCreationObserving {
     /// nil when the AXObserver could not be created or the notification could not be added (logged).
     init?(pid: Int32, onWindowCreated: @escaping @MainActor (AXUIElement) -> Void) {
         self.pid = pid
-        self.appElement = AXUIElementCreateApplication(pid)
+        self.appElement = AXWindow.applicationElement(pid: pid)
         self.onWindowCreated = onWindowCreated
         guard attach() else { return nil }
     }

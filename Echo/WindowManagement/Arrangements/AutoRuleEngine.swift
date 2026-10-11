@@ -177,12 +177,13 @@ final class AutoRuleEngine {
     // MARK: - Placement
 
     private func placeExistingWindows(of pid: pid_t, bundleID: String) {
-        for window in AXWindow.windows(of: AXUIElementCreateApplication(pid)) {
+        for window in AXWindow.windows(of: AXWindow.applicationElement(pid: pid)) {
             place(window, bundleID: bundleID)
         }
     }
 
     private func place(_ window: AXUIElement, bundleID: String) {
+        AXWindow.bounded(window)
         guard let frame = Self.targetFrame(
             forBundleID: bundleID,
             rules: store.document.rules,
