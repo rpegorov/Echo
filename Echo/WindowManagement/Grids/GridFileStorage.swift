@@ -57,10 +57,11 @@ struct GridFileStorage: GridDocumentStoring {
 
     /// The schema version is read before the document, so a newer file is never judged by this version's shape.
     func load() throws(GridStorageError) -> GridDocument {
-        guard FileManager.default.fileExists(atPath: fileURL.path) else { return .empty }
         let data: Data
         do {
             data = try Data(contentsOf: fileURL)
+        } catch let error as CocoaError where error.code == .fileReadNoSuchFile && !isDanglingSymbolicLink {
+            return .empty
         } catch {
             throw .readFailed(error.localizedDescription)
         }
@@ -84,6 +85,16 @@ struct GridFileStorage: GridDocumentStoring {
             try JSONEncoder().encode(envelope).write(to: fileURL, options: .atomic)
         } catch {
             throw .writeFailed(error.localizedDescription)
+        }
+    }
+
+    /// A link to a missing target is a file Echo cannot replace, not an absent file.
+    private var isDanglingSymbolicLink: Bool {
+        do {
+            _ = try FileManager.default.destinationOfSymbolicLink(atPath: fileURL.path)
+            return true
+        } catch {
+            return false
         }
     }
 
