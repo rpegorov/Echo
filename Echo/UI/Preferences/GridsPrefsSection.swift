@@ -231,47 +231,6 @@ struct GridsPrefsSection: View {
         }
     }
 
-    // MARK: - Notices
-
-    private func noticeLine(_ notice: GridLoadNotice) -> some View {
-        messageLine(text(for: notice))
-    }
-
-    private func failureLine(_ error: GridStorageError) -> some View {
-        messageLine(loc.t(InputKey.gridSaveFailedMessage, failureDetail(of: error)))
-    }
-
-    private func messageLine(_ text: String) -> some View {
-        HStack(alignment: .top, spacing: DS.Grids.rowSpacing) {
-            Image(systemName: DS.GridEditor.messageIcon)
-                .foregroundStyle(DS.Grids.noticeColor)
-                .accessibilityHidden(true)
-            Text(text)
-                .font(DS.Grids.detailFont)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
-
-    private func text(for notice: GridLoadNotice) -> String {
-        switch notice {
-        case .loadFailed(let fileName): return loc.t(InputKey.gridLoadFailedMessage, fileName)
-        case .newerVersion:             return loc.t(InputKey.gridReadOnlyMessage)
-        case .unavailable:              return loc.t(InputKey.gridUnavailableMessage)
-        }
-    }
-
-    /// Human-readable cause of a failed save, shown after the localized "Couldn't save grids" prefix.
-    private func failureDetail(of error: GridStorageError) -> String {
-        switch error {
-        case .writeFailed(let detail), .readFailed(let detail): return detail
-        case .unreadable(let fileName):                         return fileName
-        case .invalidGrid:                                      return loc.t(InputKey.gridInvalidMessage)
-        case .locationUnavailable, .newerSchema, .readOnly,
-             .invalidSlot:                                      return loc.t(InputKey.gridUnavailableMessage)
-        }
-    }
-
     // MARK: - Actions
 
     private func choose(_ ref: ActiveGridRef, for display: ConnectedDisplay) {
@@ -353,5 +312,46 @@ struct GridsPrefsSection: View {
 
     private var deletionTitle: String {
         loc.t(InputKey.gridDeleteConfirmTitle, deletionCandidate?.name ?? "")
+    }
+}
+
+extension GridsPrefsSection {
+    private func noticeLine(_ notice: GridLoadNotice) -> some View {
+        messageLine(text(for: notice))
+    }
+
+    private func failureLine(_ error: GridStorageError) -> some View {
+        messageLine(loc.t(InputKey.gridSaveFailedMessage, failureDetail(of: error)))
+    }
+
+    private func messageLine(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: DS.Grids.rowSpacing) {
+            Image(systemName: DS.GridEditor.messageIcon)
+                .foregroundStyle(DS.Grids.noticeColor)
+                .accessibilityHidden(true)
+            Text(text)
+                .font(DS.Grids.detailFont)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func text(for notice: GridLoadNotice) -> String {
+        switch notice {
+        case .loadFailed(let fileName): return loc.t(InputKey.gridLoadFailedMessage, fileName)
+        case .newerVersion:             return loc.t(InputKey.gridReadOnlyMessage)
+        case .unavailable:              return loc.t(InputKey.gridUnavailableMessage)
+        }
+    }
+
+    /// Human-readable cause of a failed save, shown after the localized "Couldn't save grids" prefix.
+    private func failureDetail(of error: GridStorageError) -> String {
+        switch error {
+        case .writeFailed(let detail), .readFailed(let detail): return detail
+        case .unreadable(let fileName):                         return fileName
+        case .invalidGrid:                                      return loc.t(InputKey.gridInvalidMessage)
+        case .locationUnavailable, .newerSchema, .readOnly,
+             .invalidSlot:                                      return loc.t(InputKey.gridUnavailableMessage)
+        }
     }
 }
