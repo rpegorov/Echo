@@ -15,8 +15,7 @@ private func expectFrame(
     #expect(abs(actual.height - expected.height) < tolerance, "height \(actual) vs \(expected)", sourceLocation: sourceLocation)
 }
 
-/// Frames the app produced before layouts became unit rects: halves and quarters of the
-/// visible area, centre at 60 % — all inset by half the gap.
+/// Reference frames: halves and quarters of the visible area, centre at 60 %, inset by half the gap.
 private func legacyFrame(_ layout: WindowLayout, in v: CGRect, gap: CGFloat) -> CGRect? {
     let halfW = v.width / 2
     let halfH = v.height / 2
