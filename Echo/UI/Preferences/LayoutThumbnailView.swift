@@ -20,30 +20,20 @@ struct LayoutThumbnailView: View {
     @ViewBuilder
     private var content: some View {
         if let layout = command.layout {
-            zone(layout)
+            DS.ZoneMap.ScreenThumbnail(
+                visibleSize: display.visible.size,
+                bounds: DS.ZoneMap.thumbnailSize,
+                zones: [layout.unitRect],
+                gap: DS.ZoneMap.thumbnailGap,
+                zoneCornerRadius: DS.ZoneMap.thumbnailZoneCorner,
+                zoneFill: DS.ZoneMap.zoneStroke,
+                zoneStroke: nil
+            )
         } else if let direction = command.displayDirection {
             Image(systemName: Self.symbolName(for: direction))
                 .font(DS.ZoneMap.thumbnailSymbolFont)
                 .foregroundStyle(.secondary)
         }
-    }
-
-    private func zone(_ layout: WindowLayout) -> some View {
-        let size = display.size(fitting: DS.ZoneMap.thumbnailSize)
-        let rect = layout.drawRect(in: size, gap: DS.ZoneMap.thumbnailGap)
-        return ZStack(alignment: .topLeading) {
-            RoundedRectangle(cornerRadius: DS.ZoneMap.thumbnailScreenCorner)
-                .fill(DS.ZoneMap.screenFill)
-                .overlay {
-                    RoundedRectangle(cornerRadius: DS.ZoneMap.thumbnailScreenCorner)
-                        .strokeBorder(DS.ZoneMap.screenStroke, lineWidth: DS.ZoneMap.hairline)
-                }
-            RoundedRectangle(cornerRadius: DS.ZoneMap.thumbnailZoneCorner)
-                .fill(DS.ZoneMap.zoneStroke)
-                .frame(width: rect.width, height: rect.height)
-                .offset(x: rect.minX, y: rect.minY)
-        }
-        .frame(width: size.width, height: size.height)
     }
 
     static func symbolName(for direction: DisplayDirection) -> String {

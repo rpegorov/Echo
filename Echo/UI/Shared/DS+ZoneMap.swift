@@ -98,3 +98,64 @@ extension DS {
         }
     }
 }
+
+extension UnitRect {
+
+    /// The zone in a top-left-origin drawing `size` wide; the geometry itself comes from `frame(in:gap:)`.
+    func drawRect(in size: CGSize, gap: CGFloat) -> CGRect {
+        let cocoa = frame(in: CGRect(origin: .zero, size: size), gap: gap)
+        // frame(in:gap:) is bottom-left based, SwiftUI draws from the top.
+        return CGRect(x: cocoa.minX, y: size.height - cocoa.maxY, width: cocoa.width, height: cocoa.height)
+    }
+}
+
+extension DS.ZoneMap {
+
+    /// Display miniature with zone rectangles on it. Layout and grid thumbnails draw through this
+    /// so the geometry (`UnitRect.frame(in:gap:)` plus the top-left flip) lives in one place.
+    struct ScreenThumbnail: View {
+        /// Visible area giving the thumbnail its proportions; zero size falls back to a default display.
+        let visibleSize: CGSize
+        /// Bounding box the thumbnail fits into.
+        let bounds: CGSize
+        let zones: [UnitRect]
+        let gap: CGFloat
+        let zoneCornerRadius: CGFloat
+        let zoneFill: Color
+        /// Drawn as a hairline border around every zone; nil draws no border.
+        let zoneStroke: Color?
+
+        var body: some View {
+            let size = Self.fittedSize(visible: visibleSize, in: bounds)
+            ZStack(alignment: .topLeading) {
+                RoundedRectangle(cornerRadius: DS.ZoneMap.thumbnailScreenCorner)
+                    .fill(DS.ZoneMap.screenFill)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: DS.ZoneMap.thumbnailScreenCorner)
+                            .strokeBorder(DS.ZoneMap.screenStroke, lineWidth: DS.ZoneMap.hairline)
+                    }
+                ForEach(zones.indices, id: \.self) { index in
+                    let rect = zones[index].drawRect(in: size, gap: gap)
+                    RoundedRectangle(cornerRadius: zoneCornerRadius)
+                        .fill(zoneFill)
+                        .overlay {
+                            if let zoneStroke {
+                                RoundedRectangle(cornerRadius: zoneCornerRadius)
+                                    .strokeBorder(zoneStroke, lineWidth: DS.ZoneMap.hairline)
+                            }
+                        }
+                        .frame(width: rect.width, height: rect.height)
+                        .offset(x: rect.minX, y: rect.minY)
+                }
+            }
+            .frame(width: size.width, height: size.height)
+        }
+
+        /// The largest size with the display's proportions that fits `bounds`.
+        private static func fittedSize(visible: CGSize, in bounds: CGSize) -> CGSize {
+            let source = visible.width > 0 && visible.height > 0 ? visible : DS.ZoneMap.fallbackDisplaySize
+            let scale = min(bounds.width / source.width, bounds.height / source.height)
+            return CGSize(width: source.width * scale, height: source.height * scale)
+        }
+    }
+}
