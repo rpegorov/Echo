@@ -37,6 +37,9 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
     /// Подписка на смену языка — переприменяет заголовки окон и строку меню без перезапуска.
     private var languageObserver: AnyCancellable?
 
+    /// Ends a shortcut recording when Echo loses focus, so its hotkeys never stay unregistered.
+    private var resignActiveObserver: AnyCancellable?
+
     init(environment: AppEnvironment) {
         self.environment = environment
         super.init()
@@ -69,6 +72,12 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
             self?.applyStatusItemAppearance()
             self?.environment.monitoring.updateMonitoringState()
         }
+        resignActiveObserver = NotificationCenter.default
+            .publisher(for: NSApplication.didResignActiveNotification)
+            .receive(on: DispatchQueue.main)
+            .sink { _ in
+                MainActor.assumeIsolated { settings.setRecordingCommand(nil) }
+            }
 
         environment.monitoring.start()
         applyAppearance()

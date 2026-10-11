@@ -173,7 +173,10 @@ final class AppWindows: NSObject, NSWindowDelegate {
         guard let closed = notification.object as? NSWindow else { return }
         if closed == detailWindow { detailWindow = nil }
         if closed == clipboardWindow { clipboardWindow = nil }
-        if closed == preferencesWindow { preferencesWindow = nil }
+        if closed == preferencesWindow {
+            preferencesWindow = nil
+            environment.settings.setRecordingCommand(nil)
+        }
         onWindowClosed?()
     }
 }
