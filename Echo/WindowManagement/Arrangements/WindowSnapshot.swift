@@ -6,7 +6,7 @@
 import ApplicationServices
 import CoreGraphics
 
-/// A window's identity within one catalog pass: owning process and front-to-back position in its app.
+/// A window's identity within one catalog pass: owning process and position in the app's reported window list.
 struct WindowRef: Hashable, Sendable {
     let pid: Int32
     let ordinal: Int
