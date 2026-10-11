@@ -148,11 +148,15 @@ struct ArrangementEditorView: View {
         }
     }
 
+    private func saveFailed(because reason: InputKey) -> String {
+        loc.t(InputKey.arrangementSaveFailedMessage, loc.t(reason))
+    }
+
     private func text(for message: ArrangementEditorModel.SaveMessage) -> String {
         switch message {
         case .write(let reason): return loc.t(InputKey.arrangementSaveFailedMessage, reason)
-        case .notFound: return loc.t(InputKey.arrangementSaveFailedMessage, loc.t(InputKey.arrangementSaveNotFoundReason))
-        case .invalidSlot: return loc.t(InputKey.arrangementSaveFailedMessage, loc.t(InputKey.arrangementSaveInvalidSlotReason))
+        case .notFound: return saveFailed(because: .arrangementSaveNotFoundReason)
+        case .invalidSlot: return saveFailed(because: .arrangementSaveInvalidSlotReason)
         case .unavailable: return loc.t(InputKey.gridUnavailableMessage)
         case .permission: return loc.t(InputKey.arrangementPermissionMessage)
         case .noWindows: return loc.t(InputKey.arrangementNoWindowsMessage)
