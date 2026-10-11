@@ -30,11 +30,35 @@ struct WindowPlacementTests {
         #expect(origin.x == 0)
     }
 
-    @Test("a smaller window keeps the requested origin")
-    func smallerWindowKeepsOrigin() {
+    @Test("a window shorter than its zone is aligned to the zone's top edge and left edge")
+    func smallerWindowHugsTopLeftOfZone() {
         let target = CGRect(x: 960, y: 100, width: 480, height: 600)
         let origin = WindowPlacement.clampedOrigin(target: target, actualSize: CGSize(width: 300, height: 400), visible: visible)
-        #expect(origin == target.origin)
+        #expect(origin.x == target.minX)
+        #expect(origin.y == target.maxY - 400)
+    }
+
+    @Test("a window slightly shorter than a full-height zone stays at the top of the screen")
+    func slightlyShorterWindowStaysAtTop() {
+        let screen = CGRect(x: 0, y: 0, width: 1440, height: 900)
+        let target = CGRect(x: 0, y: 0, width: 720, height: 900)
+        let origin = WindowPlacement.clampedOrigin(target: target, actualSize: CGSize(width: 720, height: 880), visible: screen)
+        #expect(origin.y == 20)
+        #expect(origin.x == 0)
+    }
+
+    @Test("a window shorter than a lower zone sits at the zone's top and does not drop to the screen bottom")
+    func shorterWindowInLowerZoneKeepsZoneTop() {
+        let target = CGRect(x: 0, y: 0, width: 1440, height: 450)
+        let origin = WindowPlacement.clampedOrigin(target: target, actualSize: CGSize(width: 1440, height: 400), visible: visible)
+        #expect(origin.y == 50)
+    }
+
+    @Test("top alignment is still limited to the visible area")
+    func topAlignmentIsClampedToVisibleArea() {
+        let target = CGRect(x: 0, y: 700, width: 400, height: 400)
+        let origin = WindowPlacement.clampedOrigin(target: target, actualSize: CGSize(width: 400, height: 300), visible: visible)
+        #expect(origin.y == visible.maxY - 300)
     }
 
     @Test("a target outside the visible area is pulled in on every side",
