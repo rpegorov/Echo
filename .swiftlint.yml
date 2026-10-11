@@ -1,4 +1,6 @@
 # SwiftLint — merge-blockers of the Swift stack. `swiftlint lint --strict` in CI and gate.sh.
+# Findings that predate the rules live in .swiftlint.baseline.json; new code is held to every rule.
+baseline: .swiftlint.baseline.json
 included:
   - Echo
   - EchoTests
@@ -10,38 +12,11 @@ excluded:
   - "**/DerivedData"
   - "**/Generated"
 
-# Rules with findings on the baseline stay off until their debt wave fixes them;
-# each comment is the finding count at the time the config was added.
-disabled_rules:
-  - no_magic_numbers # baseline: 913
-  - line_length # baseline: 128
-  - identifier_name # baseline: 114
-  - comma # baseline: 34
-  - colon # baseline: 30
-  - force_unwrapping # baseline: 20
-  - trailing_comma # baseline: 19
-  - swallowed_try # baseline: 17
-  - hardcoded_frame # baseline: 13
-  - large_tuple # baseline: 11
-  - unchecked_sendable # baseline: 10
-  - unowned_task # baseline: 9
-  - void_function_in_ternary # baseline: 7
-  - opening_brace # baseline: 6
-  - function_parameter_count # baseline: 4
-  - vertical_whitespace # baseline: 3
-  - file_length # baseline: 2
-  - cyclomatic_complexity # baseline: 2
-  - implicit_optional_initialization # baseline: 1
-  - multiple_closures_with_trailing_closure # baseline: 1
-  - legacy_swiftui_aspect_ratio # baseline: 1
-  - type_name # baseline: 1
-  - nesting # baseline: 1
-  - implicitly_unwrapped_optional # baseline: 1
-  - discouraged_optional_boolean # baseline: 1
-  - orphaned_doc_comment # baseline: 1
-  - function_body_length # baseline: 1
-
 opt_in_rules:
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - discouraged_optional_boolean
+  - no_magic_numbers
   - fatal_error_message
   - unowned_variable_capture
   - weak_delegate
@@ -53,6 +28,20 @@ opt_in_rules:
 
 force_cast: error
 force_try: error
+force_unwrapping: error
+implicitly_unwrapped_optional: error
+no_magic_numbers:
+  severity: error
+  test_parent_classes: [XCTestCase]
+function_body_length:
+  warning: 50
+  error: 80
+file_length:
+  warning: 400
+  error: 600
+cyclomatic_complexity:
+  warning: 10
+  error: 15
 type_body_length:
   warning: 300
   error: 500
