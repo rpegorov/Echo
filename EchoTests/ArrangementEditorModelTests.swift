@@ -234,10 +234,7 @@ struct ArrangementEditorModelSaveTests {
         rig.model.remove(window: rig.safari.id)
         rig.service.saveFailure = .notFound
         #expect(!rig.model.save())
-        guard case .write? = rig.model.saveMessage else {
-            Issue.record("expected the save-failed line, got \(String(describing: rig.model.saveMessage))")
-            return
-        }
+        #expect(rig.model.saveMessage == .notFound)
         #expect(rig.model.isDirty)
     }
 
@@ -246,10 +243,7 @@ struct ArrangementEditorModelSaveTests {
         rig.model.name = "Focus"
         rig.service.saveFailure = .storage(.invalidSlot)
         #expect(!rig.model.save())
-        guard case .write? = rig.model.saveMessage else {
-            Issue.record("expected the save-failed line, got \(String(describing: rig.model.saveMessage))")
-            return
-        }
+        #expect(rig.model.saveMessage == .invalidSlot)
         #expect(rig.model.isDirty)
     }
 
