@@ -80,6 +80,8 @@ private let windowCreatedCallback: AXObserverCallback = { _, element, _, refcon 
     let watcher = Unmanaged<WindowCreationObserver>.fromOpaque(refcon).takeUnretainedValue()
     // Delivered synchronously on the main thread by the main run-loop source; the element is used only
     // within this call. AXUIElement is not Sendable, so the compiler cannot prove that.
-    nonisolated(unsafe) let window = element // lint-allow: sw-nonisolated-unsafe main-thread run-loop callback, element never escapes
+    // lint-allow: sw-nonisolated-unsafe main-thread run-loop callback, element never escapes
+    // swiftlint:disable:next unchecked_sendable
+    nonisolated(unsafe) let window = element
     MainActor.assumeIsolated { watcher.deliver(window) }
 }

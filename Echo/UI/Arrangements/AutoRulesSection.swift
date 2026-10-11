@@ -53,7 +53,9 @@ struct AutoRulesSection: View {
                 onSave: save
             )
         }
-        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in
+        .onReceive(
+            NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)
+        ) { _ in
             displays = DisplayIdentity.connectedDisplays()
         }
     }

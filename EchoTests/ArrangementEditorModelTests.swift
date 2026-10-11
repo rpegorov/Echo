@@ -29,7 +29,9 @@ private let studioKey = "uuid:STUDIO"
 private let goneKey = "uuid:GONE"
 private let deskKey = "uuid:DESK"
 
-private func connectedDisplay(_ key: String, _ name: String, zones: [UnitRect], width: Double = 1600, height: Double = 1000) -> DisplaySnapshot {
+private func connectedDisplay(
+    _ key: String, _ name: String, zones: [UnitRect], width: Double = 1600, height: Double = 1000
+) -> DisplaySnapshot {
     let frame = CGRect(x: 0, y: 0, width: width, height: height)
     return DisplaySnapshot(key: DisplayKey(rawValue: key), name: name, frame: frame, visibleFrame: frame, zones: zones)
 }
@@ -48,8 +50,10 @@ private struct Rig {
     /// Terminal and Safari on the laptop (zones 1 and 2), Mail on the studio display (zone 1);
     /// a desk display is connected but not part of the arrangement.
     init(store: GridStore = GridStore(storage: InMemoryGridStorage()), extraDisplays: [String: SavedDisplay] = [:]) {
-        terminal = fixtureWindow(bundleID: "t", appName: "Terminal", slot: ZoneSlot(display: laptopKey, rect: laptopZones[0]))
-        safari = fixtureWindow(bundleID: "s", appName: "Safari", slot: ZoneSlot(display: laptopKey, rect: laptopZones[1]))
+        terminal = fixtureWindow(
+            bundleID: "t", appName: "Terminal", slot: ZoneSlot(display: laptopKey, rect: laptopZones[0]))
+        safari = fixtureWindow(
+            bundleID: "s", appName: "Safari", slot: ZoneSlot(display: laptopKey, rect: laptopZones[1]))
         mail = fixtureWindow(bundleID: "m", appName: "Mail", slot: ZoneSlot(display: studioKey, rect: studioZones[0]))
         let arrangement = Arrangement(
             id: UUID(), name: "Work", windows: [terminal, safari, mail],

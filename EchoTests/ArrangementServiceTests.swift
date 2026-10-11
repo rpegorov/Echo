@@ -77,7 +77,8 @@ struct ArrangementCaptureServiceTests {
             rig.catalog.windowList = [
                 catalogWindow(title: "build", ordinal: 0, frame: CGRect(x: 50, y: 100, width: 300, height: 400)),
                 catalogWindow(
-                    bundleID: "com.apple.Safari", appName: "Safari", pid: 70_100, frame: CGRect(x: 600, y: 100, width: 300, height: 400))
+                    bundleID: "com.apple.Safari", appName: "Safari", pid: 70_100,
+                    frame: CGRect(x: 600, y: 100, width: 300, height: 400))
             ]
 
             let arrangement = try rig.service.captureCurrent(named: "Review")
@@ -98,7 +99,7 @@ struct ArrangementCaptureServiceTests {
 
     @Test("without the accessibility permission nothing is read and nothing is written")
     func deniedReadsNothing() throws {
-        try withScratchDefaults { defaults in
+        withScratchDefaults { defaults in
             let rig = ServiceRig(defaults: defaults, hasPermission: false)
             rig.catalog.windowList = [catalogWindow(frame: CGRect(x: 50, y: 100, width: 300, height: 400))]
 
@@ -111,7 +112,7 @@ struct ArrangementCaptureServiceTests {
 
     @Test("no windows reports noWindows and leaves the file alone")
     func noWindowsWritesNothing() throws {
-        try withScratchDefaults { defaults in
+        withScratchDefaults { defaults in
             let rig = ServiceRig(defaults: defaults)
 
             #expect(throws: ArrangementError.noWindows) { try rig.service.captureCurrent(named: "Work") }
@@ -123,7 +124,7 @@ struct ArrangementCaptureServiceTests {
 
     @Test("windows that only sit on a display without a key count as no windows")
     func keylessDisplayOnly() throws {
-        try withScratchDefaults { defaults in
+        withScratchDefaults { defaults in
             let rig = ServiceRig(defaults: defaults, displays: [snapshotDisplay(key: nil, frame: visibleFrame)])
             rig.catalog.windowList = [catalogWindow(frame: CGRect(x: 50, y: 100, width: 300, height: 400))]
 
@@ -135,7 +136,7 @@ struct ArrangementCaptureServiceTests {
 
     @Test("a failed write reports the storage error and publishes nothing")
     func failedWriteKeepsDocument() throws {
-        try withScratchDefaults { defaults in
+        withScratchDefaults { defaults in
             let rig = ServiceRig(defaults: defaults)
             rig.storage.saveError = .writeFailed("disk full")
             rig.catalog.windowList = [catalogWindow(frame: CGRect(x: 50, y: 100, width: 300, height: 400))]
@@ -151,7 +152,7 @@ struct ArrangementCaptureServiceTests {
 
     @Test("a read-only store refuses to capture and writes nothing")
     func readOnlyRefusesCapture() throws {
-        try withScratchDefaults { defaults in
+        withScratchDefaults { defaults in
             let rig = ServiceRig(defaults: defaults, loadError: .newerSchema(3))
             rig.catalog.windowList = [catalogWindow(frame: CGRect(x: 50, y: 100, width: 300, height: 400))]
 
@@ -185,7 +186,7 @@ struct ArrangementSaveServiceTests {
 
     @Test("saving an unknown id throws notFound and does not bring the arrangement back")
     func saveUnknownIdThrowsNotFound() throws {
-        try withScratchDefaults { defaults in
+        withScratchDefaults { defaults in
             let rig = ServiceRig(defaults: defaults, arrangements: [fixtureArrangement(name: "Kept")])
 
             #expect(throws: ArrangementError.notFound) { try rig.service.save(fixtureArrangement(name: "Deleted")) }
@@ -210,7 +211,7 @@ struct ArrangementSaveServiceTests {
 
     @Test("a failed write keeps the stored arrangement as it was")
     func failedSaveKeepsOriginal() throws {
-        try withScratchDefaults { defaults in
+        withScratchDefaults { defaults in
             let original = fixtureArrangement(name: "Work")
             let rig = ServiceRig(defaults: defaults, arrangements: [original])
             rig.storage.saveError = .writeFailed("disk full")
@@ -225,7 +226,7 @@ struct ArrangementSaveServiceTests {
 
     @Test("a read-only store refuses to save")
     func readOnlyRefusesSave() throws {
-        try withScratchDefaults { defaults in
+        withScratchDefaults { defaults in
             let rig = ServiceRig(defaults: defaults, loadError: .newerSchema(3))
 
             #expect(throws: ArrangementError.storage(.readOnly)) { try rig.service.save(fixtureArrangement()) }
@@ -244,7 +245,7 @@ struct ArrangementApplyServiceTests {
 
     @Test("every running entry is moved to its zone and the rest is reported")
     func movesRunningEntriesAndReportsTheRest() throws {
-        try withScratchDefaults { defaults in
+        withScratchDefaults { defaults in
             let arrangement = fixtureArrangement(windows: [
                 fixtureWindow(slot: Self.leftSlot),
                 fixtureWindow(bundleID: "com.apple.Safari", appName: "Safari", slot: Self.rightSlot)
@@ -275,7 +276,8 @@ struct ArrangementApplyServiceTests {
             ])
             let rig = ServiceRig(defaults: defaults, arrangements: [arrangement])
             let logs = catalogWindow(title: "logs", ordinal: 0, frame: CGRect(x: 10, y: 10, width: 100, height: 100))
-            let build = catalogWindow(title: "build", pid: 70_050, ordinal: 1, frame: CGRect(x: 20, y: 20, width: 100, height: 100))
+            let build = catalogWindow(
+                title: "build", pid: 70_050, ordinal: 1, frame: CGRect(x: 20, y: 20, width: 100, height: 100))
             rig.catalog.windowList = [logs, build]
             rig.catalog.running = ["com.apple.Terminal"]
 
@@ -292,7 +294,7 @@ struct ArrangementApplyServiceTests {
 
     @Test("the window gap setting insets the target frames")
     func gapApplied() throws {
-        try withScratchDefaults { defaults in
+        withScratchDefaults { defaults in
             let arrangement = fixtureArrangement(windows: [fixtureWindow(slot: Self.rightSlot)])
             let rig = ServiceRig(defaults: defaults, arrangements: [arrangement], gap: 10)
             rig.catalog.windowList = [catalogWindow(frame: CGRect(x: 10, y: 10, width: 100, height: 100))]
@@ -306,7 +308,7 @@ struct ArrangementApplyServiceTests {
 
     @Test("an app that runs but has no window left is reported and nothing is moved")
     func runningAppWithoutWindows() throws {
-        try withScratchDefaults { defaults in
+        withScratchDefaults { defaults in
             let arrangement = fixtureArrangement(windows: [fixtureWindow(slot: Self.leftSlot)])
             let rig = ServiceRig(defaults: defaults, arrangements: [arrangement])
             rig.catalog.running = ["com.apple.Terminal"]
@@ -321,7 +323,7 @@ struct ArrangementApplyServiceTests {
 
     @Test("an entry on a display that is not connected is reported and nothing is moved")
     func displayNotConnected() throws {
-        try withScratchDefaults { defaults in
+        withScratchDefaults { defaults in
             let arrangement = fixtureArrangement(windows: [fixtureWindow(slot: fixtureSlot("uuid:GONE", 0, 0, 0.5, 1))])
             let rig = ServiceRig(defaults: defaults, arrangements: [arrangement])
             rig.catalog.windowList = [catalogWindow(frame: CGRect(x: 10, y: 10, width: 100, height: 100))]
@@ -337,7 +339,7 @@ struct ArrangementApplyServiceTests {
 
     @Test("without the permission no window is read or moved and running apps count as windowless")
     func deniedMovesNothing() throws {
-        try withScratchDefaults { defaults in
+        withScratchDefaults { defaults in
             let arrangement = fixtureArrangement(windows: [fixtureWindow(slot: Self.leftSlot)])
             let rig = ServiceRig(defaults: defaults, arrangements: [arrangement], hasPermission: false)
             rig.catalog.windowList = [catalogWindow(frame: CGRect(x: 10, y: 10, width: 100, height: 100))]
@@ -354,7 +356,7 @@ struct ArrangementApplyServiceTests {
 
     @Test("the report accounts for every entry exactly once")
     func reportSumsToTotal() throws {
-        try withScratchDefaults { defaults in
+        withScratchDefaults { defaults in
             let arrangement = fixtureArrangement(windows: [
                 fixtureWindow(slot: Self.leftSlot),
                 fixtureWindow(slot: Self.rightSlot),

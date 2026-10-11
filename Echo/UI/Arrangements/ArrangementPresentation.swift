@@ -33,12 +33,12 @@ enum ArrangementPresentation {
         return .zone(index + 1)
     }
 
-    static func matches(_ a: UnitRect, _ b: UnitRect) -> Bool {
+    static func matches(_ first: UnitRect, _ second: UnitRect) -> Bool {
         let tolerance = GridEditing.tolerance
-        return abs(a.x - b.x) <= tolerance
-            && abs(a.y - b.y) <= tolerance
-            && abs(a.width - b.width) <= tolerance
-            && abs(a.height - b.height) <= tolerance
+        return abs(first.x - second.x) <= tolerance
+            && abs(first.y - second.y) <= tolerance
+            && abs(first.width - second.width) <= tolerance
+            && abs(first.height - second.height) <= tolerance
     }
 
     /// The smallest number above the arrangement count that no default name uses yet.
