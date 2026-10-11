@@ -18,12 +18,15 @@ final class SnapOverlayModel: ObservableObject {
     /// 1-based numbers of the target zones; empty in edge mode.
     @Published var zoneNumbers: [Int] = []
     @Published var shortcut: KeyboardShortcut?
+    /// Zones of a flashed grid in the same local coordinates; empty while a drag preview is shown.
+    @Published var flashZones: [GridFlashZone] = []
+    @Published var flashTitle: GridFlash.Title?
     /// `visible` drives opacity; `settled` separately drives the appear scale so a hide only fades.
     @Published var visible = false
     @Published var settled = false
 }
 
-/// The translucent snap zone drawn inside a full-screen transparent window, with the faint
+/// The translucent snap zone, or a flashed grid, drawn inside a full-screen transparent window, with the faint
 /// zones of the active grid behind it in grid mode.
 /// `display` selects which window this instance paints for; only the active display shows a zone.
 struct SnapOverlayView: View {
@@ -39,11 +42,14 @@ struct SnapOverlayView: View {
 
     var body: some View {
         let isActive = model.visible && model.activeDisplay == display
+        let isFlash = !model.flashZones.isEmpty
         ZStack {
             gridContext
                 .opacity(contextIsVisible(isActive: isActive) ? 1 : 0)
+            GridFlashView(zones: model.flashZones, title: model.flashTitle, displaySize: display.size)
+                .opacity(isActive && isFlash ? 1 : 0)
             targetZone
-                .opacity(isActive ? 1 : 0)
+                .opacity(isActive && !isFlash ? 1 : 0)
                 .scaleEffect(model.settled && isActive ? 1 : DS.SnapOverlay.appearScale)
                 .frame(width: model.zone.width, height: model.zone.height)
                 .position(x: model.zone.midX, y: model.zone.midY)
