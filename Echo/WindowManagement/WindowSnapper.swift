@@ -18,10 +18,15 @@ final class WindowSnapper {
     private var dragMonitor: Any?
     private var upMonitor: Any?
 
+    /// Window movement below this distance is treated as a click, not a drag.
+    private static let movementThreshold: CGFloat = 8
+
+    private var downLocation: CGPoint?
     private var dragWindow: AXUIElement?
     private var startPosition: CGPoint?
+    private var dragScreens: [ScreenGeometry] = []
     private var isDraggingWindow = false
-    private var activeZone: WindowLayout?
+    private var shownPreview: SnapPreview?
 
     private let overlay: any SnapOverlayPresenting
 
@@ -61,98 +66,91 @@ final class WindowSnapper {
     private func handleDown(_ event: NSEvent) {
         reset()
         guard settings.windowManagerEnabled else { return }
-        let location = NSEvent.mouseLocation
-        guard let window = windowManager.window(at: location) else { return }
-        dragWindow = window
-        startPosition = windowManager.position(of: window)
+        downLocation = NSEvent.mouseLocation
     }
 
     private func handleDrag(_ event: NSEvent) {
+        // The window is resolved lazily on the first drag event, not on every click.
+        if let down = downLocation { beginDrag(at: down) }
         guard let window = dragWindow else { return }
 
         // Shift временно отключает примагничивание.
         if event.modifierFlags.contains(.shift) {
-            activeZone = nil
-            overlay.hide()
+            hideOverlayIfNeeded()
             return
         }
 
         // Убеждаемся, что окно реально перемещают (а не выделяют текст и т. п.).
         if !isDraggingWindow, let start = startPosition, let current = windowManager.position(of: window) {
-            if hypot(current.x - start.x, current.y - start.y) > 8 { isDraggingWindow = true }
+            if hypot(current.x - start.x, current.y - start.y) > Self.movementThreshold { isDraggingWindow = true }
         }
         guard isDraggingWindow else { return }
 
         let location = NSEvent.mouseLocation
-        guard let screen = screenContaining(location) else {
-            activeZone = nil
-            overlay.hide()
+        guard let screen = dragScreens.first(where: { $0.frame.contains(location) }) else {
+            hideOverlayIfNeeded()
             return
         }
 
-        if let zone = zone(for: location, on: screen) {
-            activeZone = zone
-            overlay.show(SnapPreview(
-                target: .layout(zone),
-                frame: zone.frame(in: screen.visibleFrame, gap: CGFloat(settings.windowGap)),
+        if let layout = EdgeSnapResolver.layout(at: location, in: screen.frame) {
+            showOverlayIfNeeded(SnapPreview(
+                target: .layout(layout),
+                frame: layout.frame(in: screen.visibleFrame, gap: CGFloat(settings.windowGap)),
                 screenFrame: screen.frame,
-                shortcut: settings.shortcut(for: zone.command)
+                shortcut: settings.shortcut(for: layout.command)
             ))
         } else {
-            activeZone = nil
-            overlay.hide()
+            hideOverlayIfNeeded()
         }
     }
 
     private func handleUp(_ event: NSEvent) {
-        defer { reset() }
-        guard let window = dragWindow,
-              isDraggingWindow,
-              let zone = activeZone,
-              !event.modifierFlags.contains(.shift)
-        else { return }
-        windowManager.apply(zone, to: window, gap: CGFloat(settings.windowGap))
+        if let window = dragWindow,
+           isDraggingWindow,
+           let preview = shownPreview,
+           !event.modifierFlags.contains(.shift) {
+            windowManager.setFrame(preview.frame, for: window)
+        }
+        reset()
+    }
+
+    // MARK: - Drag state
+
+    /// Resolves the dragged window and caches screen geometry once per drag.
+    private func beginDrag(at down: CGPoint) {
+        downLocation = nil
+        dragScreens = NSScreen.screens.map { ScreenGeometry(frame: $0.frame, visibleFrame: $0.visibleFrame) }
+        guard let window = windowManager.window(at: down) else { return }
+        dragWindow = window
+        startPosition = windowManager.position(of: window)
     }
 
     private func reset() {
+        downLocation = nil
         dragWindow = nil
         startPosition = nil
+        dragScreens = []
         isDraggingWindow = false
-        activeZone = nil
+        hideOverlayIfNeeded()
+    }
+
+    // MARK: - Overlay
+
+    private func showOverlayIfNeeded(_ preview: SnapPreview) {
+        guard preview != shownPreview else { return }
+        overlay.show(preview)
+        shownPreview = preview
+    }
+
+    private func hideOverlayIfNeeded() {
+        guard shownPreview != nil else { return }
         overlay.hide()
+        shownPreview = nil
     }
+}
 
-    // MARK: - Zone detection
-
-    private func screenContaining(_ point: CGPoint) -> NSScreen? {
-        NSScreen.screens.first { $0.frame.contains(point) }
-    }
-
-    /// Зона по позиции курсора (Cocoa-координаты). Углы → четверти, края →
-    /// половины, верх по центру → максимизация.
-    private func zone(for point: CGPoint, on screen: NSScreen) -> WindowLayout? {
-        let frame = screen.frame
-        let edge: CGFloat = 4
-        let corner: CGFloat = 120
-
-        let nearLeft   = point.x <= frame.minX + edge
-        let nearRight  = point.x >= frame.maxX - edge
-        let nearTop    = point.y >= frame.maxY - edge
-        let nearBottom = point.y <= frame.minY + edge
-
-        let leftSide  = point.x <= frame.minX + corner
-        let rightSide = point.x >= frame.maxX - corner
-        let topSide   = point.y >= frame.maxY - corner
-        let botSide   = point.y <= frame.minY + corner
-
-        if (nearTop && leftSide) || (nearLeft && topSide)    { return .topLeft }
-        if (nearTop && rightSide) || (nearRight && topSide)  { return .topRight }
-        if (nearBottom && leftSide) || (nearLeft && botSide) { return .bottomLeft }
-        if (nearBottom && rightSide) || (nearRight && botSide) { return .bottomRight }
-        if nearTop    { return .maximize }
-        if nearLeft   { return .leftHalf }
-        if nearRight  { return .rightHalf }
-        if nearBottom { return .bottomHalf }
-        return nil
-    }
+/// Screen geometry captured once per drag so drag events stay free of NSScreen queries.
+private struct ScreenGeometry {
+    let frame: CGRect
+    let visibleFrame: CGRect
 }
