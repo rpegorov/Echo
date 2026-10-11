@@ -180,9 +180,10 @@ struct GridFileStorageTests {
     // MARK: Newer schema
 
     @Test("a newer schema version is reported and the file is left byte for byte",
-          arguments: [2, 99])
-    func newerSchemaIsUntouched(version: Int) throws {
+          arguments: [1, 97])
+    func newerSchemaIsUntouched(versionsAhead: Int) throws {
         try withTemporaryDirectory { directory in
+            let version = GridFileStorage.schemaVersion + versionsAhead
             let files = storage(in: directory)
             let content = "{\"schemaVersion\":\(version),\"document\":\"a shape this version cannot read\"}"
             try write(content, to: files.fileURL)
@@ -314,7 +315,7 @@ struct GridFileStorageTests {
     func newerFileSurvivesStoreSave() throws {
         try withTemporaryDirectory { directory in
             let files = storage(in: directory)
-            let content = "{\"schemaVersion\":2,\"document\":{}}"
+            let content = "{\"schemaVersion\":\(GridFileStorage.schemaVersion + 1),\"document\":{}}"
             try write(content, to: files.fileURL)
 
             let store = GridStore(storage: files)

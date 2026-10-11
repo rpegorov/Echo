@@ -61,7 +61,7 @@ struct WMCommandTests {
         #expect(shortcut?.collides(with: KeyboardShortcut(keyCode: UInt32(keyCode), flags: controlOptionCommand)) == true)
     }
 
-    @Test("every command that is not a layout or a display move is a clipboard or Ultra Switch command")
+    @Test("every command that is not a layout, a display move or a grid command is a clipboard or Ultra Switch command")
     func windowCommandsAreLayoutsOrDisplays() {
         let others: Set<WMCommand> = [.openClipboard, .switchLayout, .convertWord, .translateSelection]
         for command in WMCommand.allCases {
@@ -69,7 +69,8 @@ struct WMCommandTests {
             #expect(command.isWindowCommand == expected, "\(command)")
             if command.isWindowCommand {
                 let kinds = [command.layout != nil, command.displayDirection != nil, command.zoneNumber != nil]
-                #expect(kinds.filter { $0 }.count == 1, "\(command)")
+                let expectedKinds = command == .nextGrid ? 0 : 1
+                #expect(kinds.filter { $0 }.count == expectedKinds, "\(command)")
                 #expect(!command.isUltraSwitchCommand, "\(command)")
             }
         }
@@ -93,7 +94,11 @@ struct WMCommandTests {
         let ru = Localizer(preference: .fixed(.ru))
         var englishTitles: Set<String> = []
         for command in WMCommand.allCases {
-            #expect(command.defaultShortcut != nil, "\(command) has no default")
+            if command == .nextGrid {
+                #expect(command.defaultShortcut == nil)
+            } else {
+                #expect(command.defaultShortcut != nil, "\(command) has no default")
+            }
             let english = en.t(command.titleKey)
             let russian = ru.t(command.titleKey)
             #expect(english != command.titleKey.rawValue, "\(command) title missing in en")
@@ -115,7 +120,9 @@ struct WMCommandTests {
         let zones: [WMCommand] = [.zone1, .zone2, .zone3, .zone4, .zone5, .zone6, .zone7, .zone8, .zone9]
         for command in added { #expect(command.introducedInShortcutsVersion == 3, "\(command)") }
         for command in zones { #expect(command.introducedInShortcutsVersion == 4, "\(command)") }
-        #expect(original.count + ultra.count + added.count + zones.count == WMCommand.allCases.count)
+        // No default shortcut, so the backfill has nothing to add whatever the version says.
+        #expect(WMCommand.nextGrid.introducedInShortcutsVersion == 1)
+        #expect(original.count + ultra.count + added.count + zones.count + 1 == WMCommand.allCases.count)
     }
 
     @Test("a shortcut matches by physical key, whatever character the active layout produces",
