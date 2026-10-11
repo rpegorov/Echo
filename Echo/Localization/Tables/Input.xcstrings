@@ -834,6 +834,23 @@
         }
       }
     },
+    "shortcutClearButton": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear Shortcut"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить сочетание"
+          }
+        }
+      }
+    },
     "ultraSwitchTitle": {
       "extractionState": "manual",
       "localizations": {
