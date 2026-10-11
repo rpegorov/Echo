@@ -18,7 +18,7 @@ struct BatteryWiringTests {
         let suiteName = "EchoTests.battery-wiring.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
-        let environment = AppEnvironment(defaults: defaults, system: SystemLanguages(preferred: { [] }))
+        let environment = AppEnvironment(defaults: defaults, system: SystemLanguages(preferred: { [] }), gridStorage: InMemoryGridStorage())
 
         #expect(environment.battery.hasBattery == false)
         #expect(environment.battery.history == BatteryHistory())

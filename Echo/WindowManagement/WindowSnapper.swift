@@ -30,11 +30,18 @@ final class WindowSnapper {
     private var shownPreview: SnapPreview?
 
     private let overlay: any SnapOverlayPresenting
+    private let grids: any ActiveGridProviding
 
-    init(windowManager: WindowManagerService, settings: AppSettings, overlay: any SnapOverlayPresenting) {
+    init(
+        windowManager: WindowManagerService,
+        settings: AppSettings,
+        overlay: any SnapOverlayPresenting,
+        grids: any ActiveGridProviding
+    ) {
         self.windowManager = windowManager
         self.settings = settings
         self.overlay = overlay
+        self.grids = grids
     }
 
     // MARK: - Lifecycle

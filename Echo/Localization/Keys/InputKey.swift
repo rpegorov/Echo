@@ -32,6 +32,15 @@ enum InputKey: String, LocalizedKey {
     case commandSwitchLayout
     case commandConvertWord
     case commandTranslateSelection
+    case commandZone1
+    case commandZone2
+    case commandZone3
+    case commandZone4
+    case commandZone5
+    case commandZone6
+    case commandZone7
+    case commandZone8
+    case commandZone9
 
     // MARK: Shortcut recorder / display
     case shortcutRecording
@@ -102,4 +111,49 @@ enum InputKey: String, LocalizedKey {
     // MARK: Shortcuts section
     case shortcutsTitle
     case clipboardHistorySectionTitle
+
+    // MARK: Grids (templates, drag modifier, settings section)
+    case gridTemplateTwoColumns
+    case gridTemplateThreeColumns
+    case gridTemplateTwoByTwo
+    case gridTemplateMainAndSide
+    case gridTemplateMainAndTwoSides
+    case gridModifierOption
+    case gridModifierCommand
+    case gridModifierOptionCommand
+    case gridModifierLabel
+    case gridsTitle
+    case gridsCaption
+    case gridActiveLabel
+    case gridTemplatesSection
+    case gridSavedSection
+    case gridsEmpty
+    case gridNewButton
+    case gridEditButton
+    case gridRenameAction
+    case gridDeleteAction
+    case gridDeleteConfirmTitle
+    case gridDeleteConfirmMessage
+    case gridZoneCount
+    case gridLoadFailedMessage
+    case gridReadOnlyMessage
+    case gridUnavailableMessage
+    case gridSaveFailedMessage
+    case gridZoneCommandsGroup
+    case tilingOptionConflictCaption
+
+    // MARK: Grid editor and overlay
+    case gridEditorWindowTitle
+    case gridEditorNameLabel
+    case gridEditorTemplateMenu
+    case gridEditorHint
+    case gridEditorSplitColumns
+    case gridEditorSplitRows
+    case gridEditorMergeLeft
+    case gridEditorMergeRight
+    case gridEditorMergeAbove
+    case gridEditorMergeBelow
+    case gridEditorSave
+    case gridZoneNumber
+    case gridZonesSpan
 }

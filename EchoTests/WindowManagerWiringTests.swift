@@ -26,7 +26,7 @@ struct WindowManagerWiringTests {
     @Test("the composition root builds the drag-to-snap controller and reuses it")
     func environmentBuildsSnapper() {
         withScratchDefaults { defaults in
-            let environment = AppEnvironment(defaults: defaults, system: SystemLanguages(preferred: { [] }))
+            let environment = AppEnvironment(defaults: defaults, system: SystemLanguages(preferred: { [] }), gridStorage: InMemoryGridStorage())
 
             let first = environment.snapper
             #expect(first === environment.snapper)

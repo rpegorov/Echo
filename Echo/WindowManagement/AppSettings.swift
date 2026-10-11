@@ -119,6 +119,13 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(popoverMetricsStyle.rawValue, forKey: Keys.popoverMetricsStyle) }
     }
 
+    // MARK: - Grid mode
+
+    /// Modifier that switches a window drag to the display's grid; the snapper reads it at the start of every drag.
+    @Published var gridModifier: GridDragModifier {
+        didSet { defaults.set(gridModifier.rawValue, forKey: Keys.gridModifier) }
+    }
+
     // MARK: - Language
 
     /// Выбор языка интерфейса: следовать системе или зафиксированный язык.
@@ -163,11 +170,12 @@ final class AppSettings: ObservableObject {
         static let menuBarIconPath = "menuBar.iconPath"
         static let menuBarInterval = "menuBar.interval"
         static let language = "general.language"
+        static let gridModifier = "wm.gridModifier"
     }
 
     /// Version of the stored shortcut set. When it grows, defaults of newer commands are added
     /// to a stored set by `ShortcutBackfill`.
-    private static let shortcutsVersion = 3
+    private static let shortcutsVersion = 4
 
     /// Stored entries whose key is not a `WMCommand` raw value; written back unchanged.
     private var unrecognizedShortcutEntries: [String: KeyboardShortcut] = [:]
@@ -217,6 +225,8 @@ final class AppSettings: ObservableObject {
         // чужой ввод, включать её пользователь должен осознанно.
         ultraSwitchEnabled = defaults.object(forKey: Keys.ultraSwitch) as? Bool ?? false
         autoConvertEnabled = defaults.object(forKey: Keys.autoConvert) as? Bool ?? false
+
+        gridModifier = defaults.string(forKey: Keys.gridModifier).flatMap(GridDragModifier.init(rawValue:)) ?? .option
 
         let storedVersion = defaults.integer(forKey: Keys.shortcutsVersion)
 

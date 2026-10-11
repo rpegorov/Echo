@@ -1,0 +1,63 @@
+//
+//  GridStore.swift
+//  Echo
+//
+
+import Foundation
+
+/// Owns the grid document. A change is written first and published only after the write succeeded.
+@MainActor
+final class GridStore: ObservableObject, ActiveGridProviding {
+    @Published private(set) var document: GridDocument
+    /// Why saved grids could not be read at launch; nil when they loaded or none existed.
+    @Published private(set) var loadError: GridStorageError?
+
+    private let storage: any GridDocumentStoring
+
+    init(storage: any GridDocumentStoring) {
+        self.storage = storage
+        do {
+            document = try storage.load()
+            loadError = nil
+        } catch {
+            document = .empty
+            loadError = error
+        }
+    }
+
+    /// Writes are allowed after a clean load, with no file, or once an unreadable file was moved aside.
+    /// Any other load failure leaves the file on disk exactly as found.
+    var isReadOnly: Bool {
+        guard let loadError else { return false }
+        if case .unreadable = loadError { return false }
+        return true
+    }
+
+    func activeZones(for display: DisplayKey?, aspect: Double) -> [UnitRect] {
+        document.activeZones(for: display, aspect: aspect)
+    }
+
+    func save(_ grid: ZoneGrid) throws(GridStorageError) {
+        try commit { $0.save(grid) }
+    }
+
+    func rename(_ id: UUID, to name: String) throws(GridStorageError) {
+        try commit { $0.rename(id, to: name) }
+    }
+
+    func delete(_ id: UUID) throws(GridStorageError) {
+        try commit { $0.delete(id) }
+    }
+
+    func setActive(_ ref: ActiveGridRef, for display: DisplayKey) throws(GridStorageError) {
+        try commit { $0.setActive(ref, for: display) }
+    }
+
+    private func commit(_ change: (inout GridDocument) -> Void) throws(GridStorageError) {
+        guard !isReadOnly else { throw .readOnly }
+        var next = document
+        change(&next)
+        try storage.save(next)
+        document = next
+    }
+}

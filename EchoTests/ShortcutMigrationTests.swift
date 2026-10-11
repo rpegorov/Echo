@@ -6,7 +6,7 @@ import Testing
 // The stored shortcut set is user data: a read never overwrites, deletes or revives what the user chose.
 private let storeKey = "wm.shortcuts"
 private let versionKey = "wm.shortcuts.version"
-private let currentVersion = 3
+private let currentVersion = 4
 
 private let controlCommand: NSEvent.ModifierFlags = [.control, .command]
 private let controlOptionCommand: NSEvent.ModifierFlags = [.control, .option, .command]
@@ -17,7 +17,8 @@ private let layoutCommands: [WMCommand] = [
 ]
 private let ultraCommands: [WMCommand] = [.switchLayout, .convertWord, .translateSelection]
 private let addedCommands: [WMCommand] = [
-    .leftThird, .centerThird, .rightThird, .leftTwoThirds, .rightTwoThirds, .nextDisplay, .previousDisplay
+    .leftThird, .centerThird, .rightThird, .leftTwoThirds, .rightTwoThirds, .nextDisplay, .previousDisplay,
+    .zone1, .zone2, .zone3, .zone4, .zone5, .zone6, .zone7, .zone8, .zone9
 ]
 
 private func shortcut(_ keyCode: Int, _ flags: NSEvent.ModifierFlags) -> KeyboardShortcut {

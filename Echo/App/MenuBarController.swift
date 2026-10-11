@@ -25,6 +25,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         windowManager: environment.windowManager,
         ultraSwitch: environment.ultraSwitch,
         translator: environment.translator,
+        grids: environment.gridStore,
         onClipboardCommand: { [weak self] in self?.openClipboard() }
     )
 
