@@ -71,7 +71,7 @@ enum AXWindow {
         return ScreenCoordinates.flipped(CGRect(origin: origin, size: size), primaryHeight: primaryScreenHeight)
     }
 
-    /// The app's windows on the current Space, front to back.
+    /// The app's windows on the current Space, in the order the app reports them (not z-order).
     static func windows(of app: AXUIElement) -> [AXUIElement] {
         var value: CFTypeRef?
         guard AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &value) == .success,

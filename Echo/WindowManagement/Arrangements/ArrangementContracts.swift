@@ -26,6 +26,8 @@ enum ArrangementError: Error, Equatable {
     /// Nothing on the current Space qualified for a snapshot.
     case noWindows
     case accessibilityDenied
+    /// The arrangement was deleted while it was being edited.
+    case notFound
 }
 
 @MainActor
@@ -40,7 +42,7 @@ protocol ArrangementApplying: AnyObject {
 protocol ArrangementManaging: ArrangementApplying {
     /// Saves the windows open now under `name` and returns the new arrangement.
     func captureCurrent(named name: String) throws(ArrangementError) -> Arrangement
-    /// Replaces the arrangement with the same id (editor save, rename).
+    /// Replaces the arrangement with the same id (editor save, rename); an unknown id throws `.notFound`.
     func save(_ arrangement: Arrangement) throws(ArrangementError)
     /// Removes the arrangement from the file, then its hotkey; a failed write keeps both.
     func delete(_ id: UUID) throws(ArrangementError)
