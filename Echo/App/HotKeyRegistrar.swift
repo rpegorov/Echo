@@ -75,10 +75,12 @@ final class HotKeyRegistrar {
                 hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
                     MainActor.assumeIsolated { self?.translator.translateSelection() }
                 }
-            default:
+            case .openClipboard:
                 hotKeys.register(shortcut, label: command.rawValue) { [weak self] in
                     MainActor.assumeIsolated { self?.onClipboardCommand() }
                 }
+            default:
+                continue
             }
         }
     }

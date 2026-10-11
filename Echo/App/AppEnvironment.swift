@@ -25,7 +25,11 @@ final class AppEnvironment {
     let localizer: Localizer
     let battery: BatteryService
 
-    lazy var snapper = WindowSnapper(windowManager: windowManager, settings: settings)
+    lazy var snapper = WindowSnapper(
+        windowManager: windowManager,
+        settings: settings,
+        overlay: SnapOverlayController(localizer: localizer)
+    )
     let monitoring: MonitoringCoordinator
 
     init(defaults: UserDefaults = .standard, system: SystemLanguages = .live) {

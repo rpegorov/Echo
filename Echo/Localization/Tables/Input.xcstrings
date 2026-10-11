@@ -171,6 +171,125 @@
         }
       }
     },
+    "commandLeftThird": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Left Third"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Левая треть"
+          }
+        }
+      }
+    },
+    "commandCenterThird": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Center Third"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Центральная треть"
+          }
+        }
+      }
+    },
+    "commandRightThird": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Right Third"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Правая треть"
+          }
+        }
+      }
+    },
+    "commandLeftTwoThirds": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Left Two Thirds"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Левые две трети"
+          }
+        }
+      }
+    },
+    "commandRightTwoThirds": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Right Two Thirds"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Правые две трети"
+          }
+        }
+      }
+    },
+    "commandNextDisplay": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next Display"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На следующий монитор"
+          }
+        }
+      }
+    },
+    "commandPreviousDisplay": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previous Display"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "На предыдущий монитор"
+          }
+        }
+      }
+    },
     "commandOpenClipboard": {
       "extractionState": "manual",
       "localizations": {
@@ -466,13 +585,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "macOS system tiling also snaps windows to the edges. Turn it off to avoid a conflict."
+            "value": "macOS system tiling also snaps windows to the edges and while ⌥ is held. Turn it off to avoid a conflict."
           }
         },
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Системный тайлинг macOS тоже магнитит окна к краям. Отключите его, чтобы не было конфликта."
+            "value": "Системный тайлинг macOS тоже магнитит окна к краям и при зажатой ⌥. Отключите его, чтобы не было конфликта."
           }
         }
       }
@@ -490,6 +609,227 @@
           "stringUnit": {
             "state": "translated",
             "value": "Отключить тайлинг macOS"
+          }
+        }
+      }
+    },
+    "layoutCyclingTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cycle sizes on repeat"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Менять размер при повторе"
+          }
+        }
+      }
+    },
+    "layoutCyclingCaption": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pressing a half shortcut again changes the width: ½ → ⅔ → ⅓."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Повторное нажатие хоткея половины меняет ширину: ½ → ⅔ → ⅓."
+          }
+        }
+      }
+    },
+    "zoneMapTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zone Map"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Карта зон"
+          }
+        }
+      }
+    },
+    "zoneMapCaption": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Click a zone to record its shortcut."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нажмите на зону, чтобы назначить сочетание."
+          }
+        }
+      }
+    },
+    "zoneMapDisplayLabel": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Display"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Монитор"
+          }
+        }
+      }
+    },
+    "zoneGroupHalves": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Halves"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Половины"
+          }
+        }
+      }
+    },
+    "zoneGroupVerticalHalves": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Top & Bottom"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Верх и низ"
+          }
+        }
+      }
+    },
+    "zoneGroupQuarters": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quarters"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Четверти"
+          }
+        }
+      }
+    },
+    "zoneGroupThirds": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thirds"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Трети"
+          }
+        }
+      }
+    },
+    "zoneGroupTwoThirds": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Two Thirds"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Две трети"
+          }
+        }
+      }
+    },
+    "zoneGroupCenterAndFull": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Center & Full Screen"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Центр и весь экран"
+          }
+        }
+      }
+    },
+    "shortcutConflictMessage": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ is already assigned to “%2$@”."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ уже назначено на «%2$@»."
+          }
+        }
+      }
+    },
+    "shortcutReassignButton": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reassign"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Переназначить"
           }
         }
       }

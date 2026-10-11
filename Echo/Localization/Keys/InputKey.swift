@@ -21,6 +21,13 @@ enum InputKey: String, LocalizedKey {
     case commandBottomRight
     case commandCenter
     case commandMaximize
+    case commandLeftThird
+    case commandCenterThird
+    case commandRightThird
+    case commandLeftTwoThirds
+    case commandRightTwoThirds
+    case commandNextDisplay
+    case commandPreviousDisplay
     case commandOpenClipboard
     case commandSwitchLayout
     case commandConvertWord
@@ -44,6 +51,21 @@ enum InputKey: String, LocalizedKey {
     case tilingConflictTitle
     case tilingConflictCaption
     case disableSystemTilingButton
+
+    // MARK: Zone map, layout cycling, shortcut conflicts
+    case layoutCyclingTitle
+    case layoutCyclingCaption
+    case zoneMapTitle
+    case zoneMapCaption
+    case zoneMapDisplayLabel
+    case zoneGroupHalves
+    case zoneGroupVerticalHalves
+    case zoneGroupQuarters
+    case zoneGroupThirds
+    case zoneGroupTwoThirds
+    case zoneGroupCenterAndFull
+    case shortcutConflictMessage
+    case shortcutReassignButton
 
     // MARK: Ultra Switch section
     case ultraSwitchTitle

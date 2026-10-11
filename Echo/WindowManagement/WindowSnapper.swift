@@ -5,7 +5,6 @@
 
 import AppKit
 import ApplicationServices
-import SwiftUI
 
 /// Drag-to-snap: при перетаскивании окна к краю/углу экрана подсвечивает зону
 /// и примагничивает окно к соответствующей раскладке. Зажатый Shift отменяет.
@@ -24,11 +23,12 @@ final class WindowSnapper {
     private var isDraggingWindow = false
     private var activeZone: WindowLayout?
 
-    private lazy var overlay = SnapOverlayWindow()
+    private let overlay: any SnapOverlayPresenting
 
-    init(windowManager: WindowManagerService, settings: AppSettings) {
+    init(windowManager: WindowManagerService, settings: AppSettings, overlay: any SnapOverlayPresenting) {
         self.windowManager = windowManager
         self.settings = settings
+        self.overlay = overlay
     }
 
     // MARK: - Lifecycle
@@ -92,7 +92,12 @@ final class WindowSnapper {
 
         if let zone = zone(for: location, on: screen) {
             activeZone = zone
-            overlay.show(frame: zone.frame(in: screen.visibleFrame, gap: CGFloat(settings.windowGap)))
+            overlay.show(SnapPreview(
+                layout: zone,
+                frame: zone.frame(in: screen.visibleFrame, gap: CGFloat(settings.windowGap)),
+                screenFrame: screen.frame,
+                shortcut: settings.shortcut(for: zone.command)
+            ))
         } else {
             activeZone = nil
             overlay.hide()
@@ -149,45 +154,5 @@ final class WindowSnapper {
         if nearRight  { return .rightHalf }
         if nearBottom { return .bottomHalf }
         return nil
-    }
-}
-
-// MARK: - Overlay
-
-/// Прозрачное окно-подсказка, показывающее целевую зону. Не перехватывает мышь.
-@MainActor
-private final class SnapOverlayWindow {
-    private let window: NSWindow
-
-    init() {
-        window = NSWindow(contentRect: .zero, styleMask: .borderless, backing: .buffered, defer: false)
-        window.isOpaque = false
-        window.backgroundColor = .clear
-        window.hasShadow = false
-        window.level = .floating
-        window.ignoresMouseEvents = true
-        window.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle]
-        window.contentView = NSHostingView(rootView: SnapOverlayView())
-    }
-
-    func show(frame: CGRect) {
-        window.setFrame(frame, display: true)
-        window.orderFront(nil)
-    }
-
-    func hide() {
-        window.orderOut(nil)
-    }
-}
-
-private struct SnapOverlayView: View {
-    var body: some View {
-        RoundedRectangle(cornerRadius: 12)
-            .fill(DS.accent.opacity(0.22))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .strokeBorder(DS.accent.opacity(0.85), lineWidth: 2)
-            )
-            .padding(4)
     }
 }

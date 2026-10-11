@@ -22,6 +22,14 @@ final class AppSettings: ObservableObject {
 
     @Published private(set) var shortcuts: [WMCommand: KeyboardShortcut]
 
+    /// Repeating a half shortcut steps the width ½ → ⅔ → ⅓.
+    @Published var layoutCyclingEnabled: Bool {
+        didSet { defaults.set(layoutCyclingEnabled, forKey: Keys.cycleLayouts) }
+    }
+
+    /// True while a shortcut recorder waits for keys; Echo's hotkeys stay unregistered meanwhile. Not persisted.
+    @Published private(set) var isRecordingShortcut = false
+
     // MARK: - General
 
     /// Запускать приложение при входе в систему (через SMAppService).
@@ -136,6 +144,7 @@ final class AppSettings: ObservableObject {
     private enum Keys {
         static let enabled = "wm.enabled"
         static let gap = "wm.gap"
+        static let cycleLayouts = "wm.cycleLayouts"
         static let shortcuts = "wm.shortcuts"
         static let updateInterval = "monitor.updateInterval"
         static let pauseWhenHidden = "power.pauseWhenHidden"
@@ -166,6 +175,7 @@ final class AppSettings: ObservableObject {
 
         windowManagerEnabled = defaults.object(forKey: Keys.enabled) as? Bool ?? true
         windowGap = defaults.object(forKey: Keys.gap) as? Double ?? 8
+        layoutCyclingEnabled = defaults.object(forKey: Keys.cycleLayouts) as? Bool ?? true
 
         // General: фактический статус берём у системы, а не из defaults.
         launchAtLogin = (SMAppService.mainApp.status == .enabled)
@@ -236,14 +246,32 @@ final class AppSettings: ObservableObject {
         shortcuts[command]
     }
 
-    func setShortcut(_ shortcut: KeyboardShortcut?, for command: WMCommand) {
-        if let shortcut {
-            shortcuts[command] = shortcut
-        } else {
+    func setRecordingShortcut(_ recording: Bool) {
+        guard recording != isRecordingShortcut else { return }
+        isRecordingShortcut = recording
+        onChange?()
+    }
+
+    /// The command currently bound to a combination that collides with `shortcut`.
+    func command(using shortcut: KeyboardShortcut) -> WMCommand? {
+        shortcuts.first { $0.value.collides(with: shortcut) }?.key
+    }
+
+    /// Binds `shortcut` to `command`. A command that held a colliding combination loses it and is returned.
+    @discardableResult
+    func setShortcut(_ shortcut: KeyboardShortcut?, for command: WMCommand) -> WMCommand? {
+        guard let shortcut else {
             shortcuts.removeValue(forKey: command)
+            persistShortcuts()
+            onChange?()
+            return nil
         }
+        let displaced = self.command(using: shortcut).flatMap { $0 == command ? nil : $0 }
+        if let displaced { shortcuts.removeValue(forKey: displaced) }
+        shortcuts[command] = shortcut
         persistShortcuts()
         onChange?()
+        return displaced
     }
 
     private func persistShortcuts() {

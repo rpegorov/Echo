@@ -134,7 +134,7 @@ final class WindowManagerService: ObservableObject {
     }
 
     /// Конвертирует кадр из Cocoa (origin снизу-слева) в AX (origin сверху-слева) и применяет.
-    private func setFrame(_ frameCocoa: CGRect, for window: AXUIElement) {
+    func setFrame(_ frameCocoa: CGRect, for window: AXUIElement) {
         let primaryHeight = NSScreen.screens.first?.frame.height ?? 0
         let axY = primaryHeight - frameCocoa.origin.y - frameCocoa.height
         var origin = CGPoint(x: frameCocoa.origin.x, y: axY)

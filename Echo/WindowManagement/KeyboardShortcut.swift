@@ -58,6 +58,11 @@ struct KeyboardShortcut: Codable, Equatable {
         return self.keyCode == keyCode && own == flags.intersection(relevant)
     }
 
+    /// Same physical key and the same ⌘⌃⌥⇧ set; recorder-only flags such as fn on arrows are ignored.
+    func collides(with other: KeyboardShortcut) -> Bool {
+        matches(keyCode: other.keyCode, flags: NSEvent.ModifierFlags(rawValue: UInt(other.modifiers)))
+    }
+
     /// Символ клавиши по виртуальному keyCode (ANSI-раскладка). `spaceName` overrides the
     /// spelled-out name for the Space key when rendering for UI; omit it for logs.
     static func keySymbol(_ code: UInt32, spaceName: String? = nil) -> String {
