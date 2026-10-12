@@ -22,6 +22,23 @@ final class AppSettings: ObservableObject {
 
     @Published private(set) var shortcuts: [WMCommand: KeyboardShortcut]
 
+    /// Repeating a half shortcut steps the width ½ → ⅔ → ⅓.
+    @Published var layoutCyclingEnabled: Bool {
+        didSet { defaults.set(layoutCyclingEnabled, forKey: Keys.cycleLayouts) }
+    }
+
+    @Published private(set) var arrangementShortcuts: [UUID: KeyboardShortcut]
+
+    /// The owner whose shortcut a recorder is capturing; Echo's hotkeys stay unregistered meanwhile. Not persisted.
+    @Published private(set) var recordingOwner: ShortcutOwner?
+
+    var isRecordingShortcut: Bool { recordingOwner != nil }
+
+    /// New windows of apps with a rule go to their zone.
+    @Published var autoRulesEnabled: Bool {
+        didSet { defaults.set(autoRulesEnabled, forKey: Keys.autoRules); onChange?() }
+    }
+
     // MARK: - General
 
     /// Запускать приложение при входе в систему (через SMAppService).
@@ -109,6 +126,13 @@ final class AppSettings: ObservableObject {
         didSet { defaults.set(popoverMetricsStyle.rawValue, forKey: Keys.popoverMetricsStyle) }
     }
 
+    // MARK: - Grid mode
+
+    /// Modifier that switches a window drag to the display's grid; the snapper reads it at the start of every drag.
+    @Published var gridModifier: GridDragModifier {
+        didSet { defaults.set(gridModifier.rawValue, forKey: Keys.gridModifier) }
+    }
+
     // MARK: - Language
 
     /// Выбор языка интерфейса: следовать системе или зафиксированный язык.
@@ -136,6 +160,7 @@ final class AppSettings: ObservableObject {
     private enum Keys {
         static let enabled = "wm.enabled"
         static let gap = "wm.gap"
+        static let cycleLayouts = "wm.cycleLayouts"
         static let shortcuts = "wm.shortcuts"
         static let updateInterval = "monitor.updateInterval"
         static let pauseWhenHidden = "power.pauseWhenHidden"
@@ -152,20 +177,27 @@ final class AppSettings: ObservableObject {
         static let menuBarIconPath = "menuBar.iconPath"
         static let menuBarInterval = "menuBar.interval"
         static let language = "general.language"
+        static let gridModifier = "wm.gridModifier"
+        static let autoRules = "wm.autoRules.enabled"
     }
 
-    /// Текущая версия набора хоткеев. При росте — в сохранённый набор
-    /// доливаются дефолты команд, которых на прошлой версии ещё не было.
-    private static let shortcutsVersion = 2
+    /// Version of the stored shortcut set. When it grows, defaults of newer commands are added
+    /// to a stored set by `ShortcutBackfill`.
+    private static let shortcutsVersion = 4
+
+    /// Stored entries whose key is neither a `WMCommand` raw value nor an arrangement key; written back unchanged.
+    private var unrecognizedShortcutEntries: [String: KeyboardShortcut] = [:]
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        // Долитые дефолты обязаны попасть в хранилище: маркер версии пишется в
-        // конце init, и без сохранения следующий запуск остался бы без хоткеев.
+        // Backfilled defaults must be saved: the version marker is written at the end of init,
+        // so without a save the next launch would not add them again.
         var needsShortcutPersist = false
 
         windowManagerEnabled = defaults.object(forKey: Keys.enabled) as? Bool ?? true
         windowGap = defaults.object(forKey: Keys.gap) as? Double ?? 8
+        layoutCyclingEnabled = defaults.object(forKey: Keys.cycleLayouts) as? Bool ?? true
+        autoRulesEnabled = defaults.object(forKey: Keys.autoRules) as? Bool ?? true
 
         // General: фактический статус берём у системы, а не из defaults.
         launchAtLogin = (SMAppService.mainApp.status == .enabled)
@@ -203,51 +235,122 @@ final class AppSettings: ObservableObject {
         ultraSwitchEnabled = defaults.object(forKey: Keys.ultraSwitch) as? Bool ?? false
         autoConvertEnabled = defaults.object(forKey: Keys.autoConvert) as? Bool ?? false
 
+        gridModifier = defaults.string(forKey: Keys.gridModifier).flatMap(GridDragModifier.init(rawValue:)) ?? .option
+
+        let storedVersion = defaults.integer(forKey: Keys.shortcutsVersion)
+
         // Если есть сохранённый набор — он авторитетный (учитывает удалённые
         // пользователем хоткеи). Иначе — дефолты (первый запуск).
         if let data = defaults.data(forKey: Keys.shortcuts),
            let stored = try? JSONDecoder().decode([String: KeyboardShortcut].self, from: data) {
-            var result: [WMCommand: KeyboardShortcut] = [:]
-            for (key, value) in stored {
-                if let command = WMCommand(rawValue: key) { result[command] = value }
-            }
-            // Доливаем дефолты команд, появившихся после сохранения набора.
-            let storedVersion = defaults.integer(forKey: Keys.shortcutsVersion)
+            var migrated = stored
             if storedVersion < Self.shortcutsVersion {
-                for command in WMCommand.allCases where result[command] == nil && command.isUltraSwitchCommand {
-                    result[command] = command.defaultShortcut
-                }
+                migrated = ShortcutBackfill.apply(to: stored, storedVersion: storedVersion)
                 needsShortcutPersist = true
             }
-            shortcuts = result
+            let split = Self.splitByOwner(migrated)
+            unrecognizedShortcutEntries = split.unrecognized
+            arrangementShortcuts = split.arrangements
+            shortcuts = split.commands
         } else {
             var defaultsMap: [WMCommand: KeyboardShortcut] = [:]
             for command in WMCommand.allCases {
                 if let shortcut = command.defaultShortcut { defaultsMap[command] = shortcut }
             }
             shortcuts = defaultsMap
+            arrangementShortcuts = [:]
         }
 
         if needsShortcutPersist { persistShortcuts() }
-        defaults.set(Self.shortcutsVersion, forKey: Keys.shortcutsVersion)
+        defaults.set(max(storedVersion, Self.shortcutsVersion), forKey: Keys.shortcutsVersion)
+    }
+
+    private struct ShortcutsByOwner {
+        let commands: [WMCommand: KeyboardShortcut]
+        let arrangements: [UUID: KeyboardShortcut]
+        let unrecognized: [String: KeyboardShortcut]
+    }
+
+    private static func splitByOwner(_ entries: [String: KeyboardShortcut]) -> ShortcutsByOwner {
+        var commands: [WMCommand: KeyboardShortcut] = [:]
+        var arrangements: [UUID: KeyboardShortcut] = [:]
+        var unrecognized: [String: KeyboardShortcut] = [:]
+        for (key, value) in entries {
+            switch ShortcutOwner(storageKey: key) {
+            case .command(let command)?:      commands[command] = value
+            case .arrangement(let id)?:       arrangements[id] = value
+            case nil:                         unrecognized[key] = value
+            }
+        }
+        return ShortcutsByOwner(commands: commands, arrangements: arrangements, unrecognized: unrecognized)
+    }
+
+    func shortcut(for owner: ShortcutOwner) -> KeyboardShortcut? {
+        switch owner {
+        case .command(let command):   return shortcuts[command]
+        case .arrangement(let id):    return arrangementShortcuts[id]
+        }
     }
 
     func shortcut(for command: WMCommand) -> KeyboardShortcut? {
-        shortcuts[command]
+        shortcut(for: .command(command))
     }
 
-    func setShortcut(_ shortcut: KeyboardShortcut?, for command: WMCommand) {
-        if let shortcut {
-            shortcuts[command] = shortcut
-        } else {
-            shortcuts.removeValue(forKey: command)
-        }
-        persistShortcuts()
+    /// Starts capturing for `owner`, which cancels any other recorder; nil stops capturing.
+    func setRecordingOwner(_ owner: ShortcutOwner?) {
+        guard owner != recordingOwner else { return }
+        recordingOwner = owner
         onChange?()
     }
 
+    /// The first owner, commands in declaration order and then arrangements by `uuidString`,
+    /// bound to a combination that collides with `shortcut`.
+    func owner(using shortcut: KeyboardShortcut) -> ShortcutOwner? {
+        orderedOwners.first { self.shortcut(for: $0)?.collides(with: shortcut) == true }
+    }
+
+    /// Binds `shortcut` to `owner`. Every other owner holding a colliding combination loses it;
+    /// the first of them, in `owner(using:)` order, is returned.
+    @discardableResult
+    func setShortcut(_ shortcut: KeyboardShortcut?, for owner: ShortcutOwner) -> ShortcutOwner? {
+        guard let shortcut else {
+            store(nil, for: owner)
+            persistShortcuts()
+            onChange?()
+            return nil
+        }
+        let displaced = orderedOwners.filter {
+            $0 != owner && self.shortcut(for: $0)?.collides(with: shortcut) == true
+        }
+        displaced.forEach { store(nil, for: $0) }
+        store(shortcut, for: owner)
+        persistShortcuts()
+        onChange?()
+        return displaced.first
+    }
+
+    @discardableResult
+    func setShortcut(_ shortcut: KeyboardShortcut?, for command: WMCommand) -> ShortcutOwner? {
+        setShortcut(shortcut, for: .command(command))
+    }
+
+    private var orderedOwners: [ShortcutOwner] {
+        WMCommand.allCases.map(ShortcutOwner.command)
+            + arrangementShortcuts.keys.sorted { $0.uuidString < $1.uuidString }.map(ShortcutOwner.arrangement)
+    }
+
+    private func store(_ shortcut: KeyboardShortcut?, for owner: ShortcutOwner) {
+        switch owner {
+        case .command(let command):   shortcuts[command] = shortcut
+        case .arrangement(let id):    arrangementShortcuts[id] = shortcut
+        }
+    }
+
     private func persistShortcuts() {
-        let stringKeyed = Dictionary(uniqueKeysWithValues: shortcuts.map { ($0.key.rawValue, $0.value) })
+        let commandEntries = shortcuts.map { (ShortcutOwner.command($0.key).storageKey, $0.value) }
+        let arrangementEntries = arrangementShortcuts.map { (ShortcutOwner.arrangement($0.key).storageKey, $0.value) }
+        let recognized = Dictionary(uniqueKeysWithValues: commandEntries + arrangementEntries)
+        let stringKeyed = recognized.merging(unrecognizedShortcutEntries, uniquingKeysWith: { current, _ in current })
         if let data = try? JSONEncoder().encode(stringKeyed) {
             defaults.set(data, forKey: Keys.shortcuts)
         }

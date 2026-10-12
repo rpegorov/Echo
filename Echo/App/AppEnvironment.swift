@@ -3,6 +3,7 @@
 //  MonitorBarApp
 //
 
+import AppKit
 import Foundation
 
 /// Композиционный корень приложения: создаёт и владеет всеми сервисами,
@@ -24,11 +25,45 @@ final class AppEnvironment {
     let detailState: DetailState
     let localizer: Localizer
     let battery: BatteryService
+    let gridStore: GridStore
 
-    lazy var snapper = WindowSnapper(windowManager: windowManager, settings: settings)
+    lazy var snapOverlay = SnapOverlayController(localizer: localizer)
+
+    lazy var snapper = WindowSnapper(
+        windowManager: windowManager,
+        settings: settings,
+        overlay: snapOverlay,
+        grids: gridStore
+    )
+
+    lazy var arrangements = ArrangementService(
+        store: gridStore,
+        settings: settings,
+        catalog: AXWindowCatalog(workspace: .shared, ownBundleID: Bundle.main.bundleIdentifier),
+        frames: windowManager,
+        displays: { [gridStore] in DisplaySnapshot.connected(grids: gridStore) },
+        hasPermission: { [windowManager] in windowManager.hasPermission() }
+    )
+
+    lazy var autoRules = AutoRuleEngine(
+        store: gridStore,
+        frames: windowManager,
+        displays: { [gridStore] in DisplaySnapshot.connected(grids: gridStore) },
+        gap: { [settings] in CGFloat(settings.windowGap) },
+        workspace: .shared
+    )
+
+    lazy var gridCycler = GridCycler(
+        windowManager: windowManager,
+        store: gridStore,
+        settings: settings,
+        overlay: snapOverlay
+    )
     let monitoring: MonitoringCoordinator
 
-    init(defaults: UserDefaults = .standard, system: SystemLanguages = .live) {
+    /// `gridStorage` has no default: the live file store is built only at the app entry point,
+    /// so a test host can never read or move the user's grid file.
+    init(defaults: UserDefaults = .standard, system: SystemLanguages = .live, gridStorage: any GridDocumentStoring) {
         settings = AppSettings(defaults: defaults)
         metrics = MetricsService()
         utilities = SystemUtilitiesService(defaults: defaults)
@@ -41,10 +76,20 @@ final class AppEnvironment {
         localizer = Localizer(preference: settings.language, system: system)
         monitoring = MonitoringCoordinator(settings: settings, metrics: metrics)
         battery = Self.makeBatteryService()
+        gridStore = GridStore(storage: gridStorage)
 
         settings.onLanguageChange = { [weak self] in
             guard let self else { return }
             self.localizer.apply(self.settings.language)
+        }
+    }
+
+    /// Grid file in Application Support; without that folder grids stay unavailable and the store reports why.
+    static func liveGridStorage() -> any GridDocumentStoring {
+        do {
+            return GridFileStorage(fileURL: try GridFileStorage.defaultURL())
+        } catch {
+            return UnavailableGridStorage(error: error)
         }
     }
 

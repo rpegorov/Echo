@@ -21,7 +21,7 @@ struct AppEnvironmentTests {
     @Test("wiring: changing AppSettings.language reaches AppEnvironment's Localizer")
     func settingsLanguageChangeReachesLocalizer() {
         let defaults = ephemeralDefaults("environment")
-        let environment = AppEnvironment(defaults: defaults, system: SystemLanguages(preferred: { [] }))
+        let environment = AppEnvironment(defaults: defaults, system: SystemLanguages(preferred: { [] }), gridStorage: InMemoryGridStorage())
 
         environment.settings.language = .fixed(.ru)
         #expect(environment.localizer.language == .ru)

@@ -1,0 +1,71 @@
+# SwiftLint — merge-blockers of the Swift stack. `swiftlint lint --strict` in CI and gate.sh.
+# Findings that predate the rules live in .swiftlint.baseline.json; new code is held to every rule.
+baseline: .swiftlint.baseline.json
+included:
+  - Echo
+  - EchoTests
+excluded:
+  - build
+  - .agents
+  - Echo.xcodeproj
+  - "**/.build"
+  - "**/DerivedData"
+  - "**/Generated"
+
+opt_in_rules:
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - discouraged_optional_boolean
+  - no_magic_numbers
+  - fatal_error_message
+  - unowned_variable_capture
+  - weak_delegate
+  - empty_count
+  - first_where
+  - contains_over_first_not_nil
+  - private_swiftui_state
+  - unhandled_throwing_task
+
+force_cast: error
+force_try: error
+force_unwrapping: error
+implicitly_unwrapped_optional: error
+no_magic_numbers:
+  severity: error
+  test_parent_classes: [XCTestCase]
+function_body_length:
+  warning: 50
+  error: 80
+file_length:
+  warning: 400
+  error: 600
+cyclomatic_complexity:
+  warning: 10
+  error: 15
+type_body_length:
+  warning: 300
+  error: 500
+
+custom_rules:
+  swallowed_try:
+    name: "Swallowed error"
+    regex: '\btry\?'
+    message: "try? swallows the error: handle, log with context, or rethrow"
+    severity: error
+    excluded: ".*Tests?/.*"
+  unowned_task:
+    name: "Unowned Task"
+    regex: '^\s*(_\s*=\s*)?Task(\.detached)?\s*(\([^)]*\))?\s*\{'
+    message: "Store the Task handle and cancel it, or use .task {} tied to the view"
+    severity: error
+    excluded: ".*Tests?/.*"
+  unchecked_sendable:
+    name: "Unchecked Sendable"
+    regex: '@unchecked\s+Sendable|nonisolated\(unsafe\)'
+    message: "Disables the compiler's race check: make the type actually Sendable or isolate it"
+    severity: error
+  hardcoded_frame:
+    name: "Hardcoded frame size"
+    regex: '\.frame\((min|max|ideal)?[wW]idth:\s*\d'
+    message: "Use layout tokens from the design system, not literal sizes"
+    severity: warning

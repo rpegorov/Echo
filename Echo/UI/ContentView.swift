@@ -16,6 +16,7 @@ struct ContentView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var ultraSwitch: UltraSwitchService
     @ObservedObject var battery: BatteryService
+    @ObservedObject var gridStore: GridStore
     @EnvironmentObject private var loc: Localizer
 
     /// Открыть детальное окно для выбранной метрики (реализуется владельцем поповера).
@@ -24,6 +25,8 @@ struct ContentView: View {
     let onOpenClipboard: () -> Void
     /// Открыть настройки.
     let onOpenPreferences: () -> Void
+    /// Applies a saved window arrangement.
+    let onApplyArrangement: (UUID) -> ArrangementApplyReport
 
     var body: some View {
         Group {
@@ -255,6 +258,8 @@ struct ContentView: View {
                 .buttonStyle(.plain)
                 .transition(.opacity)
             }
+
+            ArrangementsMenuRow(store: gridStore, settings: settings, onApply: onApplyArrangement)
         }
         .padding(.bottom, 6)
     }

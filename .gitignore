@@ -24,3 +24,6 @@ fix_project.sh
 DEVLOG.md
 ARCHITECTURE.md
 contex.md
+
+# External executor briefs, logs and results
+.agents/
