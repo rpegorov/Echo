@@ -81,7 +81,7 @@ final class WindowSnapper {
 
     private func handleDrag(_ event: NSEvent) {
         // The window is resolved lazily on the first drag event, not on every click.
-        if let down = downLocation { beginDrag(at: down) }
+        if let down = downLocation { beginDrag(at: down, at: event.timestamp) }
         guard let window = dragWindow else { return }
 
         // Shift временно отключает примагничивание.
@@ -91,15 +91,16 @@ final class WindowSnapper {
         }
 
         // Убеждаемся, что окно реально перемещают (а не выделяют текст и т. п.).
-        // The probe limits the reads; after it gives up, the rest of the drag is ignored.
+        // The cursor moves before the window does, so the probe keeps watching rather than judging
+        // the window by the reads taken while the system is still recognising the drag.
         if !isDraggingWindow, let start = startPosition, var probe = dragProbe {
-            if probe.shouldProbe(cursor: NSEvent.mouseLocation),
+            let cursor = NSEvent.mouseLocation
+            if probe.shouldProbe(cursor: cursor),
                let current = windowManager.position(of: window) {
                 let moved = hypot(current.x - start.x, current.y - start.y) >= Self.movementThreshold
-                if probe.record(moved: moved) == .windowMoving {
-                    isDraggingWindow = true
-                }
-                dragProbe = probe
+                let verdict = probe.record(moved: moved, cursor: cursor, at: event.timestamp)
+                isDraggingWindow = verdict == .windowMoving
+                dragProbe = verdict == .keepWatching ? probe : nil
             }
         }
         guard isDraggingWindow else { return }
@@ -171,13 +172,13 @@ final class WindowSnapper {
     // MARK: - Drag state
 
     /// Resolves the dragged window and caches screen geometry once per drag.
-    private func beginDrag(at down: CGPoint) {
+    private func beginDrag(at down: CGPoint, at time: TimeInterval) {
         downLocation = nil
         guard let window = windowManager.window(at: down) else { return }
         dragScreens = NSScreen.screens.map(makeScreenGeometry)
         dragWindow = window
         startPosition = windowManager.position(of: window)
-        dragProbe = WindowDragProbe(downLocation: down, threshold: Self.movementThreshold)
+        dragProbe = WindowDragProbe(downLocation: down, startTime: time, threshold: Self.movementThreshold)
     }
 
     private func makeScreenGeometry(for screen: NSScreen) -> ScreenGeometry {
