@@ -38,6 +38,7 @@ actor SMCTemperatureMonitor: TemperatureMonitoring {
     private var cpuKeys: [String] = []
     private var gpuKeys: [String] = []
     private var keyInfoCache: [String: KeyInfo] = [:]
+    private var staticFilter = SMCStaticKeyFilter()
 
     deinit {
         if connection != 0 { IOServiceClose(connection) }
@@ -119,6 +120,7 @@ actor SMCTemperatureMonitor: TemperatureMonitoring {
         var peak: Double?
         for key in keys {
             guard let value = readValue(key), SMC.plausibleRange.contains(value) else { continue }
+            guard !staticFilter.isStatic(key: key, value: value) else { continue }
             peak = max(peak ?? value, value)
         }
         return peak
