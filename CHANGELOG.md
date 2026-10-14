@@ -13,7 +13,7 @@ release does not build.
   current and peak readings, sampled from the SMC every second. The tab hides
   itself on Macs without readable sensors.
 
-## [2.2] — 2026-10-11
+## [2.2] — 2026-10-14
 
 ### Added
 
@@ -32,6 +32,10 @@ release does not build.
   are skipped.
 - Auto rules: a new window of a chosen application lands in its zone by
   itself.
+- Temperature tab in the metrics popover: CPU and GPU temperature charts with
+  current and peak readings, sampled from the SMC every second. The popover
+  also shows a temperature row next to the network one, and the tab hides
+  itself on Macs without readable sensors.
 
 ### Changed
 
