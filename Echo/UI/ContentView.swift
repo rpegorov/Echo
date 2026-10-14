@@ -322,6 +322,10 @@ struct ContentView: View {
         case .battery:
             // Battery is shown as BatteryRow, not a ring — unreachable.
             return (0, "", "", "")
+
+        case .temperature:
+            // Temperature lives in its detail tab only — unreachable here.
+            return (0, "", "", "")
         }
     }
 

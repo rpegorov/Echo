@@ -26,7 +26,13 @@ struct BatteryWiringTests {
 
     @Test("MetricTab.visibleCases includes .battery only when hasBattery is true")
     func visibleCasesRespectsHasBattery() {
-        #expect(!MetricTab.visibleCases(hasBattery: false).contains(.battery))
-        #expect(MetricTab.visibleCases(hasBattery: true).contains(.battery))
+        #expect(!MetricTab.visibleCases(hasBattery: false, hasTemperature: true).contains(.battery))
+        #expect(MetricTab.visibleCases(hasBattery: true, hasTemperature: true).contains(.battery))
+    }
+
+    @Test("MetricTab.visibleCases includes .temperature only when hasTemperature is true")
+    func visibleCasesRespectsHasTemperature() {
+        #expect(!MetricTab.visibleCases(hasBattery: true, hasTemperature: false).contains(.temperature))
+        #expect(MetricTab.visibleCases(hasBattery: true, hasTemperature: true).contains(.temperature))
     }
 }

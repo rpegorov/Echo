@@ -21,6 +21,11 @@ struct MetricsDetailView: View {
         state.tab == .cpu || state.tab == .memory
     }
 
+    /// Tabs depend on hardware: battery on portables, temperature on sensor availability.
+    private var visibleTabs: [MetricTab] {
+        MetricTab.visibleCases(hasBattery: battery.hasBattery, hasTemperature: metrics.temperatureAvailable)
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             tabBar
@@ -53,7 +58,7 @@ struct MetricsDetailView: View {
     private var tabBar: some View {
         Group {
             HStack(spacing: 4) {
-                ForEach(MetricTab.visibleCases(hasBattery: battery.hasBattery), id: \.self) { tab in
+                ForEach(visibleTabs, id: \.self) { tab in
                     Button {
                         withAnimation(.easeInOut(duration: 0.2)) { state.tab = tab }
                     } label: {
@@ -106,6 +111,12 @@ struct MetricsDetailView: View {
         case .memory:  MemoryChartView(history: metrics.ramHistory, timestamps: metrics.historyDates, samples: metrics.resourceHistory)
         case .network: NetworkChartView(history: metrics.networkHistory, timestamps: metrics.historyDates)
         case .disk:    DiskUsageBarView(used: metrics.metrics.disk.used, total: metrics.metrics.disk.total)
+        case .temperature:
+            TemperatureChartView(
+                cpuHistory: metrics.cpuTemperatureHistory,
+                gpuHistory: metrics.gpuTemperatureHistory,
+                timestamps: metrics.historyDates
+            )
         case .battery: EmptyView()
         }
     }
@@ -117,6 +128,12 @@ struct MetricsDetailView: View {
         case .memory:  MemoryProcessListView(searchText: searchText)
         case .network: NetworkStatsView(current: metrics.metrics.network, history: metrics.networkHistory)
         case .disk:    DiskDetailView(diskUsed: metrics.metrics.disk.used, diskTotal: metrics.metrics.disk.total)
+        case .temperature:
+            TemperatureDetailView(
+                current: metrics.metrics.temperature,
+                cpuHistory: metrics.cpuTemperatureHistory,
+                gpuHistory: metrics.gpuTemperatureHistory
+            )
         case .battery: BatteryDetailView(history: battery.history, lastError: battery.lastError)
         }
     }

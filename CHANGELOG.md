@@ -5,6 +5,14 @@ the Sparkle update window: `scripts/release.sh` moves it into the appcast's
 `<description>`. Without a section for the version being released, the
 release does not build.
 
+## [Unreleased]
+
+### Added
+
+- Temperature tab in the metrics popover: CPU and GPU temperature charts with
+  current and peak readings, sampled from the SMC every second. The tab hides
+  itself on Macs without readable sensors.
+
 ## [2.2] — 2026-10-11
 
 ### Added
