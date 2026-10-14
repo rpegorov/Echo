@@ -6,4 +6,5 @@ struct SystemMetrics: Sendable {
     var ram = RAMMetrics()
     var disk = DiskMetrics()
     var network = NetworkMetrics()
+    var temperature = TemperatureSample()
 }

@@ -17,6 +17,9 @@ final class AppWindows: NSObject, NSWindowDelegate {
     private let environment: AppEnvironment
     private let externalApps = ExternalAppTracker()
 
+    private var gridEditor: GridEditorWindowController?
+    private var arrangementEditor: ArrangementEditorWindowController?
+
     private(set) var detailWindow: NSWindow?
     private(set) var clipboardWindow: NSWindow?
     private(set) var preferencesWindow: NSWindow?
@@ -24,6 +27,9 @@ final class AppWindows: NSObject, NSWindowDelegate {
     /// Вызывается при закрытии любого из окон — владелец пересчитывает
     /// политику мониторинга по новому набору видимых окон.
     var onWindowClosed: (() -> Void)?
+
+    /// Called when Preferences sees Accessibility turn from denied to granted.
+    var onAccessibilityGranted: (() -> Void)?
 
     /// Открыто ли хотя бы одно из окон, за которые отвечает этот тип.
     var isAnyWindowVisible: Bool {
@@ -133,11 +139,17 @@ final class AppWindows: NSObject, NSWindowDelegate {
             settings: environment.settings,
             clipboard: environment.clipboard,
             windowManager: environment.windowManager,
+            gridStore: environment.gridStore,
+            onOpenGridEditor: { [weak self] in self?.openGridEditor($0) },
+            arrangements: environment.arrangements,
+            onOpenArrangementEditor: { [weak self] in self?.openArrangementEditor($0) },
+            onAccessibilityGranted: { [weak self] in self?.onAccessibilityGranted?() },
             ultraSwitch: environment.ultraSwitch,
             updater: environment.updater,
             metrics: environment.metrics
         )
-        let hosting = HostingFactory.make(root, localizer: environment.localizer)
+        let content = root.environmentObject(environment.gridStore)
+        let hosting = HostingFactory.make(content, localizer: environment.localizer)
 
         let window = NSWindow(contentViewController: hosting)
         window.styleMask = [.titled, .closable, .fullSizeContentView]
@@ -152,6 +164,31 @@ final class AppWindows: NSObject, NSWindowDelegate {
         window.makeKeyAndOrderFront(nil)
     }
 
+    // MARK: - Grid editor
+
+    func openGridEditor(_ request: GridEditorRequest) {
+        let controller = gridEditor ?? GridEditorWindowController(
+            store: environment.gridStore,
+            settings: environment.settings,
+            localizer: environment.localizer
+        )
+        gridEditor = controller
+        controller.open(request)
+    }
+
+    // MARK: - Arrangement editor
+
+    func openArrangementEditor(_ id: UUID) {
+        let controller = arrangementEditor ?? ArrangementEditorWindowController(
+            store: environment.gridStore,
+            arrangements: environment.arrangements,
+            settings: environment.settings,
+            localizer: environment.localizer
+        )
+        arrangementEditor = controller
+        controller.open(id)
+    }
+
     // MARK: - Language change
 
     /// Re-titles already open windows after the language changed on the fly.
@@ -159,6 +196,8 @@ final class AppWindows: NSObject, NSWindowDelegate {
         detailWindow?.title = localizer.t(SystemKey.windowTitleDetail)
         clipboardWindow?.title = localizer.t(SystemKey.windowTitleClipboard)
         preferencesWindow?.title = localizer.t(SystemKey.windowTitlePreferences)
+        gridEditor?.applyTitle()
+        arrangementEditor?.applyTitle()
     }
 
     // MARK: - NSWindowDelegate
@@ -173,7 +212,10 @@ final class AppWindows: NSObject, NSWindowDelegate {
         guard let closed = notification.object as? NSWindow else { return }
         if closed == detailWindow { detailWindow = nil }
         if closed == clipboardWindow { clipboardWindow = nil }
-        if closed == preferencesWindow { preferencesWindow = nil }
+        if closed == preferencesWindow {
+            preferencesWindow = nil
+            environment.settings.setRecordingOwner(nil)
+        }
         onWindowClosed?()
     }
 }

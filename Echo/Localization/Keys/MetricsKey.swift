@@ -12,6 +12,7 @@ enum MetricsKey: String, LocalizedKey {
     case tabNetwork
     case tabDisk
     case tabBattery
+    case tabTemperature
 
     case speedUnitKB
     case speedUnitMB
@@ -28,6 +29,17 @@ enum MetricsKey: String, LocalizedKey {
     case networkUploadValue
     case networkLegendDownload
     case networkLegendUpload
+
+    case temperatureLegendCPU
+    case temperatureLegendGPU
+    case temperatureAxisValue
+    case temperatureTooltipTitle
+    case temperatureValueCPU
+    case temperatureValueGPU
+    case temperatureStatCPU
+    case temperatureStatGPU
+    case temperatureStatPeakCPU
+    case temperatureStatPeakGPU
 
     case networkStatDownload
     case networkStatUpload
@@ -82,11 +94,12 @@ extension MetricTab {
     /// Localized display name; `rawValue` stays a persisted identifier.
     var titleKey: MetricsKey {
         switch self {
-        case .cpu:     return .tabCPU
-        case .memory:  return .tabMemory
-        case .network: return .tabNetwork
-        case .disk:    return .tabDisk
-        case .battery: return .tabBattery
+        case .cpu:         return .tabCPU
+        case .temperature: return .tabTemperature
+        case .memory:      return .tabMemory
+        case .network:     return .tabNetwork
+        case .disk:        return .tabDisk
+        case .battery:     return .tabBattery
         }
     }
 }

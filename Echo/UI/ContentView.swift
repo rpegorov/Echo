@@ -16,6 +16,7 @@ struct ContentView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var ultraSwitch: UltraSwitchService
     @ObservedObject var battery: BatteryService
+    @ObservedObject var gridStore: GridStore
     @EnvironmentObject private var loc: Localizer
 
     /// Открыть детальное окно для выбранной метрики (реализуется владельцем поповера).
@@ -24,6 +25,8 @@ struct ContentView: View {
     let onOpenClipboard: () -> Void
     /// Открыть настройки.
     let onOpenPreferences: () -> Void
+    /// Applies a saved window arrangement.
+    let onApplyArrangement: (UUID) -> ArrangementApplyReport
 
     var body: some View {
         Group {
@@ -37,6 +40,16 @@ struct ContentView: View {
                 networkRow
                     .padding(.horizontal, 12)
                     .padding(.top, 10)
+
+                if metrics.temperatureAvailable {
+                    TemperatureRow(
+                        cpu: metrics.metrics.temperature.cpu,
+                        gpu: metrics.metrics.temperature.gpu,
+                        onSelect: { onSelect(.temperature) }
+                    )
+                    .padding(.horizontal, DS.Temperature.popoverInset)
+                    .padding(.top, DS.Temperature.popoverRowSpacing)
+                }
 
                 if battery.hasBattery {
                     BatteryRow(reading: battery.current, onSelect: { onSelect(.battery) })
@@ -255,6 +268,8 @@ struct ContentView: View {
                 .buttonStyle(.plain)
                 .transition(.opacity)
             }
+
+            ArrangementsMenuRow(store: gridStore, settings: settings, onApply: onApplyArrangement)
         }
         .padding(.bottom, 6)
     }
@@ -316,6 +331,10 @@ struct ContentView: View {
 
         case .battery:
             // Battery is shown as BatteryRow, not a ring — unreachable.
+            return (0, "", "", "")
+
+        case .temperature:
+            // Temperature lives in its detail tab only — unreachable here.
             return (0, "", "", "")
         }
     }

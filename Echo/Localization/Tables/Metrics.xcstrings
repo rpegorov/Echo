@@ -36,6 +36,83 @@
         "ru": { "stringUnit": { "state": "translated", "value": "Батарея" } }
       }
     },
+    "tabTemperature": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Temperature" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Температура" } }
+      }
+    },
+    "temperatureLegendCPU": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "CPU" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "ЦП" } }
+      }
+    },
+    "temperatureLegendGPU": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "GPU" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "ГПУ" } }
+      }
+    },
+    "temperatureAxisValue": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "%d°" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "%d°" } }
+      }
+    },
+    "temperatureTooltipTitle": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "Temperatures" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Температуры" } }
+      }
+    },
+    "temperatureValueCPU": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "CPU: %.1f°" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "ЦП: %.1f°" } }
+      }
+    },
+    "temperatureValueGPU": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "GPU: %.1f°" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "ГПУ: %.1f°" } }
+      }
+    },
+    "temperatureStatCPU": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "CPU" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "ЦП" } }
+      }
+    },
+    "temperatureStatGPU": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "GPU" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "ГПУ" } }
+      }
+    },
+    "temperatureStatPeakCPU": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "CPU peak" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Пик ЦП" } }
+      }
+    },
+    "temperatureStatPeakGPU": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": { "stringUnit": { "state": "translated", "value": "GPU peak" } },
+        "ru": { "stringUnit": { "state": "translated", "value": "Пик ГПУ" } }
+      }
+    },
     "speedUnitKB": {
       "extractionState": "manual",
       "localizations": {

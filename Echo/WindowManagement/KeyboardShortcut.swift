@@ -7,6 +7,7 @@ import AppKit
 import Carbon.HIToolbox
 
 /// Сочетание клавиш: виртуальный keyCode + модификаторы (Cocoa-маска).
+/// Persisted in user defaults: a new stored field must be Optional, or decoding drops every saved shortcut.
 struct KeyboardShortcut: Codable, Equatable {
     var keyCode: UInt32
     /// NSEvent.ModifierFlags.rawValue (device-independent подмножество).
@@ -56,6 +57,11 @@ struct KeyboardShortcut: Codable, Equatable {
         let relevant: NSEvent.ModifierFlags = [.command, .control, .option, .shift]
         let own = NSEvent.ModifierFlags(rawValue: UInt(modifiers)).intersection(relevant)
         return self.keyCode == keyCode && own == flags.intersection(relevant)
+    }
+
+    /// Same physical key and the same ⌘⌃⌥⇧ set; recorder-only flags such as fn on arrows are ignored.
+    func collides(with other: KeyboardShortcut) -> Bool {
+        matches(keyCode: other.keyCode, flags: NSEvent.ModifierFlags(rawValue: UInt(other.modifiers)))
     }
 
     /// Символ клавиши по виртуальному keyCode (ANSI-раскладка). `spaceName` overrides the

@@ -16,13 +16,18 @@ struct PreferencesView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var clipboard: ClipboardService
     @ObservedObject var windowManager: WindowManagerService
+    let gridStore: GridStore
+    let onOpenGridEditor: (GridEditorRequest) -> Void
+    let arrangements: any ArrangementManaging
+    let onOpenArrangementEditor: (UUID) -> Void
+    let onAccessibilityGranted: () -> Void
     let ultraSwitch: UltraSwitchService
     @ObservedObject var updater: UpdaterService
     @ObservedObject var metrics: MetricsService
 
     @State private var section: PrefSection? = .general
     @State private var hasAXPermission = false
-    @State private var systemTilingEnabled = false
+    @State private var tilingConflict = TilingConflict(edge: false, optionDrag: false)
     @State private var hasBothLayouts = true
 
     /// Живой опрос статуса доступа — UI сам переключится, когда выдашь право.
@@ -35,6 +40,7 @@ struct PreferencesView: View {
         case appearance = "Appearance"
         case menuBar = "Menu Bar"
         case windowManager = "Window Manager"
+        case arrangements = "Arrangements"
         case ultraSwitch = "Ultra Switch"
         case snippets = "Snippets"
         case keyboard = "Keyboard Shortcuts"
@@ -51,6 +57,7 @@ struct PreferencesView: View {
             case .appearance:    return "paintbrush"
             case .menuBar:       return "menubar.rectangle"
             case .windowManager: return "macwindow.on.rectangle"
+            case .arrangements:  return "rectangle.3.group"
             case .ultraSwitch:   return "globe"
             case .snippets:      return "text.badge.plus"
             case .keyboard:      return "keyboard"
@@ -76,6 +83,7 @@ struct PreferencesView: View {
         .frame(width: 720, height: 520)
         .onAppear(perform: refreshStatuses)
         .onReceive(permissionTimer) { _ in refreshStatuses() }
+        .onChange(of: settings.gridModifier) { _, _ in refreshStatuses() }
     }
 
     @ViewBuilder
@@ -96,11 +104,21 @@ struct PreferencesView: View {
                 settings: settings,
                 windowManager: windowManager,
                 hasAXPermission: hasAXPermission,
-                systemTilingEnabled: systemTilingEnabled,
-                onDisableSystemTiling: {
-                    windowManager.disableSystemEdgeTiling()
-                    systemTilingEnabled = false
-                }
+                gridStore: gridStore,
+                tilingConflict: tilingConflict,
+                onResolveTilingConflict: {
+                    windowManager.resolveSystemTilingConflict($0)
+                    refreshStatuses()
+                },
+                onOpenGridEditor: onOpenGridEditor
+            )
+        case .arrangements:
+            ArrangementsPrefsView(
+                store: gridStore,
+                settings: settings,
+                arrangements: arrangements,
+                hasAXPermission: hasAXPermission,
+                onOpenEditor: onOpenArrangementEditor
             )
         case .ultraSwitch:
             UltraSwitchPrefsView(
@@ -123,10 +141,13 @@ struct PreferencesView: View {
     /// система не уведомляет о выдаче права, а раздел должен переключиться сам.
     private func refreshStatuses() {
         let granted = windowManager.hasPermission()
-        if granted != hasAXPermission { hasAXPermission = granted }
+        if granted != hasAXPermission {
+            hasAXPermission = granted
+            if granted { onAccessibilityGranted() }
+        }
 
-        let tiling = windowManager.isSystemEdgeTilingEnabled()
-        if tiling != systemTilingEnabled { systemTilingEnabled = tiling }
+        let conflict = windowManager.systemTilingConflict(gridModifier: settings.gridModifier)
+        if conflict != tilingConflict { tilingConflict = conflict }
 
         let layouts = ultraSwitch.diagnostics().hasBothLayouts
         if layouts != hasBothLayouts { hasBothLayouts = layouts }

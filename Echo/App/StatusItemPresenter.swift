@@ -104,6 +104,9 @@ struct StatusItemPresenter {
         case .battery:
             // Battery isn't offered in menuBarSelectable yet — unreachable until wired.
             return ""
+        case .temperature:
+            // Temperature is popover-only — unreachable in the status item.
+            return ""
         }
     }
 
