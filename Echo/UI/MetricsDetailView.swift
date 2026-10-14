@@ -67,10 +67,11 @@ struct MetricsDetailView: View {
                                 .font(.system(size: 12, weight: .medium))
                             Text(loc.t(tab.titleKey))
                                 .font(.system(size: 13, weight: .medium))
+                                .lineLimit(1)
                         }
                         .foregroundStyle(state.tab == tab ? DS.accent : .secondary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 7)
+                        .padding(.horizontal, DS.tabHorizontalPadding)
+                        .padding(.vertical, DS.tabVerticalPadding)
                         .background {
                             if state.tab == tab {
                                 Color.clear

@@ -144,7 +144,12 @@ struct TemperatureChartView: View {
         }
         .padding(DS.Temperature.legendPadding)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: DS.cornerSM))
-        .padding(DS.Temperature.legendPadding)
+        .padding(EdgeInsets(
+            top: DS.Temperature.legendPadding,
+            leading: DS.Temperature.legendLeadingInset,
+            bottom: DS.Temperature.legendPadding,
+            trailing: DS.Temperature.legendPadding
+        ))
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 

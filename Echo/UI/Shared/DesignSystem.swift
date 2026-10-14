@@ -30,6 +30,13 @@ enum DS {
 
     static let gutter: CGFloat = 16
 
+    /// Metrics detail tab bar — six tabs must fit one line in the detail window.
+    static let tabHorizontalPadding: CGFloat = 10
+    static let tabVerticalPadding: CGFloat = 6
+
+    /// Chart legends sit top-left and must clear the Y-axis labels.
+    static let chartLegendLeadingInset: CGFloat = 56
+
     // MARK: - Color
 
     /// Фирменный акцент.

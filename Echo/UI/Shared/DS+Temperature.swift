@@ -40,11 +40,27 @@ extension DS {
 
         static let legendRowSpacing: CGFloat = 4
         static let legendPadding: CGFloat = 8
+        static let legendLeadingInset: CGFloat = 44
         static let legendItemSpacing: CGFloat = 6
         static let legendSwatchRadius: CGFloat = 1
         static let legendSwatchWidth: CGFloat = 14
         static let legendSwatchHeight: CGFloat = 2
         static let legendFont = Font.system(size: 10, design: .monospaced)
+
+        // MARK: - Popover row
+
+        static let popoverInset: CGFloat = 12
+        static let popoverRowSpacing: CGFloat = 8
+        static let rowSpacing: CGFloat = 10
+        static let rowValueStackSpacing: CGFloat = 2
+        static let rowValueSpacing: CGFloat = 4
+        static let rowHorizontalPadding: CGFloat = 14
+        static let rowVerticalPadding: CGFloat = 9
+        static let rowIconFont = Font.system(size: 14, weight: .medium)
+        static let rowTitleFont = Font.system(size: 12, weight: .medium)
+        static let rowValueIconFont = Font.system(size: 9, weight: .bold)
+        static let rowValueFont = Font.system(size: 11, weight: .medium, design: .rounded)
+        static let rowChevronFont = Font.system(size: 9, weight: .semibold)
 
         // MARK: - Stat cards
 

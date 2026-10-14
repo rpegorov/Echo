@@ -125,6 +125,7 @@ struct NetworkChartView: View {
         }
         .padding(8)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: DS.cornerSM))
+        .padding(.leading, DS.chartLegendLeadingInset)
         .padding(8)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }

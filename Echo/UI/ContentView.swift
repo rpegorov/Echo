@@ -41,6 +41,16 @@ struct ContentView: View {
                     .padding(.horizontal, 12)
                     .padding(.top, 10)
 
+                if metrics.temperatureAvailable {
+                    TemperatureRow(
+                        cpu: metrics.metrics.temperature.cpu,
+                        gpu: metrics.metrics.temperature.gpu,
+                        onSelect: { onSelect(.temperature) }
+                    )
+                    .padding(.horizontal, DS.Temperature.popoverInset)
+                    .padding(.top, DS.Temperature.popoverRowSpacing)
+                }
+
                 if battery.hasBattery {
                     BatteryRow(reading: battery.current, onSelect: { onSelect(.battery) })
                         .padding(.horizontal, 12)
