@@ -5,6 +5,63 @@
     <description>Обновления Echo</description>
     <language>ru</language>
     <item>
+      <title>2.2</title>
+      <pubDate>Thu, 15 Oct 2026 18:31:03 +0300</pubDate>
+      <sparkle:version>2.2</sparkle:version>
+      <sparkle:shortVersionString>2.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>26.1</sparkle:minimumSystemVersion>
+      <description>### Added
+
+- Zone highlight while dragging a window: an animated frame with the zone
+  name and its keyboard shortcut.
+- Thirds and two-thirds of the screen, moving a window to the adjacent
+  display, pressing the half hotkey again cycles the width: ½ → ⅔ → ⅓.
+- Zone map in settings and zone badges in the shortcuts list.
+- Zone grids: templates and custom grids in the editor (split by click,
+  merge, drag borders), one grid per display.
+- Grid mode: dragging a window with ⌥ held shows all grid zones; with ⌃ the
+  window stretches across several zones.
+- Zone hotkeys ⌃⌥1…9 and the "Next grid" command.
+- Window arrangements: "Remember current", editing in the editor, applying
+  from settings, the menu bar or a hotkey; applications that are not running
+  are skipped.
+- Auto rules: a new window of a chosen application lands in its zone by
+  itself.
+- Temperature tab in the metrics popover: CPU and GPU temperature charts with
+  current and peak readings, sampled from the SMC every second. The popover
+  also shows a temperature row next to the network one, and the tab hides
+  itself on Macs without readable sensors.
+
+### Changed
+
+- New default shortcuts: ⌃⌥⌘D/F/G/E/T (thirds and two-thirds), ⌃⌥⌘←/→
+  (adjacent display), ⌃⌥1…9 (zones). Shortcuts you have already assigned do
+  not change. ⌃⌥ and ⌃⌥⌘ overlap with VoiceOver commands — if you use
+  VoiceOver, reassign the shortcuts in settings.
+- If the system macOS tiling is enabled (including "Hold ⌥ while dragging
+  windows"), settings offer to turn it off.
+
+### Fixed
+
+- Mouse window dragging shows the snap zone highlight again: the "the window
+  is really being dragged" probe gave up after three reads taken within
+  ~11 ms, while the system starts moving the window only after ~0.23 s, so
+  the highlight never appeared — neither at screen edges nor in ⌥ grid
+  mode.
+
+### Data
+
+- Grids and arrangements are stored in `~/Library/Application Support/
+  rostislav.egorov.Echo/window-zones.json`. A corrupted file is set aside as
+  `window-zones.corrupt-&lt;date&gt;.json`, and Echo starts with templates.
+- Arrangements store window titles — locally, in this file only. Deleting an
+  arrangement erases them; the set-aside copies keep them until removed
+  manually.
+- Echo versions before 2.2 do not see grids and arrangements saved in 2.2:
+  after a downgrade only templates are available; the file is not modified.</description>
+      <enclosure url="https://github.com/rpegorov/Echo/releases/download/v2.2/Echo-2.2.dmg" type="application/octet-stream" length="4923585" sparkle:edSignature="SY2Tl0YGH2ck22vdBj6Wt6XmVl6occk6VG7CXFSjt1NVbkVOGab5b3VmWDwXGytmhshwhIsirDOelEzuI6qOCg==" />
+    </item>
+    <item>
       <title>2.1.1</title>
       <pubDate>Tue, 06 Oct 2026 20:32:32 +0300</pubDate>
       <sparkle:version>2.1.1</sparkle:version>
