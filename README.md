@@ -53,7 +53,7 @@ management, clipboard history and quick system utilities.
 
 ## Requirements
 
-- macOS 26.1 or later.
+- macOS 15 (Sequoia) or later, on Apple Silicon or Intel Macs.
 - The app is **not sandboxed** (required for process inspection, Accessibility-based
   window management, etc.).
 

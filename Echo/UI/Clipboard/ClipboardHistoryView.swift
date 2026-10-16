@@ -26,7 +26,7 @@ struct ClipboardHistoryView: View {
             }
         }
         .frame(width: DS.clipboardSize.width, height: DS.clipboardSize.height)
-        .glassEffect(.regular, in: .rect(cornerRadius: DS.cornerXL))
+        .modifier(PanelBackground())
     }
 
     // MARK: - Header
@@ -182,5 +182,19 @@ private struct ClipboardItemIcon: View {
         Image(nsImage: NSWorkspace.shared.icon(for: type))
             .resizable()
             .scaledToFit()
+    }
+}
+
+/// Liquid Glass on macOS 26+, a blurred material panel on earlier systems.
+private struct PanelBackground: ViewModifier {
+    func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: DS.cornerXL, style: .continuous)
+        if #available(macOS 26.0, *) {
+            content.glassEffect(.regular, in: shape)
+        } else {
+            content
+                .background(.regularMaterial, in: shape)
+                .overlay(shape.strokeBorder(Color.primary.opacity(0.08)))
+        }
     }
 }

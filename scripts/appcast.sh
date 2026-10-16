@@ -44,7 +44,7 @@ MIN_OS="$(awk -F' = ' '/MACOSX_DEPLOYMENT_TARGET = /{print $2; exit}' Echo.xcode
 NOTES=""
 [[ -n "$NOTES_FILE" && -f "$NOTES_FILE" ]] && NOTES="$(cat "$NOTES_FILE")"
 
-VERSION="$VERSION" URL="$DOWNLOAD_URL" SIGN="$SIGN_OUTPUT" MIN_OS="${MIN_OS:-26.1}" \
+VERSION="$VERSION" URL="$DOWNLOAD_URL" SIGN="$SIGN_OUTPUT" MIN_OS="${MIN_OS:-15.0}" \
 NOTES="$NOTES" APPCAST="$APPCAST" python3 scripts/appcast_merge.py
 
 echo "✓ $APPCAST обновлён: версия $VERSION"
