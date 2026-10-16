@@ -5,6 +5,29 @@
     <description>Обновления Echo</description>
     <language>ru</language>
     <item>
+      <title>2.3</title>
+      <pubDate>Sat, 17 Oct 2026 00:13:26 +0300</pubDate>
+      <sparkle:version>2.3</sparkle:version>
+      <sparkle:shortVersionString>2.3</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <description>### Added
+
+- Support for macOS 15 (Sequoia) and newer. Echo no longer requires macOS 26.
+- Support for Intel Macs: the app is now a universal build for both Apple
+  Silicon and Intel.
+
+### Changed
+
+- The clipboard history panel uses a blurred material background on macOS 15
+  to 25 and keeps Liquid Glass on macOS 26.
+
+### Known limitations
+
+- CPU and GPU temperature on Intel Macs has not been tested on real hardware;
+  the Temperature tab stays hidden if the sensors cannot be read.</description>
+      <enclosure url="https://github.com/rpegorov/Echo/releases/download/v2.3/Echo-2.3.dmg" type="application/octet-stream" length="4928040" sparkle:edSignature="BlQfdDJR66nc1Gnq1C2kC0Hp0z6lTebQbBtn6B+Yg7Riz3VZfq9joDQ9foBZOpfChEHT8JZxko7dn+FwmuSQDg==" />
+    </item>
+    <item>
       <title>2.2</title>
       <pubDate>Thu, 15 Oct 2026 18:31:03 +0300</pubDate>
       <sparkle:version>2.2</sparkle:version>
