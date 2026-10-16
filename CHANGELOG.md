@@ -7,15 +7,23 @@ release does not build.
 
 ## [Unreleased]
 
+## [2.3] — 2026-10-16
+
 ### Added
 
-- Support for macOS 15 (Sequoia) and newer, and for Intel Macs: the app is now
-  built as a universal binary (Apple Silicon + Intel). The clipboard panel
-  falls back to a blurred material where Liquid Glass is unavailable.
+- Support for macOS 15 (Sequoia) and newer. Echo no longer requires macOS 26.
+- Support for Intel Macs: the app is now a universal build for both Apple
+  Silicon and Intel.
 
-- Temperature tab in the metrics popover: CPU and GPU temperature charts with
-  current and peak readings, sampled from the SMC every second. The tab hides
-  itself on Macs without readable sensors.
+### Changed
+
+- The clipboard history panel uses a blurred material background on macOS 15
+  to 25 and keeps Liquid Glass on macOS 26.
+
+### Known limitations
+
+- CPU and GPU temperature on Intel Macs has not been tested on real hardware;
+  the Temperature tab stays hidden if the sensors cannot be read.
 
 ## [2.2] — 2026-10-14
 
