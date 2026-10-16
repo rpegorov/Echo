@@ -9,6 +9,10 @@ release does not build.
 
 ### Added
 
+- Support for macOS 15 (Sequoia) and newer, and for Intel Macs: the app is now
+  built as a universal binary (Apple Silicon + Intel). The clipboard panel
+  falls back to a blurred material where Liquid Glass is unavailable.
+
 - Temperature tab in the metrics popover: CPU and GPU temperature charts with
   current and peak readings, sampled from the SMC every second. The tab hides
   itself on Macs without readable sensors.
