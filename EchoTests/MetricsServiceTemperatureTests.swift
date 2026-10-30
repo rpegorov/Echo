@@ -27,6 +27,20 @@ final class MetricsServiceTemperatureTests: XCTestCase {
         XCTAssertTrue(service.gpuTemperatureHistory.isEmpty)
     }
 
+    func testAvailabilityRecoversAfterAMissedRead() async {
+        let monitor = ScriptedTemperatureMonitor(samples: [
+            nil,
+            TemperatureSample(cpu: 60, gpu: 50)
+        ])
+        let service = MetricsService(temperature: monitor)
+
+        await service.refresh()
+        XCTAssertFalse(service.temperatureAvailable)
+
+        await service.refresh()
+        XCTAssertTrue(service.temperatureAvailable)
+    }
+
     func testMissingComponentCarriesLastValueForward() async {
         let monitor = ScriptedTemperatureMonitor(samples: [
             TemperatureSample(cpu: 60, gpu: 50),

@@ -8,8 +8,8 @@ import Foundation
 /// Maps the SMC keys a Mac exposes to CPU and GPU sensor sets. Key families
 /// are undocumented and differ per chip generation; the rules encode the
 /// families verified on M-series Macs (M1–M4) plus the classic Intel keys.
-/// Some firmwares report constants on unused keys of these families — the
-/// reader's plausibility range keeps them out of the maximum.
+/// Some firmwares report stored limits on unused keys of these families —
+/// the static-key filter keeps them out of the maximum.
 enum TemperatureSensorMap {
 
     /// M3 GPUs report through Tf* keys; the Tg* family only reappears on M4.

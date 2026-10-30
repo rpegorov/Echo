@@ -91,6 +91,7 @@ final class MetricsService: ObservableObject {
         metrics.network      = netData
         if let temperatureSample {
             metrics.temperature = temperatureSample
+            temperatureAvailable = true
         } else {
             temperatureAvailable = false
         }
