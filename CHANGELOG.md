@@ -7,6 +7,22 @@ release does not build.
 
 ## [Unreleased]
 
+## [2.3.1] — 2026-10-31
+
+### Fixed
+
+- CPU and GPU temperature no longer sticks at ~105 °C on an idle, cool Mac.
+  The SMC stores per-cluster throttle limits as keys that read like
+  temperatures (~93–105 °C), and the filter that tells them from real
+  measurements trusted a key forever after its first change — once such a
+  stored limit shifted, it drove the maximum permanently. A key now has to
+  keep moving to count toward the maximum; one that holds a single value
+  across the observation window is excluded again, and an unmoved key is
+  presumed a limit right after launch instead of showing up for the first
+  ~13 seconds.
+- The Temperature tab no longer disappears for good after a single failed
+  sensor read: availability follows the latest read instead of latching off.
+
 ## [2.3] — 2026-10-16
 
 ### Added
