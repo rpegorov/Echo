@@ -7,6 +7,24 @@ release does not build.
 
 ## [Unreleased]
 
+## [2.3.2] — 2026-11-02
+
+### Fixed
+
+- The ⌃⌥T translate-selection hotkey no longer dies permanently after one
+  failed translation. A lost translation session used to leave the translator
+  busy forever, silently swallowing every later press until relaunch; the
+  wait now ends on a watchdog, logs the reason and the hotkey keeps working.
+- Translating Russian text no longer silently fails in some apps. Short
+  Cyrillic phrases were detected as Ukrainian or Belarusian, and a language
+  pair without an on-device model never starts translating. Detection is now
+  constrained to the Russian–English pair the feature actually converts
+  between, and an unsupported or still-downloading pair is reported in the log.
+- Translation now works while a fullscreen app is frontmost: the invisible
+  helper window previously could sit on another Space and never render.
+- Repeated presses while a translation is still running are logged instead of
+  being silently ignored.
+
 ## [2.3.1] — 2026-10-31
 
 ### Fixed
