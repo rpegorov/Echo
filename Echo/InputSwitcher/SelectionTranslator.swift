@@ -28,7 +28,10 @@ final class SelectionTranslator {
 
     /// Переводит выделение и печатает перевод поверх него.
     func translateSelection() {
-        guard !isBusy else { return }
+        guard !isBusy else {
+            Self.log.notice("Перевод ещё выполняется, повторное нажатие пропущено") // l10n-exempt: log, not user-facing
+            return
+        }
         isBusy = true
 
         Task { [weak self] in
