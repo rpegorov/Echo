@@ -5,6 +5,29 @@
     <description>Обновления Echo</description>
     <language>ru</language>
     <item>
+      <title>2.3.2</title>
+      <pubDate>Mon, 02 Nov 2026 20:49:05 +0300</pubDate>
+      <sparkle:version>2.3.2</sparkle:version>
+      <sparkle:shortVersionString>2.3.2</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <description>### Fixed
+
+- The ⌃⌥T translate-selection hotkey no longer dies permanently after one
+  failed translation. A lost translation session used to leave the translator
+  busy forever, silently swallowing every later press until relaunch; the
+  wait now ends on a watchdog, logs the reason and the hotkey keeps working.
+- Translating Russian text no longer silently fails in some apps. Short
+  Cyrillic phrases were detected as Ukrainian or Belarusian, and a language
+  pair without an on-device model never starts translating. Detection is now
+  constrained to the Russian–English pair the feature actually converts
+  between, and an unsupported or still-downloading pair is reported in the log.
+- Translation now works while a fullscreen app is frontmost: the invisible
+  helper window previously could sit on another Space and never render.
+- Repeated presses while a translation is still running are logged instead of
+  being silently ignored.</description>
+      <enclosure url="https://github.com/rpegorov/Echo/releases/download/v2.3.2/Echo-2.3.2.dmg" type="application/octet-stream" length="4943612" sparkle:edSignature="ZdgfLuDoSn7mzzjjpu86pZljcZDm1q7wY1Hap5iL6l0jl+M3tKa1qzwWBXGhJDpEXU+ExApiE8D7Y3/WPbPEAA==" />
+    </item>
+    <item>
       <title>2.3.1</title>
       <pubDate>Sat, 31 Oct 2026 01:05:40 +0300</pubDate>
       <sparkle:version>2.3.1</sparkle:version>
