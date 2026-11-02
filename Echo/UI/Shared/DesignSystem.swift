@@ -48,6 +48,11 @@ enum DS {
     /// Лёгкая подсветка нажатия — адаптивна к теме.
     static let pressHighlight = Color.primary.opacity(0.06)
 
+    /// Тонкая рамка панели поверх material-фона — адаптивна к теме.
+    static let panelStroke = Color.primary.opacity(panelStrokeOpacity)
+    /// Непрозрачность рамки панели.
+    private static let panelStrokeOpacity: Double = 0.08
+
     /// Цвет метрики по порогу загрузки (0–100): зелёный / оранжевый / красный.
     static func load(_ percent: Double) -> Color {
         switch percent {

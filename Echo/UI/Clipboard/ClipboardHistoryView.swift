@@ -194,7 +194,7 @@ private struct PanelBackground: ViewModifier {
         } else {
             content
                 .background(.regularMaterial, in: shape)
-                .overlay(shape.strokeBorder(Color.primary.opacity(0.08)))
+                .overlay(shape.strokeBorder(DS.panelStroke))
         }
     }
 }
