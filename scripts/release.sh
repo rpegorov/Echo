@@ -24,6 +24,8 @@ if ! git remote get-url origin >/dev/null 2>&1; then
   exit 1
 fi
 
+TEST_MODE=release python3 scripts/test-policy.py app
+
 # --- Версия в бандле ---
 # При GENERATE_INFOPLIST_FILE = YES версия в собранном .app берётся из настроек
 # сборки, а не из Info.plist — правка самого файла ни на что не влияет.
