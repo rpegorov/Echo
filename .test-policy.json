@@ -1,0 +1,44 @@
+{
+  "app": {
+    "paths": [
+      "Echo/*",
+      "EchoTests/*",
+      "Echo.xcodeproj/*"
+    ],
+    "command": [
+      "xcodebuild",
+      "-project",
+      "Echo.xcodeproj",
+      "-scheme",
+      "Echo",
+      "-destination",
+      "platform=macOS",
+      "-derivedDataPath",
+      "build/test-dd",
+      "CODE_SIGNING_ALLOWED=NO",
+      "test"
+    ],
+    "cwd": ".",
+    "kind": "component",
+    "release_only": true
+  },
+  "policy": {
+    "paths": [
+      ".test-policy.json",
+      "scripts/test-policy.py",
+      "scripts/test_test_policy.py"
+    ],
+    "command": [
+      "python3",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "scripts",
+      "-p",
+      "test_test_policy.py"
+    ],
+    "cwd": ".",
+    "kind": "component"
+  }
+}
